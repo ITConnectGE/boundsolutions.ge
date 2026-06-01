@@ -698,28 +698,19 @@
             a.addEventListener('click',function(e){if(this.getAttribute('href')==='#')return;e.preventDefault();document.querySelector(this.getAttribute('href'))?.scrollIntoView({behavior:'smooth'})});
         });
 
-        // Lazy load summit video (434MB) — only on click
+        // Lazy load summit video (YouTube) — iframe only on click
         function loadSummitVideo() {
             const wrap = document.getElementById('summitVideoWrap');
             const poster = document.getElementById('summitPoster');
             poster.remove();
-            const video = document.createElement('video');
-            video.className = 'w-full aspect-video object-cover';
-            video.muted = true;
-            video.volume = 0.25;
-            video.setAttribute('playsinline', '');
-            video.setAttribute('preload', 'auto');
-            video.innerHTML = '<source src="video/iebi.mp4" type="video/mp4">';
-            wrap.appendChild(video);
-            video.play().catch(() => {});
-            videoObs.observe(video);
-            // Add mute button
-            const btn = document.createElement('button');
-            btn.className = 'absolute bottom-3 right-3 z-10 w-11 h-11 bg-black/50 backdrop-blur-sm text-white rounded-xl flex items-center justify-center hover:bg-black/70 transition-all duration-200';
-            btn.innerHTML = muteSvg;
-            btn.setAttribute('aria-label', 'ხმა');
-            btn.addEventListener('click', (e) => { e.stopPropagation(); video.muted = !video.muted; btn.innerHTML = video.muted ? muteSvg : unmuteSvg; });
-            wrap.appendChild(btn);
+            const iframe = document.createElement('iframe');
+            iframe.className = 'w-full aspect-video';
+            iframe.src = 'https://www.youtube-nocookie.com/embed/HzaXsSdSukY?autoplay=1&rel=0&modestbranding=1';
+            iframe.title = 'HR ბიზნეს სამიტი 2019';
+            iframe.setAttribute('frameborder', '0');
+            iframe.setAttribute('allow', 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share');
+            iframe.setAttribute('allowfullscreen', '');
+            wrap.appendChild(iframe);
         }
 
         // Video autoplay on scroll + mute toggle button
