@@ -1,0 +1,84 @@
+@import "tailwindcss";
+
+/* ---- Brand design tokens (ported 1:1 from the original Tailwind config) ---- */
+@theme {
+  --color-brand: #D35C63;
+  --color-brand-50: #FBF0F0;
+  --color-brand-100: #F5D5D7;
+  --color-brand-200: #EAABAE;
+  --color-brand-400: #E07A80;
+  --color-brand-500: #D35C63;
+  --color-brand-600: #B84A50;
+  --color-brand-700: #9C3B40;
+  --color-brand-800: #802E32;
+
+  --color-cream: #FAE8E2;
+  --color-cream-light: #FDF3EF;
+  --color-cream-dark: #F5DDD5;
+
+  --font-sans: 'Montserrat', 'Noto Sans Georgian', system-ui, sans-serif;
+}
+
+/* ---- Base ---- */
+* {
+  font-family: 'Montserrat', 'Noto Sans Georgian', system-ui, sans-serif;
+}
+
+/* ---- Reusable brand utilities (ported from the legacy <style> blocks) ---- */
+.font-brand {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.gradient-text {
+  background: linear-gradient(135deg, #D35C63 0%, #E8956A 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.gradient-bg {
+  background: linear-gradient(135deg, #D35C63 0%, #E8956A 100%);
+}
+
+.glow {
+  box-shadow: 0 0 60px -12px rgba(211, 92, 99, 0.25);
+}
+
+.card-hover {
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+    box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.card-hover:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px -12px rgba(211, 92, 99, 0.15);
+}
+
+/* ---- Scroll-reveal animation (only when JS is on, so no-JS content is visible) ---- */
+.js .fade-in {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1),
+    transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.js .fade-in.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* anchor offset so fixed nav doesn't cover section tops */
+section[id] {
+  scroll-margin-top: 80px;
+}
+
+/* route transition */
+.page-enter-active,
+.page-leave-active {
+  transition: opacity 0.25s ease;
+}
+.page-enter-from,
+.page-leave-to {
+  opacity: 0;
+}

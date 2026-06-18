@@ -1,0 +1,106 @@
+<script setup>
+import { ref } from 'vue'
+import { useI18n } from 'vue-i18n'
+import { useLoc } from '@/composables/useLocale'
+import { usePageMeta } from '@/composables/usePageMeta'
+import { services } from '@/data/services.js'
+import { founder } from '@/data/about.js'
+import HeroSlider from '@/components/HeroSlider.vue'
+import SectionHeading from '@/components/SectionHeading.vue'
+import ServiceCard from '@/components/ServiceCard.vue'
+import Testimonials from '@/components/Testimonials.vue'
+import ContactCta from '@/components/ContactCta.vue'
+import BaseIcon from '@/components/BaseIcon.vue'
+
+const { t, tm, rt } = useI18n()
+const { loc } = useLoc()
+const founderImgFailed = ref(false)
+
+// no title => site default; description from i18n keeps it bilingual
+usePageMeta({ description: () => t('hero.subtitle') })
+</script>
+
+<template>
+  <!-- HERO SLIDER (full page, slogan) -->
+  <HeroSlider />
+
+  <!-- STATS STRIP -->
+  <section class="bg-white border-b border-gray-100">
+    <div class="max-w-5xl mx-auto px-6 py-10 grid grid-cols-3 gap-4 sm:gap-8 text-center">
+      <div v-for="(s, i) in tm('hero.stats')" :key="i" class="fade-in">
+        <div class="text-3xl lg:text-4xl font-extrabold gradient-text">{{ rt(s.v) }}</div>
+        <p class="text-gray-400 text-xs sm:text-sm mt-1">{{ rt(s.l) }}</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ABOUT teaser (Nino) — placed before services per request -->
+  <section class="py-20 lg:py-28">
+    <div class="max-w-5xl mx-auto px-6">
+      <div class="grid lg:grid-cols-5 gap-12 lg:gap-16 items-center fade-in">
+        <div class="lg:col-span-2 order-1">
+          <img
+            v-if="!founderImgFailed"
+            :src="founder.photo"
+            :alt="loc(founder.name)"
+            class="w-full aspect-[4/5] object-cover object-top rounded-2xl bg-gray-100"
+            loading="lazy"
+            @error="founderImgFailed = true"
+          />
+          <div
+            v-else
+            class="w-full aspect-[4/5] rounded-2xl bg-cream flex items-center justify-center"
+          >
+            <img src="/images/BoundSolutions - Nav.png" alt="" class="h-10 opacity-40" />
+          </div>
+        </div>
+        <div class="lg:col-span-3 order-2">
+          <p class="text-brand font-semibold text-sm mb-3 tracking-wide">
+            {{ t('home.aboutTeaser.eyebrow') }}
+          </p>
+          <h2 class="text-3xl lg:text-4xl font-extrabold text-gray-900 mb-4 leading-tight">
+            {{ t('home.aboutTeaser.title') }}
+          </h2>
+          <p class="text-gray-500 text-[15px] leading-relaxed mb-8">
+            {{ t('home.aboutTeaser.text') }}
+          </p>
+          <RouterLink
+            to="/about"
+            class="inline-flex items-center gap-2 bg-gray-900 text-white px-7 py-3 rounded-2xl font-semibold text-sm hover:bg-gray-800 transition-all"
+          >
+            {{ t('home.aboutTeaser.cta') }} <BaseIcon name="arrowRight" class="w-4 h-4" />
+          </RouterLink>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SERVICES -->
+  <section id="services" class="py-20 lg:py-28 bg-gray-50/80">
+    <div class="max-w-6xl mx-auto px-6">
+      <SectionHeading
+        :eyebrow="t('home.services.eyebrow')"
+        :title="t('home.services.title')"
+        :subtitle="t('home.services.subtitle')"
+        class="mb-14"
+      />
+      <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
+        <ServiceCard v-for="s in services" :key="s.slug" :service="s" />
+      </div>
+      <div class="mt-10">
+        <RouterLink
+          to="/services"
+          class="inline-flex items-center gap-2 text-brand font-semibold text-sm hover:gap-3 transition-all"
+        >
+          {{ t('common.viewAll') }} <BaseIcon name="arrowRight" class="w-4 h-4" />
+        </RouterLink>
+      </div>
+    </div>
+  </section>
+
+  <!-- TESTIMONIALS / partner reviews (PPT-style) -->
+  <Testimonials />
+
+  <!-- CONTACT CTA -->
+  <ContactCta />
+</template>
