@@ -2,12 +2,11 @@
 import { ref, onMounted, onBeforeUnmount, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { useLocale } from '@/composables/useLocale'
 import BaseIcon from './BaseIcon.vue'
 import SocialLinks from './SocialLinks.vue'
+import LangSwitcher from './LangSwitcher.vue'
 
 const { t } = useI18n()
-const { toggle } = useLocale()
 const route = useRoute()
 
 const links = [
@@ -67,14 +66,7 @@ watch(() => route.fullPath, () => (open.value = false))
           >
         </RouterLink>
 
-        <button
-          class="flex items-center gap-1.5 text-gray-500 hover:text-brand transition-colors"
-          @click="toggle"
-          aria-label="Switch language"
-        >
-          <BaseIcon name="globe" class="w-4 h-4" />
-          <span class="font-semibold">{{ t('langName') }}</span>
-        </button>
+        <LangSwitcher />
 
         <RouterLink
           to="/contact"
@@ -119,13 +111,7 @@ watch(() => route.fullPath, () => (open.value = false))
 
       <div class="flex items-center justify-between pt-4 mt-2">
         <SocialLinks />
-        <button
-          class="flex items-center gap-1.5 text-gray-500 hover:text-brand transition-colors text-sm font-semibold"
-          @click="toggle"
-        >
-          <BaseIcon name="globe" class="w-4 h-4" />
-          {{ t('langName') }}
-        </button>
+        <LangSwitcher />
       </div>
     </div>
   </nav>

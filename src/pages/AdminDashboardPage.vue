@@ -4,18 +4,17 @@ import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useHead } from '@unhead/vue'
 import { useAdminAuth } from '@/composables/useAdminAuth'
-import { useLocale } from '@/composables/useLocale'
 import {
   getApplications,
   setApplicationStatus,
   deleteApplication,
 } from '@/composables/applications.js'
 import BaseIcon from '@/components/BaseIcon.vue'
+import LangSwitcher from '@/components/LangSwitcher.vue'
 
 const { t, locale } = useI18n()
 const router = useRouter()
 const { isAuthed, currentUser, logout } = useAdminAuth()
-const { toggle: toggleLocale } = useLocale()
 
 useHead({
   title: () => t('admin.dash.title'),
@@ -109,12 +108,7 @@ const statCards = computed(() => [
           </span>
         </div>
         <div class="flex items-center gap-3">
-          <button
-            class="flex items-center gap-1.5 text-gray-400 hover:text-brand transition-colors text-sm font-semibold"
-            @click="toggleLocale"
-          >
-            <BaseIcon name="globe" class="w-4 h-4" /> {{ t('langName') }}
-          </button>
+          <LangSwitcher />
           <span class="hidden md:block text-xs text-gray-400">{{ user }}</span>
           <button
             class="inline-flex items-center gap-1.5 bg-gray-900 text-white text-xs font-semibold px-4 py-2 rounded-xl hover:bg-gray-800 transition-colors"
