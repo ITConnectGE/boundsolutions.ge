@@ -30,5 +30,4 @@ export const partners = [
   { name: 'MIHOUSE', logo: '/images/partners/mihouse.png' },
   { name: 'Lion Trans', logo: '/images/partners/lion-trans.png' },
   { name: 'MEAMA', logo: '/images/partners/meama.png' },
-  { name: 'Kani', logo: '/images/partners/kani.png' },
 ]
