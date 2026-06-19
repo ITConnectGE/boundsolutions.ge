@@ -8,6 +8,7 @@ import { partners } from '@/data/social.js'
 import PageHero from '@/components/PageHero.vue'
 import SectionHeading from '@/components/SectionHeading.vue'
 import TeamMemberCard from '@/components/TeamMemberCard.vue'
+import PartnerBadge from '@/components/PartnerBadge.vue'
 import Testimonials from '@/components/Testimonials.vue'
 import ContactCta from '@/components/ContactCta.vue'
 import BaseIcon from '@/components/BaseIcon.vue'
@@ -136,22 +137,9 @@ usePageMeta({ title: () => t('about.title'), description: () => loc(mission) })
         center
         class="mb-10"
       />
-      <div class="fade-in bg-gray-900 rounded-2xl px-6 py-8">
-        <div class="flex flex-wrap items-center justify-center gap-x-10 gap-y-5">
-          <template v-for="p in partners" :key="p.name">
-            <img
-              v-if="p.logo"
-              :src="p.logo"
-              :alt="p.name"
-              class="h-7 object-contain opacity-80 hover:opacity-100 transition-opacity"
-              loading="lazy"
-            />
-            <span
-              v-else
-              class="font-brand text-white/70 hover:text-white transition-colors text-lg"
-              >{{ p.name }}</span
-            >
-          </template>
+      <div class="fade-in bg-white border border-gray-100 rounded-2xl px-6 py-10">
+        <div class="flex flex-wrap items-center justify-center gap-x-12 gap-y-7">
+          <PartnerBadge v-for="p in partners" :key="p.name" :partner="p" />
         </div>
       </div>
     </div>

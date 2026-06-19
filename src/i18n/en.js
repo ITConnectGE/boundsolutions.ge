@@ -129,8 +129,8 @@ export default {
     visionTitle: 'Our Vision',
     valuesTitle: 'Our Core Values',
     valuesSubtitle: 'The principles we work by every day.',
-    teamTitle: 'Management team',
-    teamSubtitle: 'Practitioners who have managed teams in real businesses.',
+    teamTitle: 'Our HR team',
+    teamSubtitle: 'Experienced HR professionals — recruitment, consulting and human-resource management.',
     teamPlaceholderNote: 'Coming soon',
   },
 

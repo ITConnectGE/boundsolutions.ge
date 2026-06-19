@@ -21,14 +21,14 @@ export const testimonials = [
   },
 ]
 
-// Real partners referenced across the site/videos. Add `logo: '/images/partners/x.png'`
-// once logo files are available; until then names render as text chips.
+// Real partners. Logos live in /public/images/partners/ — each badge shows the logo
+// if its file exists, otherwise falls back to the company name as text.
 export const partners = [
-  { name: 'ITConnect', logo: '' },
-  { name: 'Maizen', logo: '' },
-  { name: 'Holiday Inn Telavi', logo: '' },
-  { name: 'MIHOUSE', logo: '' },
-  { name: 'Lion Trans', logo: '' },
-  { name: 'MEAMA', logo: '' },
-  { name: 'Kani', logo: '' },
+  { name: 'ITConnect', logo: '/images/partners/itconnect.png' },
+  { name: 'Maizen', logo: '/images/partners/maizen.png' },
+  { name: 'Holiday Inn Telavi', logo: '/images/partners/holiday-inn-telavi.png' },
+  { name: 'MIHOUSE', logo: '/images/partners/mihouse.png' },
+  { name: 'Lion Trans', logo: '/images/partners/lion-trans.png' },
+  { name: 'MEAMA', logo: '/images/partners/meama.png' },
+  { name: 'Kani', logo: '/images/partners/kani.png' },
 ]

@@ -8,7 +8,11 @@ const links = [
     label: 'Facebook',
     url: 'https://www.facebook.com/profile.php?id=61581814735975',
   },
-  { name: 'linkedin', label: 'LinkedIn', url: 'https://www.linkedin.com/in/nino-bartaia-ba619b88/' },
+  {
+    name: 'linkedin',
+    label: 'LinkedIn',
+    url: 'https://www.linkedin.com/company/human-bound-solutions/',
+  },
 ]
 </script>
 
