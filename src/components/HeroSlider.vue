@@ -8,9 +8,9 @@ const { t } = useI18n()
 // Full-bleed background slides (crossfade). Swap these for your best wide photos.
 const slides = [
   '/images/3/boundsolutions 1.jpg',
-  '/images/strong team.jpg',
+  '/images/bound.jpg',
   '/images/3/team building.jpg',
-  '/images/events.jpg',
+  '/images/bound.jpg',
 ]
 
 const current = ref(0)
