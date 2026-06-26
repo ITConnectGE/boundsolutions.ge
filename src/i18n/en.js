@@ -355,7 +355,15 @@ export default {
       subtitle: 'Candidate CVs and messages.',
       logout: 'Log out',
     },
-    tabs: { inbox: 'Applications', jobs: 'Vacancies' },
+    tabs: { inbox: 'Applications', jobs: 'Vacancies', content: 'Content' },
+    content: {
+      title: 'Edit content',
+      subtitle: 'Site texts and images — changes appear on the public pages.',
+      save: 'Save',
+      saved: 'Saved ✓',
+      changeImage: 'Change image',
+      needApi: 'Editing content needs the backend (API). Set VITE_API_BASE and run the Laravel server.',
+    },
     jobs: {
       title: 'Manage vacancies',
       subtitle: 'Add, edit or delete vacancies. Changes appear on the public page.',

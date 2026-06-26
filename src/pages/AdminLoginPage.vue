@@ -19,16 +19,23 @@ useHead({
 const email = ref(DEMO_EMAIL)
 const password = ref(DEMO_PASSWORD)
 const error = ref(false)
+const loading = ref(false)
 
 onMounted(() => {
   if (isAuthed()) router.replace('/admin')
 })
 
-function submit() {
-  if (login(email.value, password.value)) {
-    router.replace('/admin')
-  } else {
-    error.value = true
+async function submit() {
+  error.value = false
+  loading.value = true
+  try {
+    if (await login(email.value, password.value)) {
+      router.replace('/admin')
+    } else {
+      error.value = true
+    }
+  } finally {
+    loading.value = false
   }
 }
 </script>
@@ -72,7 +79,12 @@ function submit() {
 
         <p v-if="error" class="text-sm text-brand">{{ t('admin.login.error') }}</p>
 
-        <button type="submit" class="w-full gradient-bg text-white py-3.5 rounded-xl font-semibold text-sm">
+        <button
+          type="submit"
+          :disabled="loading"
+          class="w-full gradient-bg text-white py-3.5 rounded-xl font-semibold text-sm transition-opacity"
+          :class="loading ? 'opacity-60' : 'hover:opacity-90'"
+        >
           {{ t('admin.login.signIn') }}
         </button>
 

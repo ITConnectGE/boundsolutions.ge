@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n'
 import { useLoc } from '@/composables/useLocale'
 import { usePageMeta } from '@/composables/usePageMeta'
 import { company, founder, mission, vision, values, team } from '@/data/about.js'
+import { img } from '@/composables/content.js'
 import { partners } from '@/data/social.js'
 import PageHero from '@/components/PageHero.vue'
 import SectionHeading from '@/components/SectionHeading.vue'
@@ -78,7 +79,7 @@ usePageMeta({ title: () => t('about.title'), description: () => loc(mission) })
         <div class="lg:col-span-2">
           <img
             v-if="!founderImgFailed"
-            :src="founder.photo"
+            :src="img('img.about.founder', founder.photo)"
             :alt="loc(founder.name)"
             class="w-full aspect-[4/5] object-cover object-top rounded-2xl bg-gray-100"
             @error="founderImgFailed = true"

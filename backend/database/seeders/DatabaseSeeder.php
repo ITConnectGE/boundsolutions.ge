@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use App\Models\Content;
 use App\Models\User;
 use App\Models\Vacancy;
 use Illuminate\Database\Seeder;
@@ -12,11 +11,19 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        // Admin user (same demo credentials the frontend used).
-        User::updateOrCreate(
-            ['email' => 'nino.bartaia@gmail.com'],
-            ['name' => 'Nino Bartaia', 'password' => Hash::make('12345678')]
-        );
+        // Admin accounts. All share the password below — change in production.
+        $admins = [
+            'nino@gmail.com' => 'Nino',
+            'tamar@gmail.com' => 'TamarI',
+            'elene@gmail.com' => 'Elene',
+            'katerina@gmail.com' => 'Katerina',
+        ];
+        foreach ($admins as $email => $name) {
+            User::updateOrCreate(
+                ['email' => $email],
+                ['name' => $name, 'password' => Hash::make('Tbilisi1!')]
+            );
+        }
 
         // Vacancies — same starter set as the frontend seed.
         $vacancies = [
@@ -34,18 +41,6 @@ class DatabaseSeeder extends Seeder
             );
         }
 
-        // A few editable content rows as a starting point for the CMS.
-        $content = [
-            ['group' => 'home', 'key' => 'home.hero.slogan1', 'locale' => 'ka', 'value' => 'People First,'],
-            ['group' => 'home', 'key' => 'home.hero.slogan2', 'locale' => 'ka', 'value' => 'Success Follows.'],
-            ['group' => 'home', 'key' => 'home.hero.subtitle', 'locale' => 'ka', 'value' => 'ვაკავშირებთ ნიჭიერ ადამიანებს სწორ შესაძლებლობებთან.'],
-            ['group' => 'home', 'key' => 'home.hero.subtitle', 'locale' => 'en', 'value' => 'We connect talented people with the right opportunities.'],
-        ];
-        foreach ($content as $c) {
-            Content::updateOrCreate(
-                ['key' => $c['key'], 'locale' => $c['locale']],
-                ['group' => $c['group'], 'type' => 'text', 'value' => $c['value']]
-            );
-        }
+        // Content (bs_contents) is managed from the admin "Content" editor — no seed.
     }
 }

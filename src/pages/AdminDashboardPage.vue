@@ -11,6 +11,17 @@ import {
 } from '@/composables/applications.js'
 import { downloadApplicationsCsv } from '@/composables/exportCsv.js'
 import { getJobs, saveJob, deleteJob } from '@/composables/jobs.js'
+import { hasApi } from '@/composables/api.js'
+import {
+  loadAllContent,
+  saveTexts,
+  uploadContentImage,
+  imageOverrides,
+  getNested,
+} from '@/composables/content.js'
+import { editableContent } from '@/data/editableContent.js'
+import kaMessages from '@/i18n/ka.js'
+import enMessages from '@/i18n/en.js'
 import BaseIcon from '@/components/BaseIcon.vue'
 import LangSwitcher from '@/components/LangSwitcher.vue'
 
@@ -103,6 +114,87 @@ function removeJob(id) {
   reloadJobs()
 }
 
+// ---- Content editor (CMS) ----
+const apiOn = hasApi()
+const contentGroups = editableContent
+const draft = ref({}) // `${key}|${locale}` -> text value
+const contentLoading = ref(false)
+const contentSaving = ref(false)
+const contentSaved = ref(false)
+const uploadingKey = ref('')
+const defaultMsgs = { ka: kaMessages, en: enMessages }
+
+function imgFor(item) {
+  return imageOverrides[item.key] || item.default || ''
+}
+
+async function loadContentEditor() {
+  if (!apiOn) return
+  contentLoading.value = true
+  const saved = {}
+  try {
+    const rows = await loadAllContent()
+    for (const r of rows) {
+      if (r.type !== 'image') saved[`${r.key}|${r.locale}`] = r.value
+    }
+  } catch {
+    // ignore — fall back to defaults
+  }
+  const d = {}
+  for (const g of contentGroups) {
+    for (const it of g.items) {
+      if (it.type === 'image') continue
+      for (const loc of ['ka', 'en']) {
+        const k = `${it.key}|${loc}`
+        d[k] = saved[k] ?? getNested(defaultMsgs[loc], it.key) ?? ''
+      }
+    }
+  }
+  draft.value = d
+  contentLoading.value = false
+}
+
+async function saveContent() {
+  contentSaving.value = true
+  contentSaved.value = false
+  const items = []
+  for (const g of contentGroups) {
+    for (const it of g.items) {
+      if (it.type === 'image') continue
+      for (const loc of ['ka', 'en']) {
+        items.push({
+          key: it.key,
+          locale: loc,
+          value: draft.value[`${it.key}|${loc}`] ?? '',
+          type: 'text',
+          group: g.group,
+        })
+      }
+    }
+  }
+  try {
+    await saveTexts(items)
+    contentSaved.value = true
+    setTimeout(() => (contentSaved.value = false), 2500)
+  } catch (e) {
+    alert('Save failed: ' + (e.message || ''))
+  }
+  contentSaving.value = false
+}
+
+async function onContentImage(item, e) {
+  const f = e.target.files?.[0]
+  if (!f) return
+  uploadingKey.value = item.key
+  try {
+    const res = await uploadContentImage(item.key, f, 'images')
+    imageOverrides[item.key] = res.url // updates preview + live site reactively
+  } catch (err) {
+    alert('Upload failed: ' + (err.message || ''))
+  }
+  uploadingKey.value = ''
+}
+
 onMounted(() => {
   if (!isAuthed()) {
     router.replace('/admin/login')
@@ -111,6 +203,7 @@ onMounted(() => {
   user.value = currentUser() || ''
   reload()
   reloadJobs()
+  loadContentEditor()
   ready.value = true
 })
 
@@ -169,8 +262,8 @@ function remove(a) {
   deleteApplication(a.id)
   reload()
 }
-function doLogout() {
-  logout()
+async function doLogout() {
+  await logout()
   router.replace('/admin/login')
 }
 
@@ -211,7 +304,7 @@ const statCards = computed(() => [
       <!-- View tabs -->
       <div class="inline-flex bg-white border border-gray-100 rounded-xl p-1 mb-6">
         <button
-          v-for="v in ['inbox', 'jobs']"
+          v-for="v in ['inbox', 'jobs', 'content']"
           :key="v"
           class="px-4 py-2 rounded-lg text-xs font-semibold transition-colors"
           :class="view === v ? 'bg-gray-900 text-white' : 'text-gray-500 hover:text-gray-900'"
@@ -373,7 +466,7 @@ const statCards = computed(() => [
       </template>
 
       <!-- ================= VACANCIES ================= -->
-      <template v-else>
+      <template v-else-if="view === 'jobs'">
         <div class="flex items-center justify-between gap-4 mb-6">
           <div>
             <h1 class="text-2xl font-extrabold text-gray-900">{{ t('admin.jobs.title') }}</h1>
@@ -433,6 +526,95 @@ const statCards = computed(() => [
         </div>
         <div v-else class="bg-white rounded-2xl border border-gray-100 py-20 text-center text-gray-400">
           {{ t('admin.jobs.empty') }}
+        </div>
+      </template>
+
+      <!-- ================= CONTENT (CMS) ================= -->
+      <template v-else>
+        <div class="flex items-center justify-between gap-4 mb-6">
+          <div>
+            <h1 class="text-2xl font-extrabold text-gray-900">{{ t('admin.content.title') }}</h1>
+            <p class="text-gray-400 text-sm mt-1">{{ t('admin.content.subtitle') }}</p>
+          </div>
+          <button
+            v-if="apiOn"
+            :disabled="contentSaving"
+            class="inline-flex items-center gap-1.5 gradient-bg text-white text-xs font-semibold px-4 py-2.5 rounded-xl hover:opacity-90 transition-opacity flex-shrink-0"
+            :class="{ 'opacity-60': contentSaving }"
+            @click="saveContent"
+          >
+            <BaseIcon name="check" class="w-4 h-4" />
+            {{ contentSaved ? t('admin.content.saved') : t('admin.content.save') }}
+          </button>
+        </div>
+
+        <!-- No backend configured -->
+        <div v-if="!apiOn" class="bg-amber-50 text-amber-700 text-sm rounded-xl px-4 py-3 mb-6">
+          {{ t('admin.content.needApi') }}
+        </div>
+
+        <div v-else class="space-y-6">
+          <div
+            v-for="g in contentGroups"
+            :key="g.label"
+            class="bg-white rounded-2xl border border-gray-100 p-5 lg:p-6"
+          >
+            <h2 class="font-brand text-sm text-gray-900 mb-5">{{ g.label }}</h2>
+            <div class="space-y-5">
+              <div v-for="it in g.items" :key="it.key">
+                <!-- Text field: ka + en -->
+                <template v-if="it.type === 'text'">
+                  <label class="block text-xs font-semibold text-gray-600 mb-1.5">{{ it.label }}</label>
+                  <div class="grid sm:grid-cols-2 gap-3">
+                    <div>
+                      <span class="block text-[10px] uppercase tracking-wide text-gray-300 mb-1">ქარ</span>
+                      <textarea
+                        v-model="draft[`${it.key}|ka`]"
+                        rows="2"
+                        class="w-full px-3 py-2 bg-gray-50 rounded-lg text-sm resize-y focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white"
+                      ></textarea>
+                    </div>
+                    <div>
+                      <span class="block text-[10px] uppercase tracking-wide text-gray-300 mb-1">EN</span>
+                      <textarea
+                        v-model="draft[`${it.key}|en`]"
+                        rows="2"
+                        class="w-full px-3 py-2 bg-gray-50 rounded-lg text-sm resize-y focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white"
+                      ></textarea>
+                    </div>
+                  </div>
+                </template>
+
+                <!-- Image field -->
+                <template v-else>
+                  <label class="block text-xs font-semibold text-gray-600 mb-1.5">{{ it.label }}</label>
+                  <div class="flex items-center gap-4">
+                    <div class="w-24 h-16 rounded-lg bg-gray-100 overflow-hidden flex items-center justify-center flex-shrink-0">
+                      <img v-if="imgFor(it)" :src="imgFor(it)" alt="" class="w-full h-full object-cover" />
+                      <BaseIcon v-else name="image" class="w-5 h-5 text-gray-300" />
+                    </div>
+                    <label class="inline-flex items-center gap-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-semibold px-4 py-2.5 rounded-xl cursor-pointer transition-colors">
+                      <BaseIcon name="upload" class="w-4 h-4" />
+                      {{ uploadingKey === it.key ? '…' : t('admin.content.changeImage') }}
+                      <input type="file" accept="image/*" class="hidden" @change="onContentImage(it, $event)" />
+                    </label>
+                  </div>
+                </template>
+              </div>
+            </div>
+          </div>
+
+          <div class="flex justify-end">
+            <button
+              :disabled="contentSaving"
+              class="inline-flex items-center gap-1.5 gradient-bg text-white text-sm font-semibold px-6 py-3 rounded-xl hover:opacity-90 transition-opacity"
+              :class="{ 'opacity-60': contentSaving }"
+              @click="saveContent"
+            >
+              <BaseIcon name="check" class="w-4 h-4" />
+              {{ contentSaved ? t('admin.content.saved') : t('admin.content.save') }}
+            </button>
+          </div>
         </div>
       </template>
     </main>

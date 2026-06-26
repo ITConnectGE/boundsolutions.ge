@@ -1,17 +1,20 @@
 <script setup>
-import { ref, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { img } from '@/composables/content.js'
 import BaseIcon from './BaseIcon.vue'
 
 const { t } = useI18n()
 
-// Full-bleed background slides (crossfade). Swap these for your best wide photos.
-const slides = [
+// Full-bleed background slides (crossfade). Each can be overridden from the admin
+// Content editor (img.hero.slide1..4); otherwise these defaults are used.
+const slideDefaults = [
   '/images/3/boundsolutions 1.jpg',
   '/images/bound.jpg',
   '/images/3/team building.jpg',
   '/images/bound.jpg',
 ]
+const slides = computed(() => slideDefaults.map((src, i) => img(`img.hero.slide${i + 1}`, src)))
 
 const current = ref(0)
 let timer
@@ -21,7 +24,7 @@ function go(i) {
 }
 onMounted(() => {
   timer = setInterval(() => {
-    current.value = (current.value + 1) % slides.length
+    current.value = (current.value + 1) % slides.value.length
   }, 5500)
 })
 onBeforeUnmount(() => clearInterval(timer))
