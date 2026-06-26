@@ -17,8 +17,12 @@ const filterKeys = ['all', 'horeca', 'finance', 'events', 'hr', 'sales']
 const active = ref('all')
 // Seed for SSR/first paint; refresh from the (admin-managed) store after mount.
 const jobsList = ref(getJobsSeed())
-onMounted(() => {
-  jobsList.value = getJobs()
+onMounted(async () => {
+  try {
+    jobsList.value = await getJobs()
+  } catch {
+    // keep the seed if the API is unreachable
+  }
 })
 const filtered = computed(() =>
   active.value === 'all'
@@ -32,9 +36,11 @@ const submitted = ref(false)
 const currentTitle = ref('')
 const currentSector = ref('')
 const fileName = ref('')
+const cvFileObj = ref(null)
 const form = ref({ name: '', email: '', phone: '', message: '' })
 const agreed = ref(false)
 const consentOpen = ref(false)
+const sending = ref(false)
 
 function openModal(job) {
   if (job) {
@@ -46,6 +52,7 @@ function openModal(job) {
   }
   submitted.value = false
   fileName.value = ''
+  cvFileObj.value = null
   agreed.value = false
   form.value = { name: '', email: '', phone: '', message: '' }
   modalOpen.value = true
@@ -55,33 +62,35 @@ function closeModal() {
 }
 function onFile(e) {
   const f = e.target.files?.[0]
-  if (f) fileName.value = f.name
+  if (f) {
+    fileName.value = f.name
+    cvFileObj.value = f
+  }
 }
-function submit() {
-  if (!agreed.value) return
-  // Save into the (demo) applications store so it shows in the admin dashboard
-  addApplication({
-    type: 'cv',
-    name: form.value.name,
-    email: form.value.email,
-    phone: form.value.phone,
-    message: form.value.message,
-    position: currentTitle.value,
-    sector: currentSector.value,
-    cvFile: fileName.value || '',
-    consent: true,
-  })
-
-  const subject = encodeURIComponent('CV — ' + currentTitle.value)
-  const body = encodeURIComponent(
-    `${currentTitle.value}${currentSector.value ? ' — ' + currentSector.value : ''}\n\n` +
-      `${t('vacancies.modal.name')}: ${form.value.name}\n` +
-      `${t('vacancies.modal.email')}: ${form.value.email}\n` +
-      `${t('vacancies.modal.phone')}: ${form.value.phone}\n` +
-      (form.value.message ? `${t('vacancies.modal.message')}: ${form.value.message}\n` : ''),
-  )
-  window.location.href = `mailto:recruitment@boundsolutions.ge?subject=${subject}&body=${body}`
-  submitted.value = true
+async function submit() {
+  if (!agreed.value || sending.value) return
+  sending.value = true
+  try {
+    // Persist to the backend (DB) — appears in the admin inbox.
+    await addApplication(
+      {
+        type: 'cv',
+        name: form.value.name,
+        email: form.value.email,
+        phone: form.value.phone,
+        message: form.value.message,
+        position: currentTitle.value,
+        sector: currentSector.value,
+        consent: true,
+      },
+      cvFileObj.value,
+    )
+    submitted.value = true
+  } catch (e) {
+    alert('Error: ' + (e.message || 'could not send'))
+  } finally {
+    sending.value = false
+  }
 }
 </script>
 
@@ -102,7 +111,7 @@ function submit() {
           class="px-4 py-2 rounded-xl text-xs font-semibold transition-all duration-200"
           :class="
             active === k
-              ? 'bg-gray-900 text-white'
+              ? 'bg-navy text-white'
               : 'bg-gray-100 text-gray-500 hover:text-gray-900'
           "
           @click="active = k"
@@ -166,7 +175,7 @@ function submit() {
           </button>
           <a
             href="tel:+995577323223"
-            class="bg-gray-900 text-white px-8 py-3.5 rounded-2xl font-semibold text-sm"
+            class="bg-navy text-white px-8 py-3.5 rounded-2xl font-semibold text-sm"
             >+995 577 32 32 23</a
           >
         </div>
@@ -287,9 +296,9 @@ function submit() {
 
               <button
                 type="submit"
-                :disabled="!agreed"
+                :disabled="!agreed || sending"
                 class="w-full gradient-bg text-white py-3.5 rounded-xl font-semibold text-sm mt-2 transition-opacity"
-                :class="agreed ? 'hover:opacity-90' : 'opacity-40 cursor-not-allowed'"
+                :class="agreed && !sending ? 'hover:opacity-90' : 'opacity-40 cursor-not-allowed'"
               >
                 {{ t('vacancies.modal.submit') }}
               </button>

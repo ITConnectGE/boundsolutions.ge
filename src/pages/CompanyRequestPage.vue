@@ -56,19 +56,29 @@ function summary() {
     .join('\n')
 }
 
-function submit() {
-  addApplication({
-    type: 'company',
-    name: form.value.companyName,
-    email: form.value.email,
-    phone: form.value.phone,
-    position: form.value.positionTitle,
-    sector: form.value.industry,
-    message: summary(),
-    contactName: form.value.contactName,
-  })
-  submitted.value = true
-  if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'smooth' })
+const sending = ref(false)
+
+async function submit() {
+  if (sending.value) return
+  sending.value = true
+  try {
+    await addApplication({
+      type: 'company',
+      name: form.value.companyName,
+      email: form.value.email,
+      phone: form.value.phone,
+      position: form.value.positionTitle,
+      sector: form.value.industry,
+      message: summary(),
+      contactName: form.value.contactName,
+    })
+    submitted.value = true
+    if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'smooth' })
+  } catch (e) {
+    alert('Error: ' + (e.message || 'could not send'))
+  } finally {
+    sending.value = false
+  }
 }
 
 const inputCls =

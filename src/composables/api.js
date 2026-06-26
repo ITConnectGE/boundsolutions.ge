@@ -11,6 +11,13 @@ export function hasApi() {
 export function apiBase() {
   return BASE
 }
+// Absolute URL for a stored file (e.g. cv_path "cv/x.pdf" -> origin/storage/cv/x.pdf)
+export function storageUrl(path) {
+  if (!path) return ''
+  if (/^https?:\/\//.test(path)) return path
+  const origin = BASE.replace(/\/api$/, '')
+  return `${origin}/storage/${String(path).replace(/^\/+/, '')}`
+}
 
 export function getToken() {
   return typeof localStorage !== 'undefined' ? localStorage.getItem(TOKEN_KEY) || '' : ''

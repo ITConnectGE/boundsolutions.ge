@@ -44,7 +44,7 @@ onBeforeUnmount(() => clearInterval(timer))
 
     <!-- Overlay -->
     <div
-      class="absolute inset-0 bg-gradient-to-br from-gray-900/85 via-gray-900/55 to-brand-800/60"
+      class="absolute inset-0 bg-gradient-to-br from-navy/85 via-navy/55 to-accent-deep/55"
     ></div>
 
     <!-- Content -->

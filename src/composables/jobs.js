@@ -1,7 +1,6 @@
-// DEMO vacancies store, backed by localStorage. Seeded from data/jobs.js on first
-// use. The admin dashboard manages these (add / edit / delete, optional image),
-// and the public Vacancies page reads from here. Replace with a real API/backend
-// when one exists. Images are stored inline as data URLs (demo only).
+// Vacancies store. With VITE_API_BASE set, reads/writes the Laravel API (DB).
+// Without it, falls back to a localStorage demo seeded from data/jobs.js.
+import { hasApi, api } from './api'
 import { jobs as seedJobs } from '@/data/jobs.js'
 
 const KEY = 'bs-jobs'
@@ -10,6 +9,7 @@ export function getJobsSeed() {
   return seedJobs.map((j) => ({ ...j }))
 }
 
+// ---- localStorage fallback ----
 function read() {
   if (typeof localStorage === 'undefined') return getJobsSeed()
   const raw = localStorage.getItem(KEY)
@@ -23,15 +23,9 @@ function read() {
     return getJobsSeed()
   }
 }
-
 function write(list) {
   if (typeof localStorage !== 'undefined') localStorage.setItem(KEY, JSON.stringify(list))
 }
-
-export function getJobs() {
-  return read()
-}
-
 function slugId(job) {
   const base =
     (job.title?.en || job.title?.ka || job.category || 'job')
@@ -42,8 +36,30 @@ function slugId(job) {
   return `${base}-${Date.now().toString(36)}`
 }
 
-// Add (no id) or update (existing id) a vacancy. Returns the saved job.
-export function saveJob(job) {
+// Public + admin both use the {ka,en} shape returned here.
+export async function getJobs() {
+  if (hasApi()) return api('/vacancies')
+  return read()
+}
+
+// job: { id?, category, title:{ka,en}, sector:{ka,en}, salary, image? }
+// file: optional File for the vacancy image.
+export async function saveJob(job, file) {
+  if (hasApi()) {
+    const fd = new FormData()
+    fd.append('category', job.category || 'hr')
+    fd.append('title_ka', job.title?.ka || '')
+    fd.append('title_en', job.title?.en || '')
+    fd.append('sector_ka', job.sector?.ka || '')
+    fd.append('sector_en', job.sector?.en || '')
+    fd.append('salary', job.salary || '')
+    fd.append('is_active', '1')
+    if (file) fd.append('image', file)
+    const numericId = job.id ? String(job.id).replace(/^v/, '') : ''
+    const path = numericId ? `/vacancies/${numericId}` : '/vacancies'
+    return api(path, { method: 'POST', body: fd, form: true, auth: true })
+  }
+  // fallback
   const list = read()
   if (job.id) {
     const i = list.findIndex((j) => j.id === job.id)
@@ -57,10 +73,10 @@ export function saveJob(job) {
   return job
 }
 
-export function deleteJob(id) {
+export async function deleteJob(id) {
+  if (hasApi()) {
+    const numericId = String(id).replace(/^v/, '')
+    return api(`/vacancies/${numericId}`, { method: 'DELETE', auth: true })
+  }
   write(read().filter((j) => j.id !== id))
-}
-
-export function resetJobs() {
-  write(getJobsSeed())
 }

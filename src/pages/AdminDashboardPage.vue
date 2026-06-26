@@ -42,8 +42,12 @@ const typeFilter = ref('all') // all | cv | company | contact
 const user = ref('')
 const view = ref('inbox') // inbox | jobs
 
-function reload() {
-  apps.value = getApplications()
+async function reload() {
+  try {
+    apps.value = await getApplications()
+  } catch {
+    apps.value = []
+  }
 }
 
 // ---- Vacancy management ----
@@ -52,8 +56,12 @@ const jobCategories = ['horeca', 'finance', 'events', 'hr', 'sales']
 const jobModalOpen = ref(false)
 const editingJob = ref(null)
 
-function reloadJobs() {
-  jobs.value = getJobs()
+async function reloadJobs() {
+  try {
+    jobs.value = await getJobs()
+  } catch {
+    jobs.value = []
+  }
 }
 
 function blankJob() {
@@ -66,6 +74,7 @@ function blankJob() {
     sectorEn: '',
     salary: '',
     image: '',
+    imageFile: null,
   }
 }
 
@@ -80,6 +89,7 @@ function openJobModal(job) {
         sectorEn: job.sector?.en || '',
         salary: job.salary || '',
         image: job.image || '',
+        imageFile: null,
       }
     : blankJob()
   jobModalOpen.value = true
@@ -88,29 +98,33 @@ function openJobModal(job) {
 function onJobImage(e) {
   const f = e.target.files?.[0]
   if (!f) return
+  editingJob.value.imageFile = f // sent to the API
   const reader = new FileReader()
   reader.onload = () => {
-    editingJob.value.image = reader.result
+    editingJob.value.image = reader.result // preview / localStorage fallback
   }
   reader.readAsDataURL(f)
 }
 
-function saveJobForm() {
+async function saveJobForm() {
   const j = editingJob.value
-  saveJob({
-    id: j.id || undefined,
-    category: j.category,
-    title: { ka: j.titleKa, en: j.titleEn || j.titleKa },
-    sector: { ka: j.sectorKa, en: j.sectorEn || j.sectorKa },
-    salary: j.salary,
-    image: j.image || '',
-  })
+  await saveJob(
+    {
+      id: j.id || undefined,
+      category: j.category,
+      title: { ka: j.titleKa, en: j.titleEn || j.titleKa },
+      sector: { ka: j.sectorKa, en: j.sectorEn || j.sectorKa },
+      salary: j.salary,
+      image: j.image || '',
+    },
+    j.imageFile || null,
+  )
   jobModalOpen.value = false
   reloadJobs()
 }
 
-function removeJob(id) {
-  deleteJob(id)
+async function removeJob(id) {
+  await deleteJob(id)
   reloadJobs()
 }
 
@@ -254,12 +268,12 @@ function fmt(iso) {
   }
 }
 
-function toggleStatus(a) {
-  setApplicationStatus(a.id, a.status === 'new' ? 'reviewed' : 'new')
+async function toggleStatus(a) {
+  await setApplicationStatus(a.id, a.status === 'new' ? 'reviewed' : 'new')
   reload()
 }
-function remove(a) {
-  deleteApplication(a.id)
+async function remove(a) {
+  await deleteApplication(a.id)
   reload()
 }
 async function doLogout() {
@@ -291,7 +305,7 @@ const statCards = computed(() => [
           <LangSwitcher />
           <span class="hidden md:block text-xs text-gray-400">{{ user }}</span>
           <button
-            class="inline-flex items-center gap-1.5 bg-gray-900 text-white text-xs font-semibold px-4 py-2 rounded-xl hover:bg-gray-800 transition-colors"
+            class="inline-flex items-center gap-1.5 bg-navy text-white text-xs font-semibold px-4 py-2 rounded-xl hover:bg-navy/90 transition-colors"
             @click="doLogout"
           >
             {{ t('admin.dash.logout') }}
@@ -307,7 +321,7 @@ const statCards = computed(() => [
           v-for="v in ['inbox', 'jobs', 'content']"
           :key="v"
           class="px-4 py-2 rounded-lg text-xs font-semibold transition-colors"
-          :class="view === v ? 'bg-gray-900 text-white' : 'text-gray-500 hover:text-gray-900'"
+          :class="view === v ? 'bg-navy text-white' : 'text-gray-500 hover:text-gray-900'"
           @click="view = v"
         >
           {{ t(`admin.tabs.${v}`) }}
@@ -364,7 +378,7 @@ const statCards = computed(() => [
             v-for="s in ['all', 'new', 'reviewed']"
             :key="s"
             class="px-4 py-2 rounded-xl text-xs font-semibold transition-all"
-            :class="statusFilter === s ? 'bg-gray-900 text-white' : 'bg-white border border-gray-100 text-gray-500 hover:text-gray-900'"
+            :class="statusFilter === s ? 'bg-navy text-white' : 'bg-white border border-gray-100 text-gray-500 hover:text-gray-900'"
             @click="statusFilter = s"
           >
             {{ t(`admin.filters.${s}`) }}
@@ -382,7 +396,7 @@ const statCards = computed(() => [
           </button>
         </div>
         <button
-          class="inline-flex items-center justify-center gap-1.5 bg-gray-900 text-white text-xs font-semibold px-4 py-2.5 rounded-xl hover:bg-gray-800 transition-colors whitespace-nowrap"
+          class="inline-flex items-center justify-center gap-1.5 bg-navy text-white text-xs font-semibold px-4 py-2.5 rounded-xl hover:bg-navy/90 transition-colors whitespace-nowrap"
           @click="exportCsv"
         >
           <BaseIcon name="download" class="w-4 h-4" /> {{ t('admin.export') }}
@@ -428,12 +442,16 @@ const statCards = computed(() => [
             >
               {{ a.message }}
             </p>
-            <p
+            <a
               v-if="a.cvFile"
+              :href="a.cvUrl || undefined"
+              :target="a.cvUrl ? '_blank' : undefined"
+              rel="noopener noreferrer"
               class="text-xs text-brand mt-2 inline-flex items-center gap-1.5 font-medium"
+              :class="a.cvUrl ? 'hover:underline' : ''"
             >
               <BaseIcon name="fileCheck" class="w-4 h-4" /> {{ a.cvFile }}
-            </p>
+            </a>
           </div>
 
           <div class="flex lg:flex-col items-center lg:items-end gap-2 flex-shrink-0">

@@ -1,7 +1,6 @@
 export const routes = [
   { path: '/', name: 'home', component: () => import('@/pages/HomePage.vue') },
   { path: '/about', name: 'about', component: () => import('@/pages/AboutPage.vue') },
-  { path: '/team', name: 'team', component: () => import('@/pages/TeamPage.vue') },
   { path: '/services', name: 'services', component: () => import('@/pages/ServicesPage.vue') },
   {
     path: '/services/:slug',

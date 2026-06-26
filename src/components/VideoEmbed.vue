@@ -13,7 +13,7 @@ const loaded = ref(false)
 </script>
 
 <template>
-  <div class="relative rounded-2xl overflow-hidden shadow-xl bg-gray-900 aspect-video">
+  <div class="relative rounded-2xl overflow-hidden shadow-xl bg-navy aspect-video">
     <!-- direct mp4 -->
     <video
       v-if="src"

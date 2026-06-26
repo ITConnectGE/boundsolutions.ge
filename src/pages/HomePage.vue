@@ -66,7 +66,7 @@ usePageMeta({ description: () => t('hero.subtitle') })
           </p>
           <RouterLink
             to="/about"
-            class="inline-flex items-center gap-2 bg-gray-900 text-white px-7 py-3 rounded-2xl font-semibold text-sm hover:bg-gray-800 transition-all"
+            class="inline-flex items-center gap-2 bg-navy text-white px-7 py-3 rounded-2xl font-semibold text-sm hover:bg-navy/90 transition-all"
           >
             {{ t('home.aboutTeaser.cta') }} <BaseIcon name="arrowRight" class="w-4 h-4" />
           </RouterLink>

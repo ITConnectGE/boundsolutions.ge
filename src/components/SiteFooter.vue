@@ -12,7 +12,7 @@ const year = 2026
 </script>
 
 <template>
-  <footer class="bg-gray-900 text-white pt-20 pb-12">
+  <footer class="bg-navy text-white pt-20 pb-12 border-t-4 border-accent">
     <div class="max-w-7xl mx-auto px-6 lg:px-10">
       <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-12 lg:gap-20 mb-16">
         <!-- Brand + social -->
@@ -31,7 +31,6 @@ const year = 2026
           <h4 class="footer-h">{{ t('footer.companyHeading') }}</h4>
           <div class="space-y-2.5 text-sm">
             <RouterLink to="/about" class="footer-link">{{ t('nav.about') }}</RouterLink>
-            <RouterLink to="/team" class="footer-link">{{ t('nav.team') }}</RouterLink>
             <RouterLink to="/vacancies" class="footer-link">{{ t('nav.vacancies') }}</RouterLink>
             <RouterLink to="/blog" class="footer-link">{{ t('nav.blog') }}</RouterLink>
             <RouterLink to="/privacy" class="footer-link">{{ t('footer.privacy') }}</RouterLink>
@@ -107,6 +106,6 @@ const year = 2026
   transition: color 0.2s;
 }
 .footer-link:hover {
-  color: #fff;
+  color: #8CCDE9;
 }
 </style>

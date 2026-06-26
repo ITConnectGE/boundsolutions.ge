@@ -25,9 +25,9 @@ export const testimonials = [
 // if its file exists, otherwise falls back to the company name as text.
 export const partners = [
   { name: 'ITConnect', logo: '/images/partners/itconnect.png' },
-  { name: 'Maizen', logo: '/images/partners/maizen.png' },
-  { name: 'Holiday Inn Telavi', logo: '/images/partners/holiday-inn-telavi.png' },
-  { name: 'MIHOUSE', logo: '/images/partners/mihouse.png' },
-  { name: 'Lion Trans', logo: '/images/partners/lion-trans.png' },
-  { name: 'MEAMA', logo: '/images/partners/meama.png' },
+  { name: 'Maizen', logo: '/images/partners/Maizen Logo.png' },
+  { name: 'Buknari', logo: '/images/partners/Buknari Logo.png' },
+  { name: 'Lisi Development', logo: '/images/partners/Logo_GEO.png' },
+  { name: 'Situationist', logo: '/images/partners/SITUATIONIST.png' },
+  { name: 'Vanilla', logo: '/images/partners/vanilla.png' },
 ]

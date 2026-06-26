@@ -132,14 +132,6 @@ usePageMeta({ title: () => t('about.title'), description: () => loc(mission) })
       <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
         <TeamMemberCard v-for="(m, i) in team" :key="i" :member="m" variant="compact" />
       </div>
-      <div class="text-center mt-10">
-        <RouterLink
-          to="/team"
-          class="inline-flex items-center gap-2 text-brand font-semibold text-sm hover:gap-3 transition-all"
-        >
-          {{ t('team.title') }} <BaseIcon name="arrowRight" class="w-4 h-4" />
-        </RouterLink>
-      </div>
     </div>
   </section>
 

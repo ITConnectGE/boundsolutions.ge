@@ -37,7 +37,7 @@ usePageMeta({ title: () => t('services.title'), description: () => t('services.s
         <div v-for="(step, i) in tm('home.process.steps')" :key="i" class="fade-in text-center group">
           <div
             class="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4 text-lg font-bold group-hover:scale-110 transition-transform duration-300"
-            :class="i % 2 === 0 ? 'gradient-bg text-white shadow-lg shadow-brand/20' : 'bg-gray-900 text-white'"
+            :class="i % 2 === 0 ? 'gradient-bg text-white shadow-lg shadow-brand/20' : 'bg-accent text-navy'"
           >
             {{ i + 1 }}
           </div>

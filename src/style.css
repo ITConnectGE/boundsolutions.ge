@@ -7,26 +7,30 @@
    light accent (--color-brand-300); interactive UI uses deeper blues from the same
    family so white text stays legible. */
 @theme {
-  --color-brand: #1E7FA8;     /* primary blue — buttons, links, icons */
-  --color-brand-50: #F1F9FD;
-  --color-brand-100: #DCF0FA;
-  --color-brand-200: #C0E6F5;
-  --color-brand-300: #8CCDE9; /* exact brandbook Brilliant Blue 5007 — light accent */
-  --color-brand-400: #5FB6DD;
-  --color-brand-500: #1E7FA8;
-  --color-brand-600: #196B8F; /* hover */
-  --color-brand-700: #155A78;
-  --color-brand-800: #2F3238; /* brandbook Black Grey — deepest */
+  /* Salmon Orange 2012 — primary brand (buttons, links, accents) */
+  --color-brand: #F05553;
+  --color-brand-50: #FEEDEC;
+  --color-brand-100: #FBD7D6;
+  --color-brand-200: #F8B3B1;
+  --color-brand-300: #F48F8D;
+  --color-brand-400: #F37672;
+  --color-brand-500: #F05553;
+  --color-brand-600: #DB4240; /* hover */
+  --color-brand-700: #B5302E;
+  --color-brand-800: #8A2523; /* deep coral — hero overlay */
 
-  /* Cream 9001 — warm light surfaces (bg-cream / -light / -dark utilities) */
+  /* Brilliant Blue 5007 — secondary accent (bg-accent / text-accent) */
+  --color-accent: #8CCDE9;
+  --color-accent-light: #C0E6F5;
+  --color-accent-deep: #1E7FA8;
+
+  /* Cream 9001 — warm light surfaces (bg-cream / -light / -dark) */
   --color-cream: #FFF4EA;
   --color-cream-light: #FFFBF7;
   --color-cream-dark: #F7E9DE;
 
-  /* Brandbook dark grey for dark sections */
+  /* Black Grey 7021 — dark sections (bg-navy / text-navy) */
   --color-navy: #2F3238;
-
-  /* Brandbook coral — available but used sparingly (client wants blue/gray-forward) */
   --color-coral: #F05553;
 
   --font-sans: 'Montserrat', 'Noto Sans Georgian', system-ui, sans-serif;
@@ -58,7 +62,7 @@
 }
 
 .glow {
-  box-shadow: 0 0 60px -12px rgba(30, 127, 168, 0.22);
+  box-shadow: 0 0 60px -12px rgba(240, 85, 83, 0.22);
 }
 
 .card-hover {

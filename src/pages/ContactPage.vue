@@ -12,30 +12,29 @@ const { t, tm, rt } = useI18n()
 usePageMeta({ title: () => t('contact.title'), description: () => t('contact.subtitle') })
 
 const submitted = ref(false)
+const sending = ref(false)
 const form = ref({ name: '', email: '', phone: '', interest: '', message: '' })
 
-function submit() {
-  // Save into the (demo) applications store so it shows in the admin dashboard
-  addApplication({
-    type: 'contact',
-    name: form.value.name,
-    email: form.value.email,
-    phone: form.value.phone,
-    message: form.value.message,
-    position: form.value.interest || '',
-    sector: '',
-  })
-
-  const subject = encodeURIComponent(`${t('contact.formTitle')} — ${form.value.name}`)
-  const body = encodeURIComponent(
-    `${t('contact.form.name')}: ${form.value.name}\n` +
-      `${t('contact.form.email')}: ${form.value.email}\n` +
-      `${t('contact.form.phone')}: ${form.value.phone}\n` +
-      `${t('contact.form.interest')}: ${form.value.interest}\n\n` +
-      `${form.value.message}\n`,
-  )
-  window.location.href = `mailto:info@boundsolutions.ge?subject=${subject}&body=${body}`
-  submitted.value = true
+async function submit() {
+  if (sending.value) return
+  sending.value = true
+  try {
+    // Persist to the backend (DB) — appears in the admin inbox.
+    await addApplication({
+      type: 'contact',
+      name: form.value.name,
+      email: form.value.email,
+      phone: form.value.phone,
+      message: form.value.message,
+      position: form.value.interest || '',
+      sector: '',
+    })
+    submitted.value = true
+  } catch (e) {
+    alert('Error: ' + (e.message || 'could not send'))
+  } finally {
+    sending.value = false
+  }
 }
 
 const cards = [
@@ -169,7 +168,7 @@ const cards = [
         class="w-full h-full object-cover"
         loading="lazy"
       />
-      <div class="absolute inset-0 bg-gray-900/55"></div>
+      <div class="absolute inset-0 bg-navy/60"></div>
       <div class="absolute inset-0 flex items-center justify-center text-center px-6">
         <p class="font-brand text-white text-2xl lg:text-4xl">{{ t('contact.bannerText') }}</p>
       </div>

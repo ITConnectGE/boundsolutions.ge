@@ -13,7 +13,6 @@ const base = 'https://boundsolutions.ge'
 const staticRoutes = [
   '/',
   '/about',
-  '/team',
   '/services',
   '/blog',
   '/vacancies',

@@ -16,7 +16,7 @@ const { loc } = useLoc()
       class="absolute inset-0 w-full h-full object-cover"
       loading="lazy"
     />
-    <div class="absolute inset-0 bg-gray-900/85"></div>
+    <div class="absolute inset-0 bg-navy/85"></div>
 
     <div class="relative max-w-6xl mx-auto px-6">
       <p class="text-brand-200 font-semibold text-sm mb-3 tracking-wide text-center fade-in">
