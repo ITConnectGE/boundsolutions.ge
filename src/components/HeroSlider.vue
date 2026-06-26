@@ -49,7 +49,7 @@ onBeforeUnmount(() => clearInterval(timer))
       <div class="max-w-6xl mx-auto px-6 w-full">
         <div class="max-w-3xl">
           <h1
-            class="font-brand text-white text-4xl sm:text-6xl lg:text-7xl leading-[1.05] mb-6 drop-shadow"
+            class="font-brand text-white text-2xl sm:text-4xl lg:text-5xl leading-[1.1] mb-6 drop-shadow"
           >
             {{ t('hero.slogan1') }}<br /><span class="gradient-text">{{ t('hero.slogan2') }}</span>
           </h1>

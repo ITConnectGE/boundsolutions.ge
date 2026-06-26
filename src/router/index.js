@@ -11,6 +11,11 @@ export const routes = [
   { path: '/blog', name: 'blog', component: () => import('@/pages/BlogPage.vue') },
   { path: '/blog/:slug', name: 'post', component: () => import('@/pages/BlogPostPage.vue') },
   { path: '/vacancies', name: 'vacancies', component: () => import('@/pages/VacanciesPage.vue') },
+  {
+    path: '/for-companies',
+    name: 'for-companies',
+    component: () => import('@/pages/CompanyRequestPage.vue'),
+  },
   { path: '/contact', name: 'contact', component: () => import('@/pages/ContactPage.vue') },
   { path: '/privacy', name: 'privacy', component: () => import('@/pages/PrivacyPage.vue') },
   { path: '/terms', name: 'terms', component: () => import('@/pages/TermsPage.vue') },

@@ -4,3 +4,6 @@ dist/
 .vite/
 *.local
 .DS_Store
+
+# Source/design files that shouldn't be web-served or committed (e.g. brandbook.ai)
+*.ai

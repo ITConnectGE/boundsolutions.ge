@@ -1,22 +1,29 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useLoc } from '@/composables/useLocale'
 import { usePageMeta } from '@/composables/usePageMeta'
-import { jobs } from '@/data/jobs.js'
+import { getJobs, getJobsSeed } from '@/composables/jobs.js'
 import { addApplication } from '@/composables/applications.js'
 import PageHero from '@/components/PageHero.vue'
 import BaseIcon from '@/components/BaseIcon.vue'
 
-const { t } = useI18n()
+const { t, tm, rt } = useI18n()
 const { loc } = useLoc()
 
 usePageMeta({ title: () => t('vacancies.title'), description: () => t('vacancies.subtitle') })
 
 const filterKeys = ['all', 'horeca', 'finance', 'events', 'hr', 'sales']
 const active = ref('all')
+// Seed for SSR/first paint; refresh from the (admin-managed) store after mount.
+const jobsList = ref(getJobsSeed())
+onMounted(() => {
+  jobsList.value = getJobs()
+})
 const filtered = computed(() =>
-  active.value === 'all' ? jobs : jobs.filter((j) => j.category === active.value),
+  active.value === 'all'
+    ? jobsList.value
+    : jobsList.value.filter((j) => j.category === active.value),
 )
 
 // CV modal state
@@ -26,6 +33,8 @@ const currentTitle = ref('')
 const currentSector = ref('')
 const fileName = ref('')
 const form = ref({ name: '', email: '', phone: '', message: '' })
+const agreed = ref(false)
+const consentOpen = ref(false)
 
 function openModal(job) {
   if (job) {
@@ -37,6 +46,7 @@ function openModal(job) {
   }
   submitted.value = false
   fileName.value = ''
+  agreed.value = false
   form.value = { name: '', email: '', phone: '', message: '' }
   modalOpen.value = true
 }
@@ -48,6 +58,7 @@ function onFile(e) {
   if (f) fileName.value = f.name
 }
 function submit() {
+  if (!agreed.value) return
   // Save into the (demo) applications store so it shows in the admin dashboard
   addApplication({
     type: 'cv',
@@ -58,6 +69,7 @@ function submit() {
     position: currentTitle.value,
     sector: currentSector.value,
     cvFile: fileName.value || '',
+    consent: true,
   })
 
   const subject = encodeURIComponent('CV — ' + currentTitle.value)
@@ -106,6 +118,12 @@ function submit() {
           :key="job.id"
           class="fade-in bg-gray-50 rounded-2xl p-5 lg:p-6 flex flex-col lg:flex-row lg:items-center gap-4"
         >
+          <img
+            v-if="job.image"
+            :src="job.image"
+            :alt="loc(job.title)"
+            class="w-full lg:w-28 h-32 lg:h-20 object-cover rounded-xl flex-shrink-0"
+          />
           <div class="flex-1">
             <h3 class="font-bold text-gray-800">{{ loc(job.title) }}</h3>
             <p class="text-gray-400 text-sm mt-0.5">{{ loc(job.sector) }}</p>
@@ -134,7 +152,7 @@ function submit() {
       </div>
 
       <!-- No position -->
-      <div class="mt-16 rounded-2xl p-8 lg:p-14 text-center" style="background: #fff2e8">
+      <div class="mt-16 rounded-2xl p-8 lg:p-14 text-center" style="background: #ECF7FC">
         <h2 class="text-2xl lg:text-3xl font-extrabold text-gray-900 mb-3">
           {{ t('vacancies.noPosition.title') }}
         </h2>
@@ -247,9 +265,31 @@ function submit() {
                   </div>
                 </div>
               </div>
+              <!-- Consent (required) -->
+              <label class="flex items-start gap-2.5 cursor-pointer select-none pt-1">
+                <input
+                  v-model="agreed"
+                  type="checkbox"
+                  required
+                  class="mt-0.5 w-4 h-4 flex-shrink-0 accent-brand cursor-pointer"
+                />
+                <span class="text-xs text-gray-500 leading-relaxed">
+                  {{ t('vacancies.consent.checkbox') }}
+                  <button
+                    type="button"
+                    class="text-brand font-medium underline underline-offset-2"
+                    @click="consentOpen = true"
+                  >
+                    {{ t('vacancies.consent.link') }}
+                  </button>
+                </span>
+              </label>
+
               <button
                 type="submit"
-                class="w-full gradient-bg text-white py-3.5 rounded-xl font-semibold text-sm mt-2"
+                :disabled="!agreed"
+                class="w-full gradient-bg text-white py-3.5 rounded-xl font-semibold text-sm mt-2 transition-opacity"
+                :class="agreed ? 'hover:opacity-90' : 'opacity-40 cursor-not-allowed'"
               >
                 {{ t('vacancies.modal.submit') }}
               </button>
@@ -265,6 +305,39 @@ function submit() {
             </h4>
             <p class="text-gray-400">{{ t('vacancies.modal.successText') }}</p>
           </div>
+        </div>
+      </div>
+    </div>
+  </Transition>
+
+  <!-- CONSENT (personal-data) MODAL -->
+  <Transition name="page">
+    <div v-if="consentOpen" class="fixed inset-0 z-[70]">
+      <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="consentOpen = false"></div>
+      <div class="absolute inset-0 flex items-center justify-center p-4" @click.self="consentOpen = false">
+        <div class="relative bg-white rounded-2xl w-full max-w-lg max-h-[85vh] overflow-y-auto p-6 sm:p-8 shadow-2xl">
+          <h3 class="text-lg font-extrabold text-gray-900 mb-4 pr-6">
+            {{ t('vacancies.consent.title') }}
+          </h3>
+          <p class="text-sm text-gray-600 mb-3">{{ t('vacancies.consent.intro') }}</p>
+          <ul class="space-y-2.5 mb-4">
+            <li
+              v-for="(p, i) in tm('vacancies.consent.points')"
+              :key="i"
+              class="flex gap-2.5 text-[13px] text-gray-500 leading-relaxed"
+            >
+              <span class="mt-1.5 w-1.5 h-1.5 rounded-full bg-brand flex-shrink-0"></span>
+              <span>{{ rt(p) }}</span>
+            </li>
+          </ul>
+          <p class="text-[13px] text-gray-400 leading-relaxed mb-6">{{ t('vacancies.consent.outro') }}</p>
+          <button
+            type="button"
+            class="w-full gradient-bg text-white py-3 rounded-xl font-semibold text-sm hover:opacity-90 transition-opacity"
+            @click="consentOpen = false"
+          >
+            {{ t('vacancies.consent.close') }}
+          </button>
         </div>
       </div>
     </div>

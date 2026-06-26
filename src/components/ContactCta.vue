@@ -11,7 +11,7 @@ const { t } = useI18n()
     <div class="max-w-4xl mx-auto px-6">
       <div
         class="fade-in rounded-3xl p-10 lg:p-16 text-center relative overflow-hidden"
-        style="background: #fff2e8"
+        style="background: #ECF7FC"
       >
         <div class="absolute -top-10 -right-10 w-48 h-48 bg-brand/10 rounded-full blur-3xl"></div>
         <div class="relative">

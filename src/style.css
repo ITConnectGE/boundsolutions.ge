@@ -1,20 +1,25 @@
 @import "tailwindcss";
 
-/* ---- Brand design tokens (ported 1:1 from the original Tailwind config) ---- */
+/* ---- Brand design tokens — Azure / sky blue + cool gray (brandbook 2026) ---- */
 @theme {
-  --color-brand: #D35C63;
-  --color-brand-50: #FBF0F0;
-  --color-brand-100: #F5D5D7;
-  --color-brand-200: #EAABAE;
-  --color-brand-400: #E07A80;
-  --color-brand-500: #D35C63;
-  --color-brand-600: #B84A50;
-  --color-brand-700: #9C3B40;
-  --color-brand-800: #802E32;
+  --color-brand: #1FA2E0;
+  --color-brand-50: #ECF7FC;
+  --color-brand-100: #CFEAF8;
+  --color-brand-200: #A3D8F1;
+  --color-brand-400: #4DB4E6;
+  --color-brand-500: #1FA2E0;
+  --color-brand-600: #1488C2; /* hover */
+  --color-brand-700: #106F9E;
+  --color-brand-800: #0E5072; /* deep blue — dark overlays/accents */
 
-  --color-cream: #FAE8E2;
-  --color-cream-light: #FDF3EF;
-  --color-cream-dark: #F5DDD5;
+  /* "cream" tokens repurposed as light cool-gray surfaces (kept names so
+     existing bg-cream / bg-cream-light / bg-cream-dark utilities still apply) */
+  --color-cream: #F4F7FA;
+  --color-cream-light: #F9FBFD;
+  --color-cream-dark: #E9EFF4;
+
+  /* Brand navy for dark sections */
+  --color-navy: #232A36;
 
   --font-sans: 'Montserrat', 'Noto Sans Georgian', system-ui, sans-serif;
 }
@@ -32,19 +37,20 @@
   letter-spacing: 0.05em;
 }
 
+/* No gradients per brandbook — solid azure. Class names kept so existing
+   markup (gradient-text / gradient-bg) needs no churn. */
 .gradient-text {
-  background: linear-gradient(135deg, #D35C63 0%, #E8956A 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: var(--color-brand);
+  -webkit-text-fill-color: currentColor;
+  background: none;
 }
 
 .gradient-bg {
-  background: linear-gradient(135deg, #D35C63 0%, #E8956A 100%);
+  background: var(--color-brand);
 }
 
 .glow {
-  box-shadow: 0 0 60px -12px rgba(211, 92, 99, 0.25);
+  box-shadow: 0 0 60px -12px rgba(31, 162, 224, 0.25);
 }
 
 .card-hover {
@@ -53,7 +59,7 @@
 }
 .card-hover:hover {
   transform: translateY(-4px);
-  box-shadow: 0 12px 40px -12px rgba(211, 92, 99, 0.15);
+  box-shadow: 0 12px 40px -12px rgba(31, 162, 224, 0.18);
 }
 
 /* ---- Scroll-reveal animation (only when JS is on, so no-JS content is visible) ---- */

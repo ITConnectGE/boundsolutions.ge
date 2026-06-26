@@ -10,7 +10,7 @@ defineProps({
   <section class="relative pt-28 pb-14 lg:pt-36 lg:pb-20 overflow-hidden bg-cream-light">
     <div
       class="absolute inset-0 opacity-[0.02]"
-      style="background-image: radial-gradient(circle, #d35c63 1px, transparent 1px); background-size: 32px 32px"
+      style="background-image: radial-gradient(circle, #1FA2E0 1px, transparent 1px); background-size: 32px 32px"
     ></div>
     <div class="absolute top-6 right-0 w-[420px] h-[420px] bg-brand/5 rounded-full blur-[120px]"></div>
     <div class="max-w-6xl mx-auto px-6 relative">

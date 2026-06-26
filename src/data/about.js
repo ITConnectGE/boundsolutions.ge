@@ -1,6 +1,22 @@
 // About-page content: Mission / Vision / Values (deck p.12), management team
 // (deck p.13). Team photos live in /public/images/team/.
 
+// Company-first intro (shown above mission/vision on the About page).
+export const company = {
+  intro: {
+    ka: [
+      'Bound Solutions წარმოადგენს HR საკონსულტაციო და აუთსორსინგულ კომპანიას, რომელიც ბიზნესებს სთავაზობს ადამიანური რესურსების მართვის სრულ სერვისს და ინდუსტრიის სტანდარტებზე მორგებულ სტრატეგიულ გადაწყვეტებს.',
+      'ჩვენ ვეხმარებით კომპანიებს HR პროცესების გამართვაში და ყოველდღიურ ადმინისტრირებაში, რაც მათ საშუალებას აძლევს კონცენტრირდნენ ძირითად ბიზნეს საქმიანობაზე.',
+      'ჩვენი საქმიანობის ფუნდამენტი არის რწმენა, რომ ნებისმიერი კორპორაციული წარმატების, ტექნოლოგიური პროგრესისა თუ ფინანსური სტაბილურობის მიღმა დგას ადამიანი — თავისი უნიკალური ემოციებით, ინტელექტუალური რესურსითა და დაუღალავი შრომით.',
+    ],
+    en: [
+      'Bound Solutions is an HR consulting and outsourcing company that offers businesses a full human-resource management service and strategic solutions tailored to industry standards.',
+      'We help companies set up their HR processes and handle day-to-day administration, freeing them to focus on their core business.',
+      'Our work rests on one belief: behind every corporate success, technological advance or financial stability stands a person — with their unique emotions, intellectual resource and tireless work.',
+    ],
+  },
+}
+
 export const founder = {
   name: { ka: 'ნინო ბართაია', en: 'Nino Bartaia' },
   role: { ka: 'Founder & CEO, Bound Solutions', en: 'Founder & CEO, Bound Solutions' },

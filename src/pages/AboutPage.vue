@@ -3,7 +3,7 @@ import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useLoc } from '@/composables/useLocale'
 import { usePageMeta } from '@/composables/usePageMeta'
-import { founder, mission, vision, values, team } from '@/data/about.js'
+import { company, founder, mission, vision, values, team } from '@/data/about.js'
 import { partners } from '@/data/social.js'
 import PageHero from '@/components/PageHero.vue'
 import SectionHeading from '@/components/SectionHeading.vue'
@@ -22,6 +22,23 @@ usePageMeta({ title: () => t('about.title'), description: () => loc(mission) })
 
 <template>
   <PageHero :eyebrow="t('about.eyebrow')" :title="t('about.title')" :subtitle="t('about.subtitle')" />
+
+  <!-- COMPANY INTRO — lead with the company, not the founder -->
+  <section class="py-20 lg:py-28">
+    <div class="max-w-3xl mx-auto px-6 text-center fade-in">
+      <p class="text-brand font-semibold text-sm mb-4 tracking-wide">{{ t('about.companyEyebrow') }}</p>
+      <h2 class="text-3xl lg:text-4xl font-extrabold text-gray-900 mb-8 leading-tight">
+        {{ t('about.companyTitle') }}
+      </h2>
+      <p
+        v-for="(p, i) in loc(company.intro)"
+        :key="i"
+        class="text-gray-500 text-[15px] lg:text-base leading-relaxed mb-5"
+      >
+        {{ p }}
+      </p>
+    </div>
+  </section>
 
   <!-- MISSION / VISION / VALUES — company first (PPT-style band) -->
   <section class="gradient-bg text-white py-20 lg:py-28">

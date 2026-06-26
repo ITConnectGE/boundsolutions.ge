@@ -9,13 +9,14 @@ import LangSwitcher from './LangSwitcher.vue'
 const { t } = useI18n()
 const route = useRoute()
 
+// Team is intentionally not a top-level item — the team lives under About.
 const links = [
   { to: '/', key: 'home' },
   { to: '/about', key: 'about' },
   { to: '/services', key: 'services' },
-  { to: '/team', key: 'team' },
   { to: '/blog', key: 'blog' },
   { to: '/vacancies', key: 'vacancies', badge: 6 },
+  { to: '/for-companies', key: 'forCompanies' },
 ]
 
 const open = ref(false)
