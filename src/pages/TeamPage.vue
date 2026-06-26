@@ -29,7 +29,7 @@ usePageMeta({ title: () => t('team.title'), description: () => t('team.subtitle'
   <section class="pb-24">
     <div class="max-w-4xl mx-auto px-6">
       <div
-        class="fade-in rounded-3xl p-10 lg:p-14 text-center relative overflow-hidden gradient-bg text-white"
+        class="fade-in rounded-3xl p-10 lg:p-14 text-center relative overflow-hidden bg-navy text-white"
       >
         <div class="absolute -top-10 -right-10 w-48 h-48 bg-white/10 rounded-full blur-3xl"></div>
         <div class="relative">

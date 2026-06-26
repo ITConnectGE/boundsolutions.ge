@@ -10,7 +10,7 @@ const { loc } = useLoc()
   <RouterLink
     :to="`/services/${service.slug}`"
     class="card-hover fade-in block rounded-2xl p-6 group"
-    style="background: #EAF2F8"
+    style="background: #FFF4EA"
   >
     <div class="rounded-xl overflow-hidden mb-5 aspect-video bg-white/40">
       <img

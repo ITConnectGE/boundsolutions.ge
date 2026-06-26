@@ -41,7 +41,7 @@ usePageMeta({ title: () => t('about.title'), description: () => loc(mission) })
   </section>
 
   <!-- MISSION / VISION / VALUES — company first (PPT-style band) -->
-  <section class="gradient-bg text-white py-20 lg:py-28">
+  <section class="bg-navy text-white py-20 lg:py-28">
     <div class="max-w-4xl mx-auto px-6 text-center">
       <div class="fade-in">
         <h2 class="font-brand text-xl lg:text-2xl mb-5 text-white">{{ t('about.missionTitle') }}</h2>

@@ -152,7 +152,7 @@ function submit() {
       </div>
 
       <!-- No position -->
-      <div class="mt-16 rounded-2xl p-8 lg:p-14 text-center" style="background: #ECF7FC">
+      <div class="mt-16 rounded-2xl p-8 lg:p-14 text-center" style="background: #FFF4EA">
         <h2 class="text-2xl lg:text-3xl font-extrabold text-gray-900 mb-3">
           {{ t('vacancies.noPosition.title') }}
         </h2>

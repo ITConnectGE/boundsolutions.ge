@@ -1,25 +1,33 @@
 @import "tailwindcss";
 
-/* ---- Brand design tokens — Azure / sky blue + cool gray (brandbook 2026) ---- */
+/* ---- Brand design tokens — official brandbook (2026) ----
+   Brandbook palette: Brilliant Blue 5007 #8CCDE9 · Black Grey 7021 #2F3238 ·
+   Cream 9001 #FFF4EA · Salmon Orange 2012 #F05553 (coral, de-emphasized per the
+   client's "blue + gray instead of the coral"). The signature blue #8CCDE9 is the
+   light accent (--color-brand-300); interactive UI uses deeper blues from the same
+   family so white text stays legible. */
 @theme {
-  --color-brand: #1FA2E0;
-  --color-brand-50: #ECF7FC;
-  --color-brand-100: #CFEAF8;
-  --color-brand-200: #A3D8F1;
-  --color-brand-400: #4DB4E6;
-  --color-brand-500: #1FA2E0;
-  --color-brand-600: #1488C2; /* hover */
-  --color-brand-700: #106F9E;
-  --color-brand-800: #0E5072; /* deep blue — dark overlays/accents */
+  --color-brand: #1E7FA8;     /* primary blue — buttons, links, icons */
+  --color-brand-50: #F1F9FD;
+  --color-brand-100: #DCF0FA;
+  --color-brand-200: #C0E6F5;
+  --color-brand-300: #8CCDE9; /* exact brandbook Brilliant Blue 5007 — light accent */
+  --color-brand-400: #5FB6DD;
+  --color-brand-500: #1E7FA8;
+  --color-brand-600: #196B8F; /* hover */
+  --color-brand-700: #155A78;
+  --color-brand-800: #2F3238; /* brandbook Black Grey — deepest */
 
-  /* "cream" tokens repurposed as light cool-gray surfaces (kept names so
-     existing bg-cream / bg-cream-light / bg-cream-dark utilities still apply) */
-  --color-cream: #F4F7FA;
-  --color-cream-light: #F9FBFD;
-  --color-cream-dark: #E9EFF4;
+  /* Cream 9001 — warm light surfaces (bg-cream / -light / -dark utilities) */
+  --color-cream: #FFF4EA;
+  --color-cream-light: #FFFBF7;
+  --color-cream-dark: #F7E9DE;
 
-  /* Brand navy for dark sections */
-  --color-navy: #232A36;
+  /* Brandbook dark grey for dark sections */
+  --color-navy: #2F3238;
+
+  /* Brandbook coral — available but used sparingly (client wants blue/gray-forward) */
+  --color-coral: #F05553;
 
   --font-sans: 'Montserrat', 'Noto Sans Georgian', system-ui, sans-serif;
 }
@@ -50,7 +58,7 @@
 }
 
 .glow {
-  box-shadow: 0 0 60px -12px rgba(31, 162, 224, 0.25);
+  box-shadow: 0 0 60px -12px rgba(30, 127, 168, 0.22);
 }
 
 .card-hover {
@@ -59,7 +67,7 @@
 }
 .card-hover:hover {
   transform: translateY(-4px);
-  box-shadow: 0 12px 40px -12px rgba(31, 162, 224, 0.18);
+  box-shadow: 0 12px 40px -12px rgba(47, 50, 56, 0.16);
 }
 
 /* ---- Scroll-reveal animation (only when JS is on, so no-JS content is visible) ---- */

@@ -98,7 +98,7 @@ const year = 2026
   color: #fff;
   margin-bottom: 1.25rem;
   padding-bottom: 0.6rem;
-  border-bottom: 2px solid #1FA2E0;
+  border-bottom: 2px solid #8CCDE9;
   display: inline-block;
 }
 .footer-link {
