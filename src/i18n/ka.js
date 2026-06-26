@@ -415,6 +415,9 @@ export default {
     status: { new: 'ახალი', reviewed: 'ნანახი' },
     type: { cv: 'CV', company: 'კომპანია', contact: 'შეტყობინება' },
     actions: { markReviewed: 'მონიშნე ნანახად', markNew: 'მონიშნე ახლად', delete: 'წაშლა' },
+    err: {
+      network: 'ვერ დაუკავშირდა სერვერს. დარწმუნდი, რომ backend გაშვებულია (php artisan serve).',
+    },
     cvFile: 'CV ფაილი',
     noFile: 'ფაილის გარეშე',
     empty: 'განაცხადები ჯერ არ არის.',

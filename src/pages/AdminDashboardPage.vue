@@ -40,13 +40,30 @@ const search = ref('')
 const statusFilter = ref('all') // all | new | reviewed
 const typeFilter = ref('all') // all | cv | company | contact
 const user = ref('')
-const view = ref('inbox') // inbox | jobs
+const view = ref('inbox') // inbox | jobs | content
+const connError = ref(false)
+
+// Friendly handling for failed API calls (e.g. backend not running).
+function adminError(e) {
+  if (e?.status === 401) {
+    doLogout()
+    return
+  }
+  const msg = ((e && e.message) || '').toLowerCase()
+  if (e?.name === 'TypeError' || msg.includes('failed to fetch') || msg.includes('network')) {
+    alert(t('admin.err.network'))
+  } else {
+    alert((e && e.message) || 'Error')
+  }
+}
 
 async function reload() {
   try {
     apps.value = await getApplications()
-  } catch {
+    connError.value = false
+  } catch (e) {
     apps.value = []
+    if (hasApi()) connError.value = true
   }
 }
 
@@ -59,8 +76,10 @@ const editingJob = ref(null)
 async function reloadJobs() {
   try {
     jobs.value = await getJobs()
-  } catch {
+    connError.value = false
+  } catch (e) {
     jobs.value = []
+    if (hasApi()) connError.value = true
   }
 }
 
@@ -108,24 +127,32 @@ function onJobImage(e) {
 
 async function saveJobForm() {
   const j = editingJob.value
-  await saveJob(
-    {
-      id: j.id || undefined,
-      category: j.category,
-      title: { ka: j.titleKa, en: j.titleEn || j.titleKa },
-      sector: { ka: j.sectorKa, en: j.sectorEn || j.sectorKa },
-      salary: j.salary,
-      image: j.image || '',
-    },
-    j.imageFile || null,
-  )
-  jobModalOpen.value = false
-  reloadJobs()
+  try {
+    await saveJob(
+      {
+        id: j.id || undefined,
+        category: j.category,
+        title: { ka: j.titleKa, en: j.titleEn || j.titleKa },
+        sector: { ka: j.sectorKa, en: j.sectorEn || j.sectorKa },
+        salary: j.salary,
+        image: j.image || '',
+      },
+      j.imageFile || null,
+    )
+    jobModalOpen.value = false
+    reloadJobs()
+  } catch (e) {
+    adminError(e)
+  }
 }
 
 async function removeJob(id) {
-  await deleteJob(id)
-  reloadJobs()
+  try {
+    await deleteJob(id)
+    reloadJobs()
+  } catch (e) {
+    adminError(e)
+  }
 }
 
 // ---- Content editor (CMS) ----
@@ -269,12 +296,20 @@ function fmt(iso) {
 }
 
 async function toggleStatus(a) {
-  await setApplicationStatus(a.id, a.status === 'new' ? 'reviewed' : 'new')
-  reload()
+  try {
+    await setApplicationStatus(a.id, a.status === 'new' ? 'reviewed' : 'new')
+    reload()
+  } catch (e) {
+    adminError(e)
+  }
 }
 async function remove(a) {
-  await deleteApplication(a.id)
-  reload()
+  try {
+    await deleteApplication(a.id)
+    reload()
+  } catch (e) {
+    adminError(e)
+  }
 }
 async function doLogout() {
   await logout()
@@ -326,6 +361,14 @@ const statCards = computed(() => [
         >
           {{ t(`admin.tabs.${v}`) }}
         </button>
+      </div>
+
+      <!-- Connection error (backend unreachable) -->
+      <div
+        v-if="connError"
+        class="bg-red-50 text-red-600 text-sm rounded-xl px-4 py-3 mb-6 flex items-center gap-2"
+      >
+        <BaseIcon name="badge" class="w-4 h-4 flex-shrink-0" /> {{ t('admin.err.network') }}
       </div>
 
       <!-- ================= INBOX ================= -->

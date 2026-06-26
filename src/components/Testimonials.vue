@@ -19,7 +19,7 @@ const { loc } = useLoc()
     <div class="absolute inset-0 bg-navy/85"></div>
 
     <div class="relative max-w-6xl mx-auto px-6">
-      <p class="text-brand-200 font-semibold text-sm mb-3 tracking-wide text-center fade-in">
+      <p class="text-accent font-semibold text-sm mb-3 tracking-wide text-center fade-in">
         {{ t('home.testimonials.eyebrow') }}
       </p>
       <h2 class="text-3xl lg:text-4xl font-extrabold text-white text-center mb-14 fade-in">
@@ -38,7 +38,7 @@ const { loc } = useLoc()
           </blockquote>
           <figcaption class="flex items-center gap-3">
             <div
-              class="w-10 h-10 rounded-full gradient-bg text-white flex items-center justify-center font-bold text-sm flex-shrink-0"
+              class="w-10 h-10 rounded-full bg-accent text-navy flex items-center justify-center font-bold text-sm flex-shrink-0"
             >
               {{ loc(item.author).charAt(0) }}
             </div>

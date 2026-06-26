@@ -49,20 +49,20 @@ usePageMeta({ title: () => t('about.title'), description: () => loc(mission) })
         <p class="text-white/80 text-lg leading-relaxed">{{ loc(mission) }}</p>
       </div>
 
-      <div class="w-12 h-0.5 bg-white/40 mx-auto my-12"></div>
+      <div class="w-12 h-0.5 bg-accent/60 mx-auto my-12"></div>
 
       <div class="fade-in">
         <h2 class="font-brand text-xl lg:text-2xl mb-5 text-white">{{ t('about.visionTitle') }}</h2>
         <p class="text-white/80 text-lg leading-relaxed">{{ loc(vision) }}</p>
       </div>
 
-      <div class="w-12 h-0.5 bg-white/40 mx-auto my-12"></div>
+      <div class="w-12 h-0.5 bg-accent/60 mx-auto my-12"></div>
 
       <div class="fade-in">
         <h2 class="font-brand text-xl lg:text-2xl mb-6 text-white">{{ t('about.valuesTitle') }}</h2>
         <ul class="space-y-3 text-left max-w-2xl mx-auto">
           <li v-for="v in values" :key="v.key" class="flex gap-3">
-            <BaseIcon name="check" class="w-4 h-4 text-white mt-1 flex-shrink-0" />
+            <BaseIcon name="check" class="w-4 h-4 text-accent mt-1 flex-shrink-0" />
             <span class="text-white/90 leading-relaxed">
               <strong class="text-white">{{ loc(v.title) }}</strong> — {{ loc(v.text) }}
             </span>

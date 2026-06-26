@@ -414,6 +414,9 @@ export default {
     status: { new: 'New', reviewed: 'Reviewed' },
     type: { cv: 'CV', company: 'Company', contact: 'Message' },
     actions: { markReviewed: 'Mark reviewed', markNew: 'Mark new', delete: 'Delete' },
+    err: {
+      network: "Couldn't reach the server. Make sure the backend is running (php artisan serve).",
+    },
     cvFile: 'CV file',
     noFile: 'No file',
     empty: 'No applications yet.',
