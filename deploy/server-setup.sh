@@ -41,13 +41,14 @@ DB_PORT=3306
 DB_DATABASE=bound_solutions
 DB_USERNAME=bound
 DB_PASSWORD=${DBPASS}
-DB_PREFIX=bs_
+DB_PREFIX=
 SESSION_DRIVER=file
 CACHE_STORE=file
 QUEUE_CONNECTION=sync
 ENVEOF
 fi
 sed -i 's|^APP_URL=.*|APP_URL=https://boundsolutions.ge|' .env
+sed -i 's|^DB_PREFIX=.*|DB_PREFIX=|' .env   # dedicated DB — no table prefix
 grep -q '^APP_KEY=base64' .env || php artisan key:generate --force
 php artisan migrate --seed --force
 php artisan storage:link 2>/dev/null || true

@@ -36,9 +36,9 @@ return [
             'driver' => 'sqlite',
             'url' => env('DB_URL'),
             'database' => env('DB_DATABASE', database_path('database.sqlite')),
-            // All tables are prefixed so they can live in a shared database
-            // without colliding with other apps' tables.
-            'prefix' => env('DB_PREFIX', 'bs_'),
+            // Optional table prefix (empty by default — the app uses its own
+            // dedicated database, so no prefix is needed).
+            'prefix' => env('DB_PREFIX', ''),
             'foreign_key_constraints' => env('DB_FOREIGN_KEYS', true),
             'busy_timeout' => null,
             'journal_mode' => null,
@@ -57,8 +57,8 @@ return [
             'unix_socket' => env('DB_SOCKET', ''),
             'charset' => env('DB_CHARSET', 'utf8mb4'),
             'collation' => env('DB_COLLATION', 'utf8mb4_unicode_ci'),
-            // Shared-database safe prefix (e.g. bs_applications, bs_jobs...).
-            'prefix' => env('DB_PREFIX', 'bs_'),
+            // Optional table prefix (empty by default — dedicated database).
+            'prefix' => env('DB_PREFIX', ''),
             'prefix_indexes' => true,
             'strict' => true,
             'engine' => null,
