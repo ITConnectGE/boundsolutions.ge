@@ -614,14 +614,17 @@ const statCards = computed(() => [
           {{ t('admin.content.needApi') }}
         </div>
 
-        <div v-else class="space-y-6">
-          <div
+        <div v-else class="space-y-4">
+          <details
             v-for="g in contentGroups"
             :key="g.label"
-            class="bg-white rounded-2xl border border-gray-100 p-5 lg:p-6"
+            class="bg-white rounded-2xl border border-gray-100 px-5 lg:px-6 py-4"
           >
-            <h2 class="font-brand text-sm text-gray-900 mb-5">{{ g.label }}</h2>
-            <div class="space-y-5">
+            <summary class="font-brand text-sm text-gray-900 cursor-pointer select-none flex items-center gap-2">
+              {{ g.label }}
+              <span class="text-gray-300 font-sans font-normal normal-case tracking-normal">({{ g.items.length }})</span>
+            </summary>
+            <div class="space-y-5 mt-5">
               <div v-for="it in g.items" :key="it.key">
                 <!-- Text field: ka + en -->
                 <template v-if="it.type === 'text'">
@@ -663,7 +666,7 @@ const statCards = computed(() => [
                 </template>
               </div>
             </div>
-          </div>
+          </details>
 
           <div class="flex justify-end">
             <button

@@ -4,18 +4,26 @@
 // is a no-op and the site shows its built-in defaults.
 import { reactive } from 'vue'
 import { hasApi, api } from './api'
+import ka from '@/i18n/ka.js'
+import en from '@/i18n/en.js'
 
 // Reactive store of image overrides: key -> URL.
 export const imageOverrides = reactive({})
 
 let i18nRef = null
+const DEFAULTS = { ka, en }
 
-function setNested(obj, dottedKey, value) {
+// Set a value at a dot-path, creating arrays for numeric segments so nested
+// arrays (e.g. process.steps.0.title) keep their array shape.
+function setNested(root, dottedKey, value) {
   const parts = dottedKey.split('.')
-  let cur = obj
+  let cur = root
   for (let i = 0; i < parts.length - 1; i++) {
-    if (typeof cur[parts[i]] !== 'object' || cur[parts[i]] === null) cur[parts[i]] = {}
-    cur = cur[parts[i]]
+    const key = parts[i]
+    if (cur[key] == null || typeof cur[key] !== 'object') {
+      cur[key] = /^\d+$/.test(parts[i + 1]) ? [] : {}
+    }
+    cur = cur[key]
   }
   cur[parts[parts.length - 1]] = value
 }
@@ -24,20 +32,23 @@ export function getNested(obj, dottedKey) {
   return dottedKey.split('.').reduce((o, k) => (o == null ? undefined : o[k]), obj)
 }
 
-// Apply a flat { key: value } map: image keys (prefix "img.") go to imageOverrides,
-// everything else is treated as a text override and merged into i18n.
+// Apply a flat { key: value } map for one locale. Image keys ("img.*") go to
+// imageOverrides. Text overrides are set onto a deep clone of the DEFAULT messages
+// at their exact paths, then the whole locale is replaced — so overridden leaves
+// win while everything else keeps its default (arrays stay arrays).
 function applyMap(locale, map) {
-  const nested = {}
+  if (!i18nRef) return
+  const base = JSON.parse(JSON.stringify(DEFAULTS[locale] || {}))
   let hasText = false
   for (const [k, v] of Object.entries(map || {})) {
     if (k.startsWith('img.')) {
       imageOverrides[k] = v
-    } else {
-      setNested(nested, k, v)
-      hasText = true
+      continue
     }
+    setNested(base, k, v)
+    hasText = true
   }
-  if (i18nRef && hasText) i18nRef.global.mergeLocaleMessage(locale, nested)
+  if (hasText) i18nRef.global.setLocaleMessage(locale, base)
 }
 
 // Called once on the client at startup (from main.js).
