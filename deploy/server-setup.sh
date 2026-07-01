@@ -68,11 +68,10 @@ echo "VITE_API_BASE=/api" > .env.production
 rm -rf node_modules/.vite-temp node_modules/.vite
 npm ci
 npm run build
-test -f dist/index.html && echo "    dist/index.html OK"
-# Serve the SPA from Laravel's public dir (single web root for SPA + /api).
-rm -rf "$BE/public/assets"
-cp -r "$ROOT/dist/." "$BE/public/"
-echo "    SPA copied into backend/public"
+test -f dist/index.html && echo "    dist/index.html OK — served directly from /srv/bound/dist"
+# Remove SPA files a previous version copied into backend/public (now unused).
+rm -rf "$BE/public/assets" "$BE/public/images" "$BE/public/index.html" \
+       "$BE/public/404.html" "$BE/public/sitemap.xml"
 
 echo "==> [5/6] nginx vhost"
 cp deploy/nginx-boundsolutions.conf /etc/nginx/sites-available/boundsolutions
