@@ -55,6 +55,11 @@ export async function api(path, { method = 'GET', body, auth = false, form = fal
 
   const res = await fetch(`${BASE}${path}`, { method, headers, body: payload })
   if (!res.ok) {
+    // A stale/expired token: clear it so the app falls back to the login screen.
+    if (res.status === 401 && auth) {
+      setToken('')
+      setStoredUser(null)
+    }
     const data = await res.json().catch(() => ({}))
     throw Object.assign(new Error(data.message || res.statusText), { status: res.status, data })
   }
