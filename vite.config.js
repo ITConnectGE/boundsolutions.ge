@@ -26,8 +26,9 @@ export default defineConfig({
         ...services.map((s) => `/services/${s.slug}`),
         ...posts.map((p) => `/blog/${p.slug}`),
       ]
-      // drop the un-rendered :param placeholder routes, add the real ones
-      const staticPaths = paths.filter((p) => !p.includes(':'))
+      // drop the :param placeholders and the client-only admin routes (prerendering
+      // /admin creates a dist/admin/ dir that makes nginx 301->403; admin is SPA-only)
+      const staticPaths = paths.filter((p) => !p.includes(':') && !p.startsWith('/admin'))
       return [...new Set([...staticPaths, ...dynamic])]
     },
   },
