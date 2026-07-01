@@ -69,6 +69,10 @@ rm -rf node_modules/.vite-temp node_modules/.vite
 npm ci
 npm run build
 test -f dist/index.html && echo "    dist/index.html OK"
+# Serve the SPA from Laravel's public dir (single web root for SPA + /api).
+rm -rf "$BE/public/assets"
+cp -r "$ROOT/dist/." "$BE/public/"
+echo "    SPA copied into backend/public"
 
 echo "==> [5/6] nginx vhost"
 cp deploy/nginx-boundsolutions.conf /etc/nginx/sites-available/boundsolutions
@@ -87,6 +91,6 @@ fi
 echo ""
 echo "=================================================="
 echo " DONE. Local API test (should print JSON):"
-curl -s -H "Host: boundsolutions.ge" http://127.0.0.1/api/vacancies | head -c 200; echo
+curl -sk --resolve boundsolutions.ge:443:127.0.0.1 https://boundsolutions.ge/api/vacancies | head -c 200; echo
 echo "=================================================="
 echo " Open: https://boundsolutions.ge   (admin: /admin  nino@gmail.com / Tbilisi1!)"
