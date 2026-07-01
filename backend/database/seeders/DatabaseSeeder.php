@@ -41,6 +41,7 @@ class DatabaseSeeder extends Seeder
             );
         }
 
-        // Content (bs_contents) is managed from the admin "Content" editor — no seed.
+        // Populate all site texts (ka + en) into the contents table.
+        $this->call(ContentSeeder::class);
     }
 }
