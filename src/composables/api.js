@@ -1,9 +1,16 @@
 // Tiny fetch wrapper for the Laravel API. The base URL comes from VITE_API_BASE
 // (see .env.example). When it's empty, hasApi() is false and the app falls back
 // to the localStorage demo, so the site still works with no backend running.
+import { ref } from 'vue'
+
 const BASE = (import.meta.env.VITE_API_BASE || '').replace(/\/$/, '')
 const TOKEN_KEY = 'bs-admin-token'
 const USER_KEY = 'bs-admin-user'
+
+// Reactive token so the UI (e.g. inline-edit affordances) can react to login/logout.
+export const authToken = ref(
+  typeof localStorage !== 'undefined' ? localStorage.getItem(TOKEN_KEY) || '' : '',
+)
 
 export function hasApi() {
   return !!BASE
@@ -23,6 +30,7 @@ export function getToken() {
   return typeof localStorage !== 'undefined' ? localStorage.getItem(TOKEN_KEY) || '' : ''
 }
 export function setToken(t) {
+  authToken.value = t || ''
   if (typeof localStorage === 'undefined') return
   if (t) localStorage.setItem(TOKEN_KEY, t)
   else localStorage.removeItem(TOKEN_KEY)

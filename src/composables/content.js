@@ -64,6 +64,18 @@ export async function initContent(i18n) {
   }
 }
 
+// Live-apply a single override (used by inline editing after a save).
+export function applyOne(locale, key, value) {
+  if (key.startsWith('img.')) {
+    imageOverrides[key] = value
+    return
+  }
+  if (!i18nRef) return
+  const base = JSON.parse(JSON.stringify(i18nRef.global.getLocaleMessage(locale)))
+  setNested(base, key, value)
+  i18nRef.global.setLocaleMessage(locale, base)
+}
+
 // Resolve an image: admin override if present, otherwise the built-in default.
 export function img(key, fallback) {
   return imageOverrides[key] || fallback

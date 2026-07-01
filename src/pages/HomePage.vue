@@ -6,6 +6,7 @@ import { usePageMeta } from '@/composables/usePageMeta'
 import { services } from '@/data/services.js'
 import { founder } from '@/data/about.js'
 import HeroSlider from '@/components/HeroSlider.vue'
+import EditableText from '@/components/EditableText.vue'
 import SectionHeading from '@/components/SectionHeading.vue'
 import ServiceCard from '@/components/ServiceCard.vue'
 import Testimonials from '@/components/Testimonials.vue'
@@ -56,13 +57,13 @@ usePageMeta({ description: () => t('hero.subtitle') })
         </div>
         <div class="lg:col-span-3 order-2">
           <p class="text-brand font-semibold text-sm mb-3 tracking-wide">
-            {{ t('home.aboutTeaser.eyebrow') }}
+            <EditableText tkey="home.aboutTeaser.eyebrow" />
           </p>
           <h2 class="text-3xl lg:text-4xl font-extrabold text-gray-900 mb-4 leading-tight">
-            {{ t('home.aboutTeaser.title') }}
+            <EditableText tkey="home.aboutTeaser.title" />
           </h2>
           <p class="text-gray-500 text-[15px] leading-relaxed mb-8">
-            {{ t('home.aboutTeaser.text') }}
+            <EditableText tkey="home.aboutTeaser.text" />
           </p>
           <RouterLink
             to="/about"

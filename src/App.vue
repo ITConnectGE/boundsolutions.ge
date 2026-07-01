@@ -6,6 +6,7 @@ import { useHead } from '@unhead/vue'
 import SiteNav from '@/components/SiteNav.vue'
 import SiteFooter from '@/components/SiteFooter.vue'
 import SocialRail from '@/components/SocialRail.vue'
+import { editMode, canEdit, toggleEdit } from '@/composables/editMode'
 
 const { locale } = useI18n()
 const route = useRoute()
@@ -66,4 +67,15 @@ onBeforeUnmount(() => {
     <router-view />
   </main>
   <SiteFooter v-if="!isAdmin" />
+
+  <!-- Inline-edit toggle (admins only) -->
+  <button
+    v-if="canEdit && !isAdmin"
+    class="fixed bottom-5 right-5 z-[100] inline-flex items-center gap-2 px-4 py-2.5 rounded-full text-xs font-semibold shadow-lg transition-colors"
+    :class="editMode ? 'bg-brand text-white' : 'bg-navy text-white hover:bg-navy/90'"
+    @click="toggleEdit"
+  >
+    <span class="w-2 h-2 rounded-full" :class="editMode ? 'bg-white' : 'bg-brand'"></span>
+    {{ editMode ? 'რედაქტირება: ჩართული' : 'ტექსტის რედაქტირება' }}
+  </button>
 </template>

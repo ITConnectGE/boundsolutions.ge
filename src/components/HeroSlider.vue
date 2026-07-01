@@ -2,6 +2,7 @@
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { img } from '@/composables/content.js'
+import EditableText from './EditableText.vue'
 import BaseIcon from './BaseIcon.vue'
 
 const { t } = useI18n()
@@ -54,9 +55,11 @@ onBeforeUnmount(() => clearInterval(timer))
           <h1
             class="font-brand text-white text-2xl sm:text-4xl lg:text-5xl leading-[1.1] mb-6 drop-shadow"
           >
-            {{ t('hero.slogan1') }}<br /><span class="gradient-text">{{ t('hero.slogan2') }}</span>
+            <EditableText tkey="hero.slogan1" /><br /><span class="gradient-text"><EditableText tkey="hero.slogan2" /></span>
           </h1>
-          <p class="text-white/80 text-lg max-w-xl mb-9 leading-relaxed">{{ t('hero.subtitle') }}</p>
+          <p class="text-white/80 text-lg max-w-xl mb-9 leading-relaxed">
+            <EditableText tkey="hero.subtitle" />
+          </p>
           <div class="flex flex-wrap gap-4">
             <RouterLink
               to="/contact"
