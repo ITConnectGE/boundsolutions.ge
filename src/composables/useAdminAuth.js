@@ -1,64 +1,40 @@
-// Admin auth. When VITE_API_BASE is set, this authenticates against the Laravel
-// backend (Sanctum token). With no API configured it falls back to a local demo
-// check so the admin still opens with no backend running.
-import { hasApi, api, getToken, setToken, getStoredUser, setStoredUser } from './api'
+// Admin auth against the Laravel backend (Sanctum token). The token is the login
+// session and is the only thing kept in localStorage (standard for token auth);
+// all real data lives in the database.
+import { api, getToken, setToken, getStoredUser, setStoredUser } from './api'
 
-// Demo fallback credentials (used only when no API base is configured).
+// Prefilled on the login form for convenience (not a credential check).
 const DEMO_EMAIL = 'nino@gmail.com'
 const DEMO_PASSWORD = 'Tbilisi1!'
-const DEMO_KEY = 'bs-admin-auth'
 
 export function useAdminAuth() {
   async function login(email, password) {
-    const mail = (email || '').trim()
-    if (hasApi()) {
-      try {
-        const { token, user } = await api('/auth/login', {
-          method: 'POST',
-          body: { email: mail, password },
-        })
-        setToken(token)
-        setStoredUser(user)
-        return true
-      } catch {
-        return false
-      }
-    }
-    // Demo fallback
-    if (mail.toLowerCase() === DEMO_EMAIL && password === DEMO_PASSWORD) {
-      if (typeof localStorage !== 'undefined') {
-        localStorage.setItem(DEMO_KEY, JSON.stringify({ name: 'Admin', email: DEMO_EMAIL }))
-      }
+    try {
+      const { token, user } = await api('/auth/login', {
+        method: 'POST',
+        body: { email: (email || '').trim(), password },
+      })
+      setToken(token)
+      setStoredUser(user)
       return true
+    } catch {
+      return false
     }
-    return false
   }
 
   function isAuthed() {
-    if (hasApi()) return !!getToken()
-    return typeof localStorage !== 'undefined' && !!localStorage.getItem(DEMO_KEY)
+    return !!getToken()
   }
 
   function currentUser() {
-    if (hasApi()) return getStoredUser()?.email || ''
-    if (typeof localStorage === 'undefined') return ''
-    try {
-      return JSON.parse(localStorage.getItem(DEMO_KEY) || 'null')?.email || ''
-    } catch {
-      return ''
-    }
+    return getStoredUser()?.email || ''
   }
 
   async function logout() {
-    if (hasApi()) {
-      const revoke = api('/auth/logout', { method: 'POST', auth: true }).catch(() => {})
-      // Clear locally immediately so guards see us as logged out right away.
-      setToken('')
-      setStoredUser(null)
-      await revoke
-      return
-    }
-    if (typeof localStorage !== 'undefined') localStorage.removeItem(DEMO_KEY)
+    const revoke = api('/auth/logout', { method: 'POST', auth: true }).catch(() => {})
+    setToken('')
+    setStoredUser(null)
+    await revoke
   }
 
   return { login, isAuthed, currentUser, logout, DEMO_EMAIL, DEMO_PASSWORD }

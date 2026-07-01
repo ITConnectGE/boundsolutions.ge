@@ -22,7 +22,7 @@ usePageMeta({ title: () => t('about.title'), description: () => loc(mission) })
 </script>
 
 <template>
-  <PageHero :eyebrow="t('about.eyebrow')" :title="t('about.title')" :subtitle="t('about.subtitle')" />
+  <PageHero eyebrow-key="about.eyebrow" title-key="about.title" subtitle-key="about.subtitle" />
 
   <!-- COMPANY INTRO — lead with the company, not the founder -->
   <section class="py-20 lg:py-28">
@@ -123,9 +123,9 @@ usePageMeta({ title: () => t('about.title'), description: () => loc(mission) })
   <section class="py-20 lg:py-28 bg-gray-50/80">
     <div class="max-w-6xl mx-auto px-6">
       <SectionHeading
-        :eyebrow="t('about.teamTitle')"
-        :title="t('about.teamTitle')"
-        :subtitle="t('about.teamSubtitle')"
+        eyebrow-key="about.teamTitle"
+        title-key="about.teamTitle"
+        subtitle-key="about.teamSubtitle"
         center
         class="mb-14"
       />
@@ -142,8 +142,8 @@ usePageMeta({ title: () => t('about.title'), description: () => loc(mission) })
   <section class="py-16 lg:py-20">
     <div class="max-w-6xl mx-auto px-6">
       <SectionHeading
-        :eyebrow="t('home.partners.eyebrow')"
-        :title="t('home.partners.title')"
+        eyebrow-key="home.partners.eyebrow"
+        title-key="home.partners.title"
         center
         class="mb-10"
       />

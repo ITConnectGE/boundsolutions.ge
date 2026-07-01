@@ -96,9 +96,9 @@ async function submit() {
 
 <template>
   <PageHero
-    :eyebrow="t('vacancies.eyebrow')"
-    :title="t('vacancies.title')"
-    :subtitle="t('vacancies.subtitle')"
+    eyebrow-key="vacancies.eyebrow"
+    title-key="vacancies.title"
+    subtitle-key="vacancies.subtitle"
   />
 
   <section class="py-14 lg:py-20">

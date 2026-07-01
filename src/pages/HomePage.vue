@@ -80,9 +80,9 @@ usePageMeta({ description: () => t('hero.subtitle') })
   <section id="services" class="py-20 lg:py-28 bg-gray-50/80">
     <div class="max-w-6xl mx-auto px-6">
       <SectionHeading
-        :eyebrow="t('home.services.eyebrow')"
-        :title="t('home.services.title')"
-        :subtitle="t('home.services.subtitle')"
+        eyebrow-key="home.services.eyebrow"
+        title-key="home.services.title"
+        subtitle-key="home.services.subtitle"
         class="mb-14"
       />
       <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-5">

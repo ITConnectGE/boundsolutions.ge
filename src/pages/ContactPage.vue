@@ -45,7 +45,7 @@ const cards = [
 </script>
 
 <template>
-  <PageHero :eyebrow="t('contact.eyebrow')" :title="t('contact.title')" :subtitle="t('contact.subtitle')" />
+  <PageHero eyebrow-key="contact.eyebrow" title-key="contact.title" subtitle-key="contact.subtitle" />
 
   <section class="py-16 lg:py-20">
     <div class="max-w-4xl mx-auto px-6">

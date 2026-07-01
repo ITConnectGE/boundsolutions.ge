@@ -14,7 +14,7 @@ usePageMeta({ title: () => t('blog.title'), description: () => t('blog.subtitle'
 </script>
 
 <template>
-  <PageHero :eyebrow="t('blog.eyebrow')" :title="t('blog.title')" :subtitle="t('blog.subtitle')" />
+  <PageHero eyebrow-key="blog.eyebrow" title-key="blog.title" subtitle-key="blog.subtitle" />
 
   <section class="py-20 lg:py-28">
     <div class="max-w-6xl mx-auto px-6 grid md:grid-cols-2 lg:grid-cols-3 gap-6">

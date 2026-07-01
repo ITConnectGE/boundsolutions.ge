@@ -93,7 +93,7 @@ usePageMeta({
       </div>
     </section>
 
-    <ContactCta :title="t('serviceDetail.ctaTitle')" :text="t('serviceDetail.ctaText')" />
+    <ContactCta title-key="serviceDetail.ctaTitle" text-key="serviceDetail.ctaText" />
   </template>
 
   <!-- unknown slug -->

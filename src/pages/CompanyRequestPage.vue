@@ -87,9 +87,9 @@ const inputCls =
 
 <template>
   <PageHero
-    :eyebrow="t('companyForm.eyebrow')"
-    :title="t('companyForm.title')"
-    :subtitle="t('companyForm.subtitle')"
+    eyebrow-key="companyForm.eyebrow"
+    title-key="companyForm.title"
+    subtitle-key="companyForm.subtitle"
   />
 
   <section class="py-14 lg:py-20">

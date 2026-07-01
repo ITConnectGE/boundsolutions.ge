@@ -13,9 +13,9 @@ usePageMeta({ title: () => t('services.title'), description: () => t('services.s
 
 <template>
   <PageHero
-    :eyebrow="t('services.eyebrow')"
-    :title="t('services.title')"
-    :subtitle="t('services.subtitle')"
+    eyebrow-key="services.eyebrow"
+    title-key="services.title"
+    subtitle-key="services.subtitle"
   />
 
   <section class="py-20 lg:py-28">
@@ -28,8 +28,8 @@ usePageMeta({ title: () => t('services.title'), description: () => t('services.s
   <section class="py-20 lg:py-28 bg-gray-50/80">
     <div class="max-w-6xl mx-auto px-6">
       <SectionHeading
-        :eyebrow="t('home.process.eyebrow')"
-        :title="t('home.process.title')"
+        eyebrow-key="home.process.eyebrow"
+        title-key="home.process.title"
         center
         class="mb-14"
       />
@@ -48,5 +48,5 @@ usePageMeta({ title: () => t('services.title'), description: () => t('services.s
     </div>
   </section>
 
-  <ContactCta :title="t('services.ctaTitle')" :text="t('services.ctaText')" />
+  <ContactCta title-key="services.ctaTitle" text-key="services.ctaText" />
 </template>
