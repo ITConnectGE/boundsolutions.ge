@@ -39,7 +39,10 @@ export async function addApplication(app, file) {
     const fd = new FormData()
     for (const [k, v] of Object.entries(payload)) {
       if (v == null) continue
-      fd.append(k, typeof v === 'object' ? JSON.stringify(v) : v)
+      let val = v
+      if (typeof v === 'boolean') val = v ? '1' : '0' // Laravel `boolean` rule wants 1/0
+      else if (typeof v === 'object') val = JSON.stringify(v)
+      fd.append(k, val)
     }
     fd.append('cv', file)
     return api('/applications', { method: 'POST', body: fd, form: true })
