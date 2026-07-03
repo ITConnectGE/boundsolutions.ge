@@ -380,8 +380,11 @@ const statCards = computed(() => [
         </div>
       </div>
 
-      <!-- Demo note -->
-      <div class="bg-brand/5 text-brand/80 text-xs rounded-xl px-4 py-2.5 mb-6 flex items-center gap-2">
+      <!-- Demo note — only when no backend/DB is connected -->
+      <div
+        v-if="!apiOn"
+        class="bg-brand/5 text-brand/80 text-xs rounded-xl px-4 py-2.5 mb-6 flex items-center gap-2"
+      >
         <BaseIcon name="badge" class="w-4 h-4 flex-shrink-0" /> {{ t('admin.demoNote') }}
       </div>
 
