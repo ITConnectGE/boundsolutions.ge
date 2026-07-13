@@ -4,7 +4,8 @@ import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useLoc } from '@/composables/useLocale'
 import { usePageMeta } from '@/composables/usePageMeta'
-import { services, getService } from '@/data/services.js'
+import { services as defaultServices } from '@/data/services.js'
+import { collection } from '@/composables/content.js'
 import ContactCta from '@/components/ContactCta.vue'
 import ServiceCard from '@/components/ServiceCard.vue'
 import BaseIcon from '@/components/BaseIcon.vue'
@@ -13,9 +14,11 @@ const route = useRoute()
 const { t } = useI18n()
 const { loc } = useLoc()
 
-const service = computed(() => getService(route.params.slug))
+// Editable from the admin CMS (falls back to the built-in catalogue).
+const allServices = computed(() => collection('services', defaultServices))
+const service = computed(() => allServices.value.find((s) => s.slug === route.params.slug))
 const others = computed(() =>
-  services.filter((s) => s.slug !== route.params.slug).slice(0, 3),
+  allServices.value.filter((s) => s.slug !== route.params.slug).slice(0, 3),
 )
 
 usePageMeta({

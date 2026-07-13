@@ -23,6 +23,7 @@ import {
 } from '@/composables/content.js'
 import { editableContent } from '@/data/editableContent.js'
 import { testimonials as defaultTestimonials } from '@/data/social.js'
+import { services as defaultServices } from '@/data/services.js'
 import kaMessages from '@/i18n/ka.js'
 import enMessages from '@/i18n/en.js'
 import BaseIcon from '@/components/BaseIcon.vue'
@@ -214,17 +215,73 @@ async function saveTestimonials() {
   testimonialsSaving.value = false
 }
 
+// ---- Collection: services ----
+const servicesDraft = ref([])
+const servicesSaving = ref(false)
+const svcUploading = ref('')
+const iconOptions = ['search', 'clipboard', 'rocket', 'badge', 'layers', 'academic', 'briefcase', 'mail', 'phone', 'globe']
+function addService() {
+  servicesDraft.value.push({
+    slug: 'service-' + Date.now().toString(36),
+    icon: 'search',
+    image: '',
+    title: { ka: '', en: '' },
+    summary: { ka: '', en: '' },
+    body: { ka: '', en: '' },
+    bullets: { ka: [], en: [] },
+  })
+}
+function removeService(i) {
+  servicesDraft.value.splice(i, 1)
+}
+function setBullets(svc, locale, text) {
+  if (!svc.bullets) svc.bullets = { ka: [], en: [] }
+  svc.bullets[locale] = text.split('\n')
+}
+async function onServiceImage(svc, e) {
+  const f = e.target.files?.[0]
+  if (!f) return
+  svcUploading.value = svc.slug
+  try {
+    const res = await uploadContentImage('img.service.' + svc.slug, f, 'services')
+    svc.image = res.url
+  } catch (err) {
+    adminError(err)
+  }
+  svcUploading.value = ''
+}
+async function saveServices() {
+  servicesSaving.value = true
+  try {
+    await saveCollection('services', servicesDraft.value)
+    contentSaved.value = true
+    setTimeout(() => (contentSaved.value = false), 2000)
+  } catch (e) {
+    adminError(e)
+  }
+  servicesSaving.value = false
+}
+
 async function loadContentEditor() {
   if (!apiOn) return
   contentLoading.value = true
   const saved = {}
   testimonialsDraft.value = JSON.parse(JSON.stringify(collection('testimonials', defaultTestimonials)))
+  servicesDraft.value = JSON.parse(JSON.stringify(collection('services', defaultServices)))
   try {
     const rows = await loadAllContent()
     for (const r of rows) {
       if (r.type === 'json' && r.key === 'col.testimonials') {
         try {
           testimonialsDraft.value = JSON.parse(r.value)
+        } catch {
+          /* keep default */
+        }
+        continue
+      }
+      if (r.type === 'json' && r.key === 'col.services') {
+        try {
+          servicesDraft.value = JSON.parse(r.value)
         } catch {
           /* keep default */
         }
@@ -724,6 +781,71 @@ const statCards = computed(() => [
                   class="gradient-bg text-white text-xs font-semibold px-4 py-2 rounded-xl hover:opacity-90 transition-opacity"
                   :class="{ 'opacity-60': testimonialsSaving }"
                   @click="saveTestimonials"
+                >
+                  <BaseIcon name="check" class="w-4 h-4 inline" /> შენახვა
+                </button>
+              </div>
+            </div>
+          </details>
+
+          <!-- Collection: Services -->
+          <details v-if="!contentSearch" class="bg-white rounded-2xl border border-gray-100 px-5 lg:px-6 py-4">
+            <summary class="font-brand text-sm text-gray-900 cursor-pointer select-none">
+              სერვისები / Services
+              <span class="text-gray-300 font-sans font-normal normal-case tracking-normal">({{ servicesDraft.length }})</span>
+            </summary>
+            <div class="space-y-5 mt-5">
+              <div v-for="(svc, i) in servicesDraft" :key="i" class="border border-gray-100 rounded-xl p-4 space-y-3">
+                <div class="flex items-center justify-between">
+                  <span class="text-xs font-semibold text-gray-500">#{{ i + 1 }}</span>
+                  <button type="button" class="text-gray-400 hover:text-red-500" @click="removeService(i)">
+                    <BaseIcon name="close" class="w-4 h-4" />
+                  </button>
+                </div>
+                <div class="flex items-center gap-4">
+                  <div class="w-24 h-16 rounded-lg bg-gray-100 overflow-hidden flex items-center justify-center flex-shrink-0">
+                    <img v-if="svc.image" :src="svc.image" alt="" class="w-full h-full object-cover" />
+                    <BaseIcon v-else name="image" class="w-5 h-5 text-gray-300" />
+                  </div>
+                  <label class="inline-flex items-center gap-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-semibold px-4 py-2.5 rounded-xl cursor-pointer">
+                    <BaseIcon name="upload" class="w-4 h-4" />
+                    {{ svcUploading === svc.slug ? '…' : t('admin.content.changeImage') }}
+                    <input type="file" accept="image/*" class="hidden" @change="onServiceImage(svc, $event)" />
+                  </label>
+                </div>
+                <div class="grid sm:grid-cols-2 gap-3">
+                  <input v-model="svc.slug" placeholder="slug (URL)" class="w-full px-3 py-2 bg-gray-50 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white" />
+                  <select v-model="svc.icon" class="w-full px-3 py-2 bg-gray-50 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white">
+                    <option v-for="ic in iconOptions" :key="ic" :value="ic">{{ ic }}</option>
+                  </select>
+                </div>
+                <div class="grid sm:grid-cols-2 gap-3">
+                  <input v-model="svc.title.ka" placeholder="სათაური (ქარ)" class="w-full px-3 py-2 bg-gray-50 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white" />
+                  <input v-model="svc.title.en" placeholder="Title (EN)" class="w-full px-3 py-2 bg-gray-50 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white" />
+                </div>
+                <div class="grid sm:grid-cols-2 gap-3">
+                  <textarea v-model="svc.summary.ka" rows="2" placeholder="მოკლე აღწერა (ქარ)" class="w-full px-3 py-2 bg-gray-50 rounded-lg text-sm resize-y focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white"></textarea>
+                  <textarea v-model="svc.summary.en" rows="2" placeholder="Summary (EN)" class="w-full px-3 py-2 bg-gray-50 rounded-lg text-sm resize-y focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white"></textarea>
+                </div>
+                <div class="grid sm:grid-cols-2 gap-3">
+                  <textarea v-model="svc.body.ka" rows="3" placeholder="სრული ტექსტი (ქარ)" class="w-full px-3 py-2 bg-gray-50 rounded-lg text-sm resize-y focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white"></textarea>
+                  <textarea v-model="svc.body.en" rows="3" placeholder="Full text (EN)" class="w-full px-3 py-2 bg-gray-50 rounded-lg text-sm resize-y focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white"></textarea>
+                </div>
+                <div class="grid sm:grid-cols-2 gap-3">
+                  <textarea :value="(svc.bullets && svc.bullets.ka ? svc.bullets.ka : []).join('\n')" rows="3" placeholder="ბულეთები — თითო ხაზზე (ქარ)" class="w-full px-3 py-2 bg-gray-50 rounded-lg text-sm resize-y focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white" @input="setBullets(svc, 'ka', $event.target.value)"></textarea>
+                  <textarea :value="(svc.bullets && svc.bullets.en ? svc.bullets.en : []).join('\n')" rows="3" placeholder="Bullets — one per line (EN)" class="w-full px-3 py-2 bg-gray-50 rounded-lg text-sm resize-y focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white" @input="setBullets(svc, 'en', $event.target.value)"></textarea>
+                </div>
+              </div>
+              <div class="flex items-center justify-between pt-1">
+                <button type="button" class="inline-flex items-center gap-1 text-brand text-xs font-semibold" @click="addService">
+                  <BaseIcon name="plus" class="w-4 h-4" /> სერვისის დამატება
+                </button>
+                <button
+                  type="button"
+                  :disabled="servicesSaving"
+                  class="gradient-bg text-white text-xs font-semibold px-4 py-2 rounded-xl hover:opacity-90 transition-opacity"
+                  :class="{ 'opacity-60': servicesSaving }"
+                  @click="saveServices"
                 >
                   <BaseIcon name="check" class="w-4 h-4 inline" /> შენახვა
                 </button>

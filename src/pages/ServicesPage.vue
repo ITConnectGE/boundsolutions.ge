@@ -1,13 +1,17 @@
 <script setup>
+import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { usePageMeta } from '@/composables/usePageMeta'
-import { services } from '@/data/services.js'
+import { services as defaultServices } from '@/data/services.js'
+import { collection } from '@/composables/content.js'
 import PageHero from '@/components/PageHero.vue'
 import ServiceCard from '@/components/ServiceCard.vue'
 import SectionHeading from '@/components/SectionHeading.vue'
 import ContactCta from '@/components/ContactCta.vue'
 
 const { t, tm, rt } = useI18n()
+// Editable from the admin CMS (falls back to the built-in catalogue).
+const services = computed(() => collection('services', defaultServices))
 usePageMeta({ title: () => t('services.title'), description: () => t('services.subtitle') })
 </script>
 

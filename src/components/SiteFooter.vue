@@ -1,7 +1,9 @@
 <script setup>
+import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useLoc } from '@/composables/useLocale'
-import { services } from '@/data/services.js'
+import { services as defaultServices } from '@/data/services.js'
+import { collection } from '@/composables/content.js'
 import SocialLinks from './SocialLinks.vue'
 import NewsletterForm from './NewsletterForm.vue'
 import BaseIcon from './BaseIcon.vue'
@@ -9,6 +11,7 @@ import BaseIcon from './BaseIcon.vue'
 const { t } = useI18n()
 const { loc } = useLoc()
 const year = 2026
+const services = computed(() => collection('services', defaultServices))
 </script>
 
 <template>
