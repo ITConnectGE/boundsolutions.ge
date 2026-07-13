@@ -180,7 +180,7 @@ const contentSearch = ref('')
 // These i18n groups are edited inside their dedicated collection blocks
 // (page headings live next to the cards/posts), so they are hidden from the
 // auto-generated list to avoid a duplicate "Services"/"Blog" section.
-const MERGED_GROUPS = new Set(['services', 'blog', 'about'])
+const MERGED_GROUPS = new Set(['services', 'blog', 'about', 'nav', 'companyForm'])
 
 // Text fields of a given i18n group (used to render its headings inside a
 // collection block and to persist them alongside the collection).
@@ -651,6 +651,8 @@ async function saveNav() {
         return item
       })
     await saveCollection('nav', clean)
+    const labels = textItemsPayload('nav')
+    if (labels.length) await saveTexts(labels)
     contentSaved.value = true
     toast.success(t('admin.content.saved'))
     setTimeout(() => (contentSaved.value = false), 2000)
@@ -729,6 +731,8 @@ async function saveCompanyForm() {
   companyFormSaving.value = true
   try {
     await saveCollection('companyForm', companyFormDraft.value)
+    const labels = textItemsPayload('companyForm')
+    if (labels.length) await saveTexts(labels)
     contentSaved.value = true
     toast.success(t('admin.content.saved'))
     setTimeout(() => (contentSaved.value = false), 2000)
@@ -1171,6 +1175,18 @@ const statCards = computed(() => [
                   <input v-model="l.badge" type="number" min="0" placeholder="ბეჯი / Badge (არასავალდებულო)" class="w-full px-3 py-2 bg-gray-50 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white" />
                 </div>
               </div>
+              <!-- Footer & CTA link labels (nav.*) -->
+              <div class="border border-dashed border-gray-200 rounded-xl p-4 space-y-3 bg-gray-50/60">
+                <p class="text-[10px] uppercase tracking-wide text-gray-400 font-semibold">ფუტერის / ღილაკის წარწერები · Footer &amp; button labels</p>
+                <div v-for="it in groupTextItems('nav')" :key="it.key">
+                  <label class="block text-xs font-semibold text-gray-600 mb-1.5">{{ it.key.split('.').slice(1).join('.') }}</label>
+                  <div class="grid sm:grid-cols-2 gap-3">
+                    <textarea v-model="draft[`${it.key}|ka`]" rows="1" placeholder="ქარ" class="w-full px-3 py-2 bg-white rounded-lg text-sm resize-y focus:outline-none focus:ring-2 focus:ring-brand/20"></textarea>
+                    <textarea v-model="draft[`${it.key}|en`]" rows="1" placeholder="EN" class="w-full px-3 py-2 bg-white rounded-lg text-sm resize-y focus:outline-none focus:ring-2 focus:ring-brand/20"></textarea>
+                  </div>
+                </div>
+              </div>
+
               <div class="flex items-center justify-between pt-1">
                 <button type="button" class="inline-flex items-center gap-1 text-brand text-xs font-semibold" @click="addNavItem">
                   <BaseIcon name="plus" class="w-4 h-4" /> გვერდის დამატება
@@ -1704,6 +1720,18 @@ const statCards = computed(() => [
                   <div>
                     <span class="block text-[10px] uppercase tracking-wide text-gray-300 mb-1">EN</span>
                     <RichTextEditor v-model="companyFormDraft.intro.en" />
+                  </div>
+                </div>
+              </div>
+
+              <!-- Field labels (companyForm.*) -->
+              <div class="border border-dashed border-gray-200 rounded-xl p-4 space-y-3 bg-gray-50/60">
+                <p class="text-[10px] uppercase tracking-wide text-gray-400 font-semibold">ველების წარწერები / Field labels</p>
+                <div v-for="it in groupTextItems('companyForm')" :key="it.key">
+                  <label class="block text-xs font-semibold text-gray-600 mb-1.5">{{ it.key.split('.').slice(1).join('.') }}</label>
+                  <div class="grid sm:grid-cols-2 gap-3">
+                    <textarea v-model="draft[`${it.key}|ka`]" rows="1" placeholder="ქარ" class="w-full px-3 py-2 bg-white rounded-lg text-sm resize-y focus:outline-none focus:ring-2 focus:ring-brand/20"></textarea>
+                    <textarea v-model="draft[`${it.key}|en`]" rows="1" placeholder="EN" class="w-full px-3 py-2 bg-white rounded-lg text-sm resize-y focus:outline-none focus:ring-2 focus:ring-brand/20"></textarea>
                   </div>
                 </div>
               </div>

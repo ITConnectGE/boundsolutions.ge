@@ -7,6 +7,19 @@ import ka from '@/i18n/ka.js'
 // Top-level i18n sections NOT exposed for editing (the admin panel's own chrome).
 const SKIP = new Set(['admin', 'langName'])
 
+// Individual keys now managed by structured collections (col.*), so they must
+// NOT also appear as flat text fields — that would be a dead duplicate control.
+const SKIP_KEY_PATTERNS = [
+  /^hero\.stats\./, //                     -> col.stats
+  /^home\.process\.steps\./, //            -> col.process
+  /^companyForm\.intro[12]$/, //           -> col.companyForm.intro (WYSIWYG)
+  /^companyForm\.scheduleOptions\./, //    -> col.companyForm.schedule
+  /^companyForm\.contractTypeOptions\./, // -> col.companyForm.contractType
+  /^companyForm\.contractPeriodOptions\./, // -> col.companyForm.contractPeriod
+  /^nav\.(home|team|forCompanies)$/, //    top nav is col.nav; these are unused
+]
+const isSkippedKey = (k) => SKIP_KEY_PATTERNS.some((re) => re.test(k))
+
 const SECTION_LABELS = {
   nav: 'ნავიგაცია / Nav',
   common: 'ღილაკები / Buttons',
@@ -59,7 +72,7 @@ export const editableContent = (() => {
   const groups = []
   for (const [section, val] of Object.entries(ka)) {
     if (SKIP.has(section) || !val || typeof val !== 'object') continue
-    const keys = flattenKeys(val, section)
+    const keys = flattenKeys(val, section).filter((k) => !isSkippedKey(k))
     if (!keys.length) continue
     groups.push({
       group: section,
