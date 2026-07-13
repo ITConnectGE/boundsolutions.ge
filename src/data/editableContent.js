@@ -51,7 +51,6 @@ const IMAGES = {
     { key: 'img.hero.slide2', type: 'image', label: 'ჰირო სლაიდი 2', default: '/images/bound.jpg' },
     { key: 'img.hero.slide3', type: 'image', label: 'ჰირო სლაიდი 3', default: '/images/3/team building.jpg' },
     { key: 'img.hero.slide4', type: 'image', label: 'ჰირო სლაიდი 4', default: '/images/bound.jpg' },
-    { key: 'img.about.founder', type: 'image', label: 'დამფუძნებლის ფოტო', default: '/images/team/nina.jpg' },
   ],
 }
 

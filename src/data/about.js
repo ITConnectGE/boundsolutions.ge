@@ -117,3 +117,20 @@ export const team = [
     placeholder: false,
   },
 ]
+
+// Combined default for the CMS "about" collection — one editable object that the
+// admin panel can override (company intro, mission/vision/values, founder, team).
+export const aboutDefault = {
+  companyIntro: company.intro,
+  mission,
+  vision,
+  values,
+  founder: {
+    name: founder.name,
+    role: founder.role,
+    photo: founder.photo,
+    linkedin: founder.linkedin,
+    bio: founder.bio,
+  },
+  team,
+}

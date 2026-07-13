@@ -5,7 +5,7 @@ import { useLoc } from '@/composables/useLocale'
 import { usePageMeta } from '@/composables/usePageMeta'
 import { services as defaultServices } from '@/data/services.js'
 import { collection } from '@/composables/content.js'
-import { founder } from '@/data/about.js'
+import { aboutDefault } from '@/data/about.js'
 import HeroSlider from '@/components/HeroSlider.vue'
 import EditableText from '@/components/EditableText.vue'
 import SectionHeading from '@/components/SectionHeading.vue'
@@ -19,6 +19,7 @@ const { loc } = useLoc()
 const founderImgFailed = ref(false)
 // Editable from the admin CMS (falls back to the built-in catalogue).
 const services = computed(() => collection('services', defaultServices))
+const founder = computed(() => collection('about', aboutDefault).founder)
 
 // no title => site default; description from i18n keeps it bilingual
 usePageMeta({ description: () => t('hero.subtitle') })

@@ -1,11 +1,11 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useLoc } from '@/composables/useLocale'
 import { usePageMeta } from '@/composables/usePageMeta'
-import { company, founder, mission, vision, values, team } from '@/data/about.js'
-import { img } from '@/composables/content.js'
-import { partners } from '@/data/social.js'
+import { aboutDefault } from '@/data/about.js'
+import { partners as defaultPartners } from '@/data/social.js'
+import { collection } from '@/composables/content.js'
 import PageHero from '@/components/PageHero.vue'
 import SectionHeading from '@/components/SectionHeading.vue'
 import TeamMemberCard from '@/components/TeamMemberCard.vue'
@@ -18,7 +18,19 @@ const { t } = useI18n()
 const { loc } = useLoc()
 const founderImgFailed = ref(false)
 
-usePageMeta({ title: () => t('about.title'), description: () => loc(mission) })
+// Editable from the admin CMS (falls back to the built-in about content).
+const about = computed(() => collection('about', aboutDefault))
+const partners = computed(() => collection('partners', defaultPartners))
+
+// A {ka,en} field whose value may be an HTML string (WYSIWYG) or a legacy
+// array of paragraphs — normalise to HTML for rendering.
+function htmlOf(field) {
+  const v = loc(field)
+  if (Array.isArray(v)) return v.map((p) => `<p>${p}</p>`).join('')
+  return v || ''
+}
+
+usePageMeta({ title: () => t('about.title'), description: () => loc(about.value.mission) })
 </script>
 
 <template>
@@ -31,13 +43,10 @@ usePageMeta({ title: () => t('about.title'), description: () => loc(mission) })
       <h2 class="text-3xl lg:text-4xl font-extrabold text-gray-900 mb-8 leading-tight">
         {{ t('about.companyTitle') }}
       </h2>
-      <p
-        v-for="(p, i) in loc(company.intro)"
-        :key="i"
-        class="text-gray-500 text-[15px] lg:text-base leading-relaxed mb-5"
-      >
-        {{ p }}
-      </p>
+      <div
+        class="rich text-gray-500 text-[15px] lg:text-base leading-relaxed"
+        v-html="htmlOf(about.companyIntro)"
+      ></div>
     </div>
   </section>
 
@@ -46,14 +55,14 @@ usePageMeta({ title: () => t('about.title'), description: () => loc(mission) })
     <div class="max-w-4xl mx-auto px-6 text-center">
       <div class="fade-in">
         <h2 class="font-brand text-xl lg:text-2xl mb-5 text-white">{{ t('about.missionTitle') }}</h2>
-        <p class="text-white/80 text-lg leading-relaxed">{{ loc(mission) }}</p>
+        <p class="text-white/80 text-lg leading-relaxed">{{ loc(about.mission) }}</p>
       </div>
 
       <div class="w-12 h-0.5 bg-accent/60 mx-auto my-12"></div>
 
       <div class="fade-in">
         <h2 class="font-brand text-xl lg:text-2xl mb-5 text-white">{{ t('about.visionTitle') }}</h2>
-        <p class="text-white/80 text-lg leading-relaxed">{{ loc(vision) }}</p>
+        <p class="text-white/80 text-lg leading-relaxed">{{ loc(about.vision) }}</p>
       </div>
 
       <div class="w-12 h-0.5 bg-accent/60 mx-auto my-12"></div>
@@ -61,7 +70,7 @@ usePageMeta({ title: () => t('about.title'), description: () => loc(mission) })
       <div class="fade-in">
         <h2 class="font-brand text-xl lg:text-2xl mb-6 text-white">{{ t('about.valuesTitle') }}</h2>
         <ul class="space-y-3 text-left max-w-2xl mx-auto">
-          <li v-for="v in values" :key="v.key" class="flex gap-3">
+          <li v-for="(v, i) in about.values" :key="i" class="flex gap-3">
             <BaseIcon name="check" class="w-4 h-4 text-accent mt-1 flex-shrink-0" />
             <span class="text-white/90 leading-relaxed">
               <strong class="text-white">{{ loc(v.title) }}</strong> — {{ loc(v.text) }}
@@ -78,9 +87,9 @@ usePageMeta({ title: () => t('about.title'), description: () => loc(mission) })
       <div class="grid lg:grid-cols-5 gap-12 lg:gap-16 items-start fade-in">
         <div class="lg:col-span-2">
           <img
-            v-if="!founderImgFailed"
-            :src="img('img.about.founder', founder.photo)"
-            :alt="loc(founder.name)"
+            v-if="about.founder.photo && !founderImgFailed"
+            :src="about.founder.photo"
+            :alt="loc(about.founder.name)"
             class="w-full aspect-[4/5] object-cover object-top rounded-2xl bg-gray-100"
             @error="founderImgFailed = true"
           />
@@ -91,7 +100,8 @@ usePageMeta({ title: () => t('about.title'), description: () => loc(mission) })
             <img src="/images/BoundSolutions - Nav.png" alt="" class="h-10 opacity-40" />
           </div>
           <a
-            :href="founder.linkedin"
+            v-if="about.founder.linkedin"
+            :href="about.founder.linkedin"
             target="_blank"
             rel="noopener noreferrer"
             class="mt-4 inline-flex items-center gap-2 text-gray-400 hover:text-brand text-sm transition-colors"
@@ -104,16 +114,13 @@ usePageMeta({ title: () => t('about.title'), description: () => loc(mission) })
             {{ t('about.founderEyebrow') }}
           </p>
           <h2 class="text-3xl lg:text-4xl font-extrabold text-gray-900 mb-2 leading-tight">
-            {{ loc(founder.name) }}
+            {{ loc(about.founder.name) }}
           </h2>
-          <p class="text-gray-400 mb-6">{{ loc(founder.role) }}</p>
-          <p
-            v-for="(p, i) in loc(founder.bio)"
-            :key="i"
-            class="text-gray-500 text-[15px] leading-relaxed mb-4"
-          >
-            {{ p }}
-          </p>
+          <p class="text-gray-400 mb-6">{{ loc(about.founder.role) }}</p>
+          <div
+            class="rich text-gray-500 text-[15px] leading-relaxed"
+            v-html="htmlOf(about.founder.bio)"
+          ></div>
         </div>
       </div>
     </div>
@@ -130,7 +137,7 @@ usePageMeta({ title: () => t('about.title'), description: () => loc(mission) })
         class="mb-14"
       />
       <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <TeamMemberCard v-for="(m, i) in team" :key="i" :member="m" variant="compact" />
+        <TeamMemberCard v-for="(m, i) in about.team" :key="i" :member="m" variant="compact" />
       </div>
     </div>
   </section>

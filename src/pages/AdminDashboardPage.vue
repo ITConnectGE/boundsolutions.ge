@@ -25,6 +25,8 @@ import { editableContent } from '@/data/editableContent.js'
 import { testimonials as defaultTestimonials } from '@/data/social.js'
 import { services as defaultServices } from '@/data/services.js'
 import { posts as defaultPosts } from '@/data/blog.js'
+import { aboutDefault } from '@/data/about.js'
+import { partners as defaultPartners } from '@/data/social.js'
 import { toast } from '@/composables/toast'
 import kaMessages from '@/i18n/ka.js'
 import enMessages from '@/i18n/en.js'
@@ -176,7 +178,7 @@ const contentSearch = ref('')
 // These i18n groups are edited inside their dedicated collection blocks
 // (page headings live next to the cards/posts), so they are hidden from the
 // auto-generated list to avoid a duplicate "Services"/"Blog" section.
-const MERGED_GROUPS = new Set(['services', 'blog'])
+const MERGED_GROUPS = new Set(['services', 'blog', 'about'])
 
 // Text fields of a given i18n group (used to render its headings inside a
 // collection block and to persist them alongside the collection).
@@ -366,6 +368,115 @@ async function saveBlog() {
   blogSaving.value = false
 }
 
+// ---- Collection: About page (company, mission/vision/values, founder, team) ----
+const aboutDraft = ref(null)
+const aboutSaving = ref(false)
+const aboutUploading = ref('')
+
+// Fold legacy paragraph arrays (companyIntro, founder.bio) into HTML for WYSIWYG.
+function joinPara(v) {
+  return Array.isArray(v) ? v.map((x) => `<p>${x}</p>`).join('') : v || ''
+}
+function normalizeAbout(a) {
+  a.companyIntro = a.companyIntro || { ka: '', en: '' }
+  a.companyIntro.ka = joinPara(a.companyIntro.ka)
+  a.companyIntro.en = joinPara(a.companyIntro.en)
+  a.mission = a.mission || { ka: '', en: '' }
+  a.vision = a.vision || { ka: '', en: '' }
+  a.values = Array.isArray(a.values) ? a.values : []
+  a.founder = a.founder || { name: { ka: '', en: '' }, role: { ka: '', en: '' }, photo: '', linkedin: '', bio: { ka: '', en: '' } }
+  a.founder.bio = a.founder.bio || { ka: '', en: '' }
+  a.founder.bio.ka = joinPara(a.founder.bio.ka)
+  a.founder.bio.en = joinPara(a.founder.bio.en)
+  a.team = Array.isArray(a.team) ? a.team : []
+  return a
+}
+function addValue() {
+  aboutDraft.value.values.push({ title: { ka: '', en: '' }, text: { ka: '', en: '' } })
+}
+function removeValue(i) {
+  aboutDraft.value.values.splice(i, 1)
+}
+function addMember() {
+  aboutDraft.value.team.push({ name: { ka: '', en: '' }, role: { ka: '', en: '' }, photo: '' })
+}
+function removeMember(i) {
+  aboutDraft.value.team.splice(i, 1)
+}
+async function onFounderImage(e) {
+  const f = e.target.files?.[0]
+  if (!f) return
+  aboutUploading.value = 'founder'
+  try {
+    const res = await uploadContentImage('img.about.founder', f, 'about')
+    aboutDraft.value.founder.photo = res.url
+  } catch (err) {
+    adminError(err)
+  }
+  aboutUploading.value = ''
+}
+async function onMemberImage(i, e) {
+  const f = e.target.files?.[0]
+  if (!f) return
+  aboutUploading.value = 'member-' + i
+  try {
+    const res = await uploadContentImage('img.team.' + i, f, 'team')
+    aboutDraft.value.team[i].photo = res.url
+  } catch (err) {
+    adminError(err)
+  }
+  aboutUploading.value = ''
+}
+async function saveAbout() {
+  aboutSaving.value = true
+  try {
+    await saveCollection('about', aboutDraft.value)
+    const headings = textItemsPayload('about')
+    if (headings.length) await saveTexts(headings)
+    contentSaved.value = true
+    toast.success(t('admin.content.saved'))
+    setTimeout(() => (contentSaved.value = false), 2000)
+  } catch (e) {
+    adminError(e)
+  }
+  aboutSaving.value = false
+}
+
+// ---- Collection: Partners (logo strip) ----
+const partnersDraft = ref([])
+const partnersSaving = ref(false)
+const partnersUploading = ref('')
+function addPartner() {
+  partnersDraft.value.push({ name: '', logo: '' })
+}
+function removePartner(i) {
+  partnersDraft.value.splice(i, 1)
+}
+async function onPartnerImage(i, e) {
+  const f = e.target.files?.[0]
+  if (!f) return
+  partnersUploading.value = 'partner-' + i
+  try {
+    const res = await uploadContentImage('img.partner.' + i, f, 'partners')
+    partnersDraft.value[i].logo = res.url
+  } catch (err) {
+    adminError(err)
+  }
+  partnersUploading.value = ''
+}
+async function savePartners() {
+  partnersSaving.value = true
+  try {
+    await saveCollection('partners', partnersDraft.value)
+    contentSaved.value = true
+    toast.success(t('admin.content.saved'))
+    setTimeout(() => (contentSaved.value = false), 2000)
+  } catch (e) {
+    adminError(e)
+  }
+  partnersSaving.value = false
+}
+
 async function loadContentEditor() {
   if (!apiOn) return
   contentLoading.value = true
@@ -373,6 +484,8 @@ async function loadContentEditor() {
   testimonialsDraft.value = JSON.parse(JSON.stringify(collection('testimonials', defaultTestimonials)))
   servicesDraft.value = JSON.parse(JSON.stringify(collection('services', defaultServices)))
   blogDraft.value = normalizePosts(JSON.parse(JSON.stringify(collection('blog', defaultPosts))))
+  aboutDraft.value = normalizeAbout(JSON.parse(JSON.stringify(collection('about', aboutDefault))))
+  partnersDraft.value = JSON.parse(JSON.stringify(collection('partners', defaultPartners)))
   try {
     const rows = await loadAllContent()
     for (const r of rows) {
@@ -395,6 +508,22 @@ async function loadContentEditor() {
       if (r.type === 'json' && r.key === 'col.blog') {
         try {
           blogDraft.value = normalizePosts(JSON.parse(r.value))
+        } catch {
+          /* keep default */
+        }
+        continue
+      }
+      if (r.type === 'json' && r.key === 'col.about') {
+        try {
+          aboutDraft.value = normalizeAbout(JSON.parse(r.value))
+        } catch {
+          /* keep default */
+        }
+        continue
+      }
+      if (r.type === 'json' && r.key === 'col.partners') {
+        try {
+          partnersDraft.value = JSON.parse(r.value)
         } catch {
           /* keep default */
         }
@@ -1078,6 +1207,198 @@ const statCards = computed(() => [
                   @click="saveBlog"
                 >
                   <span v-if="blogSaving" class="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin inline-block align-middle"></span>
+                  <BaseIcon v-else name="check" class="w-4 h-4 inline" /> შენახვა
+                </button>
+              </div>
+            </div>
+          </details>
+
+          <!-- Collection: About page -->
+          <details v-if="!contentSearch && aboutDraft" class="bg-white rounded-2xl border border-gray-100 px-5 lg:px-6 py-4">
+            <summary class="font-brand text-sm text-gray-900 cursor-pointer select-none">
+              ჩვენ შესახებ / About
+            </summary>
+            <div class="space-y-5 mt-5">
+              <!-- Page headings (about.*) -->
+              <div class="border border-dashed border-gray-200 rounded-xl p-4 space-y-3 bg-gray-50/60">
+                <p class="text-[10px] uppercase tracking-wide text-gray-400 font-semibold">გვერდის სათაურები / Page headings</p>
+                <div v-for="it in groupTextItems('about')" :key="it.key">
+                  <label class="block text-xs font-semibold text-gray-600 mb-1.5">{{ it.key.split('.').slice(1).join('.') }}</label>
+                  <div class="grid sm:grid-cols-2 gap-3">
+                    <textarea v-model="draft[`${it.key}|ka`]" rows="2" placeholder="ქარ" class="w-full px-3 py-2 bg-white rounded-lg text-sm resize-y focus:outline-none focus:ring-2 focus:ring-brand/20"></textarea>
+                    <textarea v-model="draft[`${it.key}|en`]" rows="2" placeholder="EN" class="w-full px-3 py-2 bg-white rounded-lg text-sm resize-y focus:outline-none focus:ring-2 focus:ring-brand/20"></textarea>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Company intro (WYSIWYG) -->
+              <div class="border border-gray-100 rounded-xl p-4 space-y-3">
+                <p class="text-xs font-semibold text-gray-600">კომპანიის აღწერა / Company intro</p>
+                <div class="grid sm:grid-cols-2 gap-3">
+                  <div>
+                    <span class="block text-[10px] uppercase tracking-wide text-gray-300 mb-1">ქარ</span>
+                    <RichTextEditor v-model="aboutDraft.companyIntro.ka" />
+                  </div>
+                  <div>
+                    <span class="block text-[10px] uppercase tracking-wide text-gray-300 mb-1">EN</span>
+                    <RichTextEditor v-model="aboutDraft.companyIntro.en" />
+                  </div>
+                </div>
+              </div>
+
+              <!-- Mission / Vision -->
+              <div class="grid sm:grid-cols-2 gap-3">
+                <div class="border border-gray-100 rounded-xl p-4 space-y-2">
+                  <p class="text-xs font-semibold text-gray-600">მისია / Mission</p>
+                  <textarea v-model="aboutDraft.mission.ka" rows="3" placeholder="ქარ" class="w-full px-3 py-2 bg-gray-50 rounded-lg text-sm resize-y focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white"></textarea>
+                  <textarea v-model="aboutDraft.mission.en" rows="3" placeholder="EN" class="w-full px-3 py-2 bg-gray-50 rounded-lg text-sm resize-y focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white"></textarea>
+                </div>
+                <div class="border border-gray-100 rounded-xl p-4 space-y-2">
+                  <p class="text-xs font-semibold text-gray-600">ხედვა / Vision</p>
+                  <textarea v-model="aboutDraft.vision.ka" rows="3" placeholder="ქარ" class="w-full px-3 py-2 bg-gray-50 rounded-lg text-sm resize-y focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white"></textarea>
+                  <textarea v-model="aboutDraft.vision.en" rows="3" placeholder="EN" class="w-full px-3 py-2 bg-gray-50 rounded-lg text-sm resize-y focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white"></textarea>
+                </div>
+              </div>
+
+              <!-- Values -->
+              <div class="border border-gray-100 rounded-xl p-4 space-y-3">
+                <p class="text-xs font-semibold text-gray-600">ღირებულებები / Values</p>
+                <div v-for="(v, i) in aboutDraft.values" :key="i" class="border border-gray-100 rounded-lg p-3 space-y-2">
+                  <div class="flex items-center justify-between">
+                    <span class="text-xs font-semibold text-gray-500">#{{ i + 1 }}</span>
+                    <button type="button" class="text-gray-400 hover:text-red-500" @click="removeValue(i)">
+                      <BaseIcon name="close" class="w-4 h-4" />
+                    </button>
+                  </div>
+                  <div class="grid sm:grid-cols-2 gap-3">
+                    <input v-model="v.title.ka" placeholder="სათაური (ქარ)" class="w-full px-3 py-2 bg-gray-50 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white" />
+                    <input v-model="v.title.en" placeholder="Title (EN)" class="w-full px-3 py-2 bg-gray-50 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white" />
+                  </div>
+                  <div class="grid sm:grid-cols-2 gap-3">
+                    <textarea v-model="v.text.ka" rows="2" placeholder="ტექსტი (ქარ)" class="w-full px-3 py-2 bg-gray-50 rounded-lg text-sm resize-y focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white"></textarea>
+                    <textarea v-model="v.text.en" rows="2" placeholder="Text (EN)" class="w-full px-3 py-2 bg-gray-50 rounded-lg text-sm resize-y focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white"></textarea>
+                  </div>
+                </div>
+                <button type="button" class="inline-flex items-center gap-1 text-brand text-xs font-semibold" @click="addValue">
+                  <BaseIcon name="plus" class="w-4 h-4" /> ღირებულების დამატება
+                </button>
+              </div>
+
+              <!-- Founder -->
+              <div class="border border-gray-100 rounded-xl p-4 space-y-3">
+                <p class="text-xs font-semibold text-gray-600">დამფუძნებელი / Founder</p>
+                <div class="flex items-center gap-4">
+                  <div class="w-16 h-20 rounded-lg bg-gray-100 overflow-hidden flex items-center justify-center flex-shrink-0">
+                    <img v-if="aboutDraft.founder.photo" :src="aboutDraft.founder.photo" alt="" class="w-full h-full object-cover object-top" />
+                    <BaseIcon v-else name="image" class="w-5 h-5 text-gray-300" />
+                  </div>
+                  <label class="inline-flex items-center gap-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-semibold px-4 py-2.5 rounded-xl cursor-pointer">
+                    <BaseIcon name="upload" class="w-4 h-4" />
+                    {{ aboutUploading === 'founder' ? '…' : t('admin.content.changeImage') }}
+                    <input type="file" accept="image/*" class="hidden" @change="onFounderImage" />
+                  </label>
+                </div>
+                <div class="grid sm:grid-cols-2 gap-3">
+                  <input v-model="aboutDraft.founder.name.ka" placeholder="სახელი (ქარ)" class="w-full px-3 py-2 bg-gray-50 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white" />
+                  <input v-model="aboutDraft.founder.name.en" placeholder="Name (EN)" class="w-full px-3 py-2 bg-gray-50 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white" />
+                  <input v-model="aboutDraft.founder.role.ka" placeholder="პოზიცია (ქარ)" class="w-full px-3 py-2 bg-gray-50 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white" />
+                  <input v-model="aboutDraft.founder.role.en" placeholder="Role (EN)" class="w-full px-3 py-2 bg-gray-50 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white" />
+                </div>
+                <input v-model="aboutDraft.founder.linkedin" placeholder="LinkedIn URL" class="w-full px-3 py-2 bg-gray-50 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white" />
+                <div class="grid sm:grid-cols-2 gap-3">
+                  <div>
+                    <span class="block text-[10px] uppercase tracking-wide text-gray-300 mb-1">ბიოგრაფია (ქარ)</span>
+                    <RichTextEditor v-model="aboutDraft.founder.bio.ka" />
+                  </div>
+                  <div>
+                    <span class="block text-[10px] uppercase tracking-wide text-gray-300 mb-1">Bio (EN)</span>
+                    <RichTextEditor v-model="aboutDraft.founder.bio.en" />
+                  </div>
+                </div>
+              </div>
+
+              <!-- Team -->
+              <div class="border border-gray-100 rounded-xl p-4 space-y-3">
+                <p class="text-xs font-semibold text-gray-600">გუნდი / Team</p>
+                <div v-for="(m, i) in aboutDraft.team" :key="i" class="border border-gray-100 rounded-lg p-3 space-y-2">
+                  <div class="flex items-center justify-between">
+                    <span class="text-xs font-semibold text-gray-500">#{{ i + 1 }}</span>
+                    <button type="button" class="text-gray-400 hover:text-red-500" @click="removeMember(i)">
+                      <BaseIcon name="close" class="w-4 h-4" />
+                    </button>
+                  </div>
+                  <div class="flex items-center gap-4">
+                    <div class="w-14 h-14 rounded-full bg-gray-100 overflow-hidden flex items-center justify-center flex-shrink-0">
+                      <img v-if="m.photo" :src="m.photo" alt="" class="w-full h-full object-cover object-top" />
+                      <BaseIcon v-else name="image" class="w-5 h-5 text-gray-300" />
+                    </div>
+                    <label class="inline-flex items-center gap-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-semibold px-4 py-2.5 rounded-xl cursor-pointer">
+                      <BaseIcon name="upload" class="w-4 h-4" />
+                      {{ aboutUploading === 'member-' + i ? '…' : t('admin.content.changeImage') }}
+                      <input type="file" accept="image/*" class="hidden" @change="onMemberImage(i, $event)" />
+                    </label>
+                  </div>
+                  <div class="grid sm:grid-cols-2 gap-3">
+                    <input v-model="m.name.ka" placeholder="სახელი (ქარ)" class="w-full px-3 py-2 bg-gray-50 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white" />
+                    <input v-model="m.name.en" placeholder="Name (EN)" class="w-full px-3 py-2 bg-gray-50 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white" />
+                    <input v-model="m.role.ka" placeholder="პოზიცია (ქარ)" class="w-full px-3 py-2 bg-gray-50 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white" />
+                    <input v-model="m.role.en" placeholder="Role (EN)" class="w-full px-3 py-2 bg-gray-50 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white" />
+                  </div>
+                </div>
+                <button type="button" class="inline-flex items-center gap-1 text-brand text-xs font-semibold" @click="addMember">
+                  <BaseIcon name="plus" class="w-4 h-4" /> წევრის დამატება
+                </button>
+              </div>
+
+              <div class="flex justify-end pt-1">
+                <button
+                  type="button"
+                  :disabled="aboutSaving"
+                  class="gradient-bg text-white text-xs font-semibold px-4 py-2 rounded-xl hover:opacity-90 transition-opacity"
+                  :class="{ 'opacity-60': aboutSaving }"
+                  @click="saveAbout"
+                >
+                  <span v-if="aboutSaving" class="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin inline-block align-middle"></span>
+                  <BaseIcon v-else name="check" class="w-4 h-4 inline" /> შენახვა
+                </button>
+              </div>
+            </div>
+          </details>
+
+          <!-- Collection: Partners -->
+          <details v-if="!contentSearch" class="bg-white rounded-2xl border border-gray-100 px-5 lg:px-6 py-4">
+            <summary class="font-brand text-sm text-gray-900 cursor-pointer select-none">
+              პარტნიორები / Partners
+              <span class="text-gray-300 font-sans font-normal normal-case tracking-normal">({{ partnersDraft.length }})</span>
+            </summary>
+            <div class="space-y-3 mt-5">
+              <div v-for="(p, i) in partnersDraft" :key="i" class="flex items-center gap-3 border border-gray-100 rounded-xl p-3">
+                <div class="w-20 h-12 rounded-lg bg-gray-50 overflow-hidden flex items-center justify-center flex-shrink-0">
+                  <img v-if="p.logo" :src="p.logo" alt="" class="w-full h-full object-contain p-1" />
+                  <BaseIcon v-else name="image" class="w-5 h-5 text-gray-300" />
+                </div>
+                <input v-model="p.name" placeholder="სახელი / Name" class="flex-1 px-3 py-2 bg-gray-50 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white" />
+                <label class="inline-flex items-center gap-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-semibold px-3 py-2 rounded-xl cursor-pointer flex-shrink-0">
+                  <BaseIcon name="upload" class="w-4 h-4" />
+                  {{ partnersUploading === 'partner-' + i ? '…' : t('admin.content.changeImage') }}
+                  <input type="file" accept="image/*" class="hidden" @change="onPartnerImage(i, $event)" />
+                </label>
+                <button type="button" class="text-gray-400 hover:text-red-500 flex-shrink-0" @click="removePartner(i)">
+                  <BaseIcon name="close" class="w-4 h-4" />
+                </button>
+              </div>
+              <div class="flex items-center justify-between pt-1">
+                <button type="button" class="inline-flex items-center gap-1 text-brand text-xs font-semibold" @click="addPartner">
+                  <BaseIcon name="plus" class="w-4 h-4" /> პარტნიორის დამატება
+                </button>
+                <button
+                  type="button"
+                  :disabled="partnersSaving"
+                  class="gradient-bg text-white text-xs font-semibold px-4 py-2 rounded-xl hover:opacity-90 transition-opacity"
+                  :class="{ 'opacity-60': partnersSaving }"
+                  @click="savePartners"
+                >
+                  <span v-if="partnersSaving" class="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin inline-block align-middle"></span>
                   <BaseIcon v-else name="check" class="w-4 h-4 inline" /> შენახვა
                 </button>
               </div>
