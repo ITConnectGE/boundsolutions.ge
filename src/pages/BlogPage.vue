@@ -1,14 +1,19 @@
 <script setup>
+import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useLoc } from '@/composables/useLocale'
 import { usePageMeta } from '@/composables/usePageMeta'
-import { posts } from '@/data/blog.js'
+import { posts as defaultPosts } from '@/data/blog.js'
+import { collection } from '@/composables/content.js'
 import { formatDate } from '@/utils/date.js'
 import PageHero from '@/components/PageHero.vue'
 import BaseIcon from '@/components/BaseIcon.vue'
 
 const { t } = useI18n()
 const { loc, locale } = useLoc()
+
+// Editable from the admin CMS (falls back to the built-in posts).
+const posts = computed(() => collection('blog', defaultPosts))
 
 usePageMeta({ title: () => t('blog.title'), description: () => t('blog.subtitle') })
 </script>

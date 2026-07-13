@@ -91,6 +91,10 @@ section[id] {
   scroll-margin-top: 80px;
 }
 
+/* Buttons are clickable; disabled ones aren't */
+button:not(:disabled) { cursor: pointer; }
+button:disabled { cursor: not-allowed; }
+
 /* Rendered rich-text (WYSIWYG) content on the public site */
 .rich h2 { font-size: 1.5rem; font-weight: 800; margin: 1.2em 0 0.5em; color: #111827; }
 .rich h3 { font-size: 1.2rem; font-weight: 700; margin: 1em 0 0.4em; color: #111827; }

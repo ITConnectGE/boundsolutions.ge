@@ -4,7 +4,8 @@ import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useLoc } from '@/composables/useLocale'
 import { usePageMeta } from '@/composables/usePageMeta'
-import { posts, getPost } from '@/data/blog.js'
+import { posts as defaultPosts } from '@/data/blog.js'
+import { collection } from '@/composables/content.js'
 import { formatDate } from '@/utils/date.js'
 import VideoEmbed from '@/components/VideoEmbed.vue'
 import BaseIcon from '@/components/BaseIcon.vue'
@@ -13,10 +14,21 @@ const route = useRoute()
 const { t } = useI18n()
 const { loc, locale } = useLoc()
 
-const post = computed(() => getPost(route.params.slug))
+// Editable from the admin CMS (falls back to the built-in posts).
+const posts = computed(() => collection('blog', defaultPosts))
+const post = computed(() => posts.value.find((p) => p.slug === route.params.slug))
 const others = computed(() =>
-  posts.filter((p) => p.slug !== route.params.slug).slice(0, 3),
+  posts.value.filter((p) => p.slug !== route.params.slug).slice(0, 3),
 )
+
+// Body may be an HTML string (WYSIWYG) or an array of paragraphs (legacy);
+// normalise to HTML for rendering.
+const bodyHtml = computed(() => {
+  if (!post.value) return ''
+  const b = loc(post.value.body)
+  if (Array.isArray(b)) return b.map((p) => `<p>${p}</p>`).join('')
+  return b || ''
+})
 
 usePageMeta({
   title: () => (post.value ? loc(post.value.title) : t('notFound.title')),
@@ -68,13 +80,7 @@ usePageMeta({
 
     <!-- BODY -->
     <article class="max-w-3xl mx-auto px-6 py-12 lg:py-16">
-      <p
-        v-for="(p, i) in loc(post.body)"
-        :key="i"
-        class="text-gray-600 text-[17px] leading-relaxed mb-5"
-      >
-        {{ p }}
-      </p>
+      <div class="rich blog-body text-gray-600 text-[17px] leading-relaxed" v-html="bodyHtml"></div>
 
       <div v-if="post.tags?.length" class="flex flex-wrap gap-2 mt-8">
         <span

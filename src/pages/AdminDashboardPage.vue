@@ -24,6 +24,8 @@ import {
 import { editableContent } from '@/data/editableContent.js'
 import { testimonials as defaultTestimonials } from '@/data/social.js'
 import { services as defaultServices } from '@/data/services.js'
+import { posts as defaultPosts } from '@/data/blog.js'
+import { toast } from '@/composables/toast'
 import kaMessages from '@/i18n/ka.js'
 import enMessages from '@/i18n/en.js'
 import BaseIcon from '@/components/BaseIcon.vue'
@@ -56,9 +58,9 @@ function adminError(e) {
   }
   const msg = ((e && e.message) || '').toLowerCase()
   if (e?.name === 'TypeError' || msg.includes('failed to fetch') || msg.includes('network')) {
-    alert(t('admin.err.network'))
+    toast.error(t('admin.err.network'))
   } else {
-    alert((e && e.message) || 'Error')
+    toast.error((e && e.message) || 'Error')
   }
 }
 
@@ -171,11 +173,39 @@ const uploadingKey = ref('')
 const defaultMsgs = { ka: kaMessages, en: enMessages }
 const contentSearch = ref('')
 
+// These i18n groups are edited inside their dedicated collection blocks
+// (page headings live next to the cards/posts), so they are hidden from the
+// auto-generated list to avoid a duplicate "Services"/"Blog" section.
+const MERGED_GROUPS = new Set(['services', 'blog'])
+
+// Text fields of a given i18n group (used to render its headings inside a
+// collection block and to persist them alongside the collection).
+function groupTextItems(groupName) {
+  const g = contentGroups.find((x) => x.group === groupName)
+  return g ? g.items.filter((it) => it.type === 'text') : []
+}
+function textItemsPayload(groupName) {
+  const items = []
+  for (const it of groupTextItems(groupName)) {
+    for (const loc of ['ka', 'en']) {
+      items.push({
+        key: it.key,
+        locale: loc,
+        value: draft.value[`${it.key}|${loc}`] ?? '',
+        type: 'text',
+        group: groupName,
+      })
+    }
+  }
+  return items
+}
+
 // Filter content groups/items by key or by the current ka/en value.
 const visibleContentGroups = computed(() => {
   const q = contentSearch.value.trim().toLowerCase()
-  if (!q) return contentGroups
-  return contentGroups
+  const base = contentGroups.filter((g) => !MERGED_GROUPS.has(g.group))
+  if (!q) return base
+  return base
     .map((g) => ({
       ...g,
       items: g.items.filter((it) => {
@@ -209,6 +239,7 @@ async function saveTestimonials() {
   try {
     await saveCollection('testimonials', testimonialsDraft.value)
     contentSaved.value = true
+    toast.success(t('admin.content.saved'))
     setTimeout(() => (contentSaved.value = false), 2000)
   } catch (e) {
     adminError(e)
@@ -255,12 +286,84 @@ async function saveServices() {
   servicesSaving.value = true
   try {
     await saveCollection('services', servicesDraft.value)
+    const headings = textItemsPayload('services')
+    if (headings.length) await saveTexts(headings)
     contentSaved.value = true
+    toast.success(t('admin.content.saved'))
     setTimeout(() => (contentSaved.value = false), 2000)
   } catch (e) {
     adminError(e)
   }
   servicesSaving.value = false
+}
+
+// ---- Collection: blog posts ----
+const blogDraft = ref([])
+const blogSaving = ref(false)
+const blogUploading = ref('')
+const blogCategories = ['Keynote', 'Team Building', 'Culture', 'HR', 'Events']
+
+// Older posts store body as an array of paragraphs; the WYSIWYG editor needs an
+// HTML string, so fold arrays into <p> blocks on load.
+function normalizePosts(list) {
+  for (const p of list) {
+    if (!p.body || typeof p.body !== 'object') p.body = { ka: '', en: '' }
+    for (const loc of ['ka', 'en']) {
+      const b = p.body[loc]
+      if (Array.isArray(b)) p.body[loc] = b.map((x) => `<p>${x}</p>`).join('')
+      else if (b == null) p.body[loc] = ''
+    }
+    if (!Array.isArray(p.tags)) p.tags = []
+  }
+  return list
+}
+function addPost() {
+  blogDraft.value.push({
+    slug: 'post-' + Date.now().toString(36),
+    date: new Date().toISOString().slice(0, 10),
+    cover: '',
+    youtube: '',
+    video: '',
+    externalLink: '',
+    category: { ka: '', en: '' },
+    tags: [],
+    title: { ka: '', en: '' },
+    author: { ka: 'Bound Solutions', en: 'Bound Solutions' },
+    excerpt: { ka: '', en: '' },
+    body: { ka: '', en: '' },
+  })
+}
+function removePost(i) {
+  blogDraft.value.splice(i, 1)
+}
+function setTags(post, text) {
+  post.tags = text.split(',').map((s) => s.trim()).filter(Boolean)
+}
+async function onPostImage(post, e) {
+  const f = e.target.files?.[0]
+  if (!f) return
+  blogUploading.value = post.slug
+  try {
+    const res = await uploadContentImage('img.blog.' + post.slug, f, 'blog')
+    post.cover = res.url
+  } catch (err) {
+    adminError(err)
+  }
+  blogUploading.value = ''
+}
+async function saveBlog() {
+  blogSaving.value = true
+  try {
+    await saveCollection('blog', blogDraft.value)
+    const headings = textItemsPayload('blog')
+    if (headings.length) await saveTexts(headings)
+    contentSaved.value = true
+    toast.success(t('admin.content.saved'))
+    setTimeout(() => (contentSaved.value = false), 2000)
+  } catch (e) {
+    adminError(e)
+  }
+  blogSaving.value = false
 }
 
 async function loadContentEditor() {
@@ -269,6 +372,7 @@ async function loadContentEditor() {
   const saved = {}
   testimonialsDraft.value = JSON.parse(JSON.stringify(collection('testimonials', defaultTestimonials)))
   servicesDraft.value = JSON.parse(JSON.stringify(collection('services', defaultServices)))
+  blogDraft.value = normalizePosts(JSON.parse(JSON.stringify(collection('blog', defaultPosts))))
   try {
     const rows = await loadAllContent()
     for (const r of rows) {
@@ -283,6 +387,14 @@ async function loadContentEditor() {
       if (r.type === 'json' && r.key === 'col.services') {
         try {
           servicesDraft.value = JSON.parse(r.value)
+        } catch {
+          /* keep default */
+        }
+        continue
+      }
+      if (r.type === 'json' && r.key === 'col.blog') {
+        try {
+          blogDraft.value = normalizePosts(JSON.parse(r.value))
         } catch {
           /* keep default */
         }
@@ -328,9 +440,10 @@ async function saveContent() {
   try {
     await saveTexts(items)
     contentSaved.value = true
+    toast.success(t('admin.content.saved'))
     setTimeout(() => (contentSaved.value = false), 2500)
   } catch (e) {
-    alert('Save failed: ' + (e.message || ''))
+    adminError(e)
   }
   contentSaving.value = false
 }
@@ -343,7 +456,7 @@ async function onContentImage(item, e) {
     const res = await uploadContentImage(item.key, f, 'images')
     imageOverrides[item.key] = res.url // updates preview + live site reactively
   } catch (err) {
-    alert('Upload failed: ' + (err.message || ''))
+    adminError(err)
   }
   uploadingKey.value = ''
 }
@@ -719,7 +832,8 @@ const statCards = computed(() => [
             :class="{ 'opacity-60': contentSaving }"
             @click="saveContent"
           >
-            <BaseIcon name="check" class="w-4 h-4" />
+            <span v-if="contentSaving" class="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin"></span>
+            <BaseIcon v-else name="check" class="w-4 h-4" />
             {{ contentSaved ? t('admin.content.saved') : t('admin.content.save') }}
           </button>
         </div>
@@ -783,19 +897,32 @@ const statCards = computed(() => [
                   :class="{ 'opacity-60': testimonialsSaving }"
                   @click="saveTestimonials"
                 >
-                  <BaseIcon name="check" class="w-4 h-4 inline" /> შენახვა
+                  <span v-if="testimonialsSaving" class="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin inline-block align-middle"></span>
+                  <BaseIcon v-else name="check" class="w-4 h-4 inline" /> შენახვა
                 </button>
               </div>
             </div>
           </details>
 
-          <!-- Collection: Services -->
+          <!-- Collection: Services (page headings + cards, merged) -->
           <details v-if="!contentSearch" class="bg-white rounded-2xl border border-gray-100 px-5 lg:px-6 py-4">
             <summary class="font-brand text-sm text-gray-900 cursor-pointer select-none">
               სერვისები / Services
               <span class="text-gray-300 font-sans font-normal normal-case tracking-normal">({{ servicesDraft.length }})</span>
             </summary>
             <div class="space-y-5 mt-5">
+              <!-- Page headings (services.*) -->
+              <div class="border border-dashed border-gray-200 rounded-xl p-4 space-y-3 bg-gray-50/60">
+                <p class="text-[10px] uppercase tracking-wide text-gray-400 font-semibold">გვერდის სათაურები / Page headings</p>
+                <div v-for="it in groupTextItems('services')" :key="it.key">
+                  <label class="block text-xs font-semibold text-gray-600 mb-1.5">{{ it.key.split('.').slice(1).join('.') }}</label>
+                  <div class="grid sm:grid-cols-2 gap-3">
+                    <textarea v-model="draft[`${it.key}|ka`]" rows="2" placeholder="ქარ" class="w-full px-3 py-2 bg-white rounded-lg text-sm resize-y focus:outline-none focus:ring-2 focus:ring-brand/20"></textarea>
+                    <textarea v-model="draft[`${it.key}|en`]" rows="2" placeholder="EN" class="w-full px-3 py-2 bg-white rounded-lg text-sm resize-y focus:outline-none focus:ring-2 focus:ring-brand/20"></textarea>
+                  </div>
+                </div>
+              </div>
+
               <div v-for="(svc, i) in servicesDraft" :key="i" class="border border-gray-100 rounded-xl p-4 space-y-3">
                 <div class="flex items-center justify-between">
                   <span class="text-xs font-semibold text-gray-500">#{{ i + 1 }}</span>
@@ -854,7 +981,104 @@ const statCards = computed(() => [
                   :class="{ 'opacity-60': servicesSaving }"
                   @click="saveServices"
                 >
-                  <BaseIcon name="check" class="w-4 h-4 inline" /> შენახვა
+                  <span v-if="servicesSaving" class="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin inline-block align-middle"></span>
+                  <BaseIcon v-else name="check" class="w-4 h-4 inline" /> შენახვა
+                </button>
+              </div>
+            </div>
+          </details>
+
+          <!-- Collection: Blog (page headings + posts) -->
+          <details v-if="!contentSearch" class="bg-white rounded-2xl border border-gray-100 px-5 lg:px-6 py-4">
+            <summary class="font-brand text-sm text-gray-900 cursor-pointer select-none">
+              ბლოგი / Blog
+              <span class="text-gray-300 font-sans font-normal normal-case tracking-normal">({{ blogDraft.length }})</span>
+            </summary>
+            <div class="space-y-5 mt-5">
+              <!-- Page headings (blog.*) -->
+              <div class="border border-dashed border-gray-200 rounded-xl p-4 space-y-3 bg-gray-50/60">
+                <p class="text-[10px] uppercase tracking-wide text-gray-400 font-semibold">გვერდის სათაურები / Page headings</p>
+                <div v-for="it in groupTextItems('blog')" :key="it.key">
+                  <label class="block text-xs font-semibold text-gray-600 mb-1.5">{{ it.key.split('.').slice(1).join('.') }}</label>
+                  <div class="grid sm:grid-cols-2 gap-3">
+                    <textarea v-model="draft[`${it.key}|ka`]" rows="2" placeholder="ქარ" class="w-full px-3 py-2 bg-white rounded-lg text-sm resize-y focus:outline-none focus:ring-2 focus:ring-brand/20"></textarea>
+                    <textarea v-model="draft[`${it.key}|en`]" rows="2" placeholder="EN" class="w-full px-3 py-2 bg-white rounded-lg text-sm resize-y focus:outline-none focus:ring-2 focus:ring-brand/20"></textarea>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Posts -->
+              <div v-for="(post, i) in blogDraft" :key="i" class="border border-gray-100 rounded-xl p-4 space-y-3">
+                <div class="flex items-center justify-between">
+                  <span class="text-xs font-semibold text-gray-500">#{{ i + 1 }}</span>
+                  <button type="button" class="text-gray-400 hover:text-red-500" @click="removePost(i)">
+                    <BaseIcon name="close" class="w-4 h-4" />
+                  </button>
+                </div>
+                <div class="flex items-center gap-4">
+                  <div class="w-24 h-16 rounded-lg bg-gray-100 overflow-hidden flex items-center justify-center flex-shrink-0">
+                    <img v-if="post.cover" :src="post.cover" alt="" class="w-full h-full object-cover" />
+                    <BaseIcon v-else name="image" class="w-5 h-5 text-gray-300" />
+                  </div>
+                  <label class="inline-flex items-center gap-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-semibold px-4 py-2.5 rounded-xl cursor-pointer">
+                    <BaseIcon name="upload" class="w-4 h-4" />
+                    {{ blogUploading === post.slug ? '…' : t('admin.content.changeImage') }}
+                    <input type="file" accept="image/*" class="hidden" @change="onPostImage(post, $event)" />
+                  </label>
+                </div>
+                <div class="grid sm:grid-cols-2 gap-3">
+                  <input v-model="post.slug" placeholder="slug (URL)" class="w-full px-3 py-2 bg-gray-50 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white" />
+                  <input v-model="post.date" type="date" class="w-full px-3 py-2 bg-gray-50 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white" />
+                </div>
+                <div class="grid sm:grid-cols-2 gap-3">
+                  <input v-model="post.title.ka" placeholder="სათაური (ქარ)" class="w-full px-3 py-2 bg-gray-50 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white" />
+                  <input v-model="post.title.en" placeholder="Title (EN)" class="w-full px-3 py-2 bg-gray-50 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white" />
+                </div>
+                <div class="grid sm:grid-cols-2 gap-3">
+                  <input v-model="post.category.ka" placeholder="კატეგორია (ქარ)" class="w-full px-3 py-2 bg-gray-50 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white" />
+                  <input v-model="post.category.en" placeholder="Category (EN)" class="w-full px-3 py-2 bg-gray-50 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white" />
+                </div>
+                <div class="grid sm:grid-cols-2 gap-3">
+                  <input v-model="post.author.ka" placeholder="ავტორი (ქარ)" class="w-full px-3 py-2 bg-gray-50 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white" />
+                  <input v-model="post.author.en" placeholder="Author (EN)" class="w-full px-3 py-2 bg-gray-50 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white" />
+                </div>
+                <div class="grid sm:grid-cols-2 gap-3">
+                  <textarea v-model="post.excerpt.ka" rows="2" placeholder="მოკლე აღწერა (ქარ)" class="w-full px-3 py-2 bg-gray-50 rounded-lg text-sm resize-y focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white"></textarea>
+                  <textarea v-model="post.excerpt.en" rows="2" placeholder="Excerpt (EN)" class="w-full px-3 py-2 bg-gray-50 rounded-lg text-sm resize-y focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white"></textarea>
+                </div>
+                <div class="grid sm:grid-cols-2 gap-3">
+                  <div>
+                    <span class="block text-[10px] uppercase tracking-wide text-gray-300 mb-1">სრული ტექსტი (ქარ)</span>
+                    <RichTextEditor v-model="post.body.ka" />
+                  </div>
+                  <div>
+                    <span class="block text-[10px] uppercase tracking-wide text-gray-300 mb-1">Full text (EN)</span>
+                    <RichTextEditor v-model="post.body.en" />
+                  </div>
+                </div>
+                <div>
+                  <label class="block text-[10px] uppercase tracking-wide text-gray-300 mb-1">თეგები — მძიმით / Tags — comma-separated</label>
+                  <input :value="(post.tags || []).join(', ')" placeholder="Adjara Group, Keynote" class="w-full px-3 py-2 bg-gray-50 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white" @input="setTags(post, $event.target.value)" />
+                </div>
+                <div class="grid sm:grid-cols-3 gap-3">
+                  <input v-model="post.youtube" placeholder="YouTube ID" class="w-full px-3 py-2 bg-gray-50 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white" />
+                  <input v-model="post.video" placeholder="ვიდეო URL / Video URL" class="w-full px-3 py-2 bg-gray-50 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white" />
+                  <input v-model="post.externalLink" placeholder="გარე ბმული / External link" class="w-full px-3 py-2 bg-gray-50 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white" />
+                </div>
+              </div>
+              <div class="flex items-center justify-between pt-1">
+                <button type="button" class="inline-flex items-center gap-1 text-brand text-xs font-semibold" @click="addPost">
+                  <BaseIcon name="plus" class="w-4 h-4" /> სტატიის დამატება
+                </button>
+                <button
+                  type="button"
+                  :disabled="blogSaving"
+                  class="gradient-bg text-white text-xs font-semibold px-4 py-2 rounded-xl hover:opacity-90 transition-opacity"
+                  :class="{ 'opacity-60': blogSaving }"
+                  @click="saveBlog"
+                >
+                  <span v-if="blogSaving" class="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin inline-block align-middle"></span>
+                  <BaseIcon v-else name="check" class="w-4 h-4 inline" /> შენახვა
                 </button>
               </div>
             </div>
@@ -921,7 +1145,8 @@ const statCards = computed(() => [
               :class="{ 'opacity-60': contentSaving }"
               @click="saveContent"
             >
-              <BaseIcon name="check" class="w-4 h-4" />
+              <span v-if="contentSaving" class="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin"></span>
+              <BaseIcon v-else name="check" class="w-4 h-4" />
               {{ contentSaved ? t('admin.content.saved') : t('admin.content.save') }}
             </button>
           </div>
