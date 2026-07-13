@@ -1,8 +1,8 @@
 <script setup>
 import LegalContent from '@/components/LegalContent.vue'
-import { terms } from '@/data/legal.js'
+import { termsDefault } from '@/data/legal.js'
 </script>
 
 <template>
-  <LegalContent :policy="terms" title-key="legal.termsTitle" />
+  <LegalContent collection-name="terms" :default-policy="termsDefault" title-key="legal.termsTitle" />
 </template>

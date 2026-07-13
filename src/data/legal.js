@@ -200,3 +200,22 @@ export const terms = {
     },
   ],
 }
+
+// The pages are now edited as rich text (WYSIWYG) via the CMS. Convert the
+// structured default above into an HTML body per locale so the built-in content
+// is the starting point; admin overrides (col.privacy / col.terms) replace it.
+function policyToHtml(policy) {
+  const build = (locale) =>
+    policy.sections
+      .map((s) => {
+        let html = `<h2>${s.title[locale]}</h2>`
+        for (const p of s.paras?.[locale] || []) html += `<p>${p}</p>`
+        if (s.bullets) html += '<ul>' + (s.bullets[locale] || []).map((b) => `<li>${b}</li>`).join('') + '</ul>'
+        return html
+      })
+      .join('')
+  return { updated: policy.updated, body: { ka: build('ka'), en: build('en') } }
+}
+
+export const privacyDefault = policyToHtml(privacy)
+export const termsDefault = policyToHtml(terms)

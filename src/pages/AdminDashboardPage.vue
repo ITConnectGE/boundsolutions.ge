@@ -29,6 +29,8 @@ import { aboutDefault } from '@/data/about.js'
 import { partners as defaultPartners } from '@/data/social.js'
 import { defaultNav } from '@/data/nav.js'
 import { defaultProcess, defaultStats, defaultCompanyForm } from '@/data/lists.js'
+import { defaultVacancyCategories } from '@/data/jobs.js'
+import { privacyDefault, termsDefault } from '@/data/legal.js'
 import { toast } from '@/composables/toast'
 import kaMessages from '@/i18n/ka.js'
 import enMessages from '@/i18n/en.js'
@@ -109,20 +111,6 @@ async function reloadJobs() {
   }
 }
 
-// Distinct categories already in use — offered as quick-pick suggestions.
-const jobCategorySuggestions = computed(() => {
-  const set = new Set()
-  for (const j of jobsDraft.value) {
-    const c = (j.category || '').trim()
-    if (c) set.add(c)
-  }
-  return [...set]
-})
-
-function addJobRow() {
-  jobsDraft.value.unshift(toJobDraft(null))
-}
-
 function onJobRowImage(row, e) {
   const f = e.target.files?.[0]
   if (!f) return
@@ -173,6 +161,92 @@ async function removeJobRow(row, i) {
   }
 }
 
+// ---- Managed vacancy categories (add / remove from the CRM) ----
+const categoriesDraft = ref([])
+const categoriesSaving = ref(false)
+const newCategory = ref('')
+function addCategory() {
+  const c = newCategory.value.trim()
+  if (!c || categoriesDraft.value.includes(c)) {
+    newCategory.value = ''
+    return
+  }
+  categoriesDraft.value.push(c)
+  newCategory.value = ''
+}
+function removeCategory(i) {
+  categoriesDraft.value.splice(i, 1)
+}
+async function saveCategories() {
+  categoriesSaving.value = true
+  try {
+    await saveCollection('vacancyCategories', categoriesDraft.value)
+    toast.success(t('admin.content.saved'))
+  } catch (e) {
+    adminError(e)
+  }
+  categoriesSaving.value = false
+}
+
+// ---- New-vacancy modal ----
+const newJobOpen = ref(false)
+const newJob = ref(null)
+function openNewJob() {
+  newJob.value = toJobDraft(null)
+  newJobOpen.value = true
+}
+async function saveNewJob() {
+  const row = newJob.value
+  if (!row.titleKa.trim() || !row.category.trim()) {
+    toast.error(t('admin.jobs.needTitleCategory'))
+    return
+  }
+  row.saving = true
+  try {
+    await saveJob(
+      {
+        category: row.category.trim(),
+        title: { ka: row.titleKa, en: row.titleEn || row.titleKa },
+        sector: { ka: row.sectorKa, en: row.sectorEn || row.sectorKa },
+        salary: row.salary,
+      },
+      row.imageFile || null,
+    )
+    newJobOpen.value = false
+    toast.success(t('admin.content.saved'))
+    await reloadJobs()
+  } catch (e) {
+    adminError(e)
+    row.saving = false
+  }
+}
+
+// ---- Legal pages (Privacy & Terms — WYSIWYG) ----
+const privacyDraft = ref(null)
+const termsDraft = ref(null)
+const legalSaving = ref(false)
+function normalizePolicy(p, fallback) {
+  if (!p || typeof p !== 'object') return JSON.parse(JSON.stringify(fallback))
+  p.updated = p.updated || { ka: '', en: '' }
+  p.body = p.body || { ka: '', en: '' }
+  return p
+}
+async function saveLegal() {
+  legalSaving.value = true
+  try {
+    await saveCollection('privacy', privacyDraft.value)
+    await saveCollection('terms', termsDraft.value)
+    const labels = textItemsPayload('legal')
+    if (labels.length) await saveTexts(labels)
+    contentSaved.value = true
+    toast.success(t('admin.content.saved'))
+    setTimeout(() => (contentSaved.value = false), 2000)
+  } catch (e) {
+    adminError(e)
+  }
+  legalSaving.value = false
+}
+
 // ---- Content editor (CMS) ----
 const apiOn = hasApi()
 const contentGroups = editableContent
@@ -187,7 +261,7 @@ const contentSearch = ref('')
 // These i18n groups are edited inside their dedicated collection blocks
 // (page headings live next to the cards/posts), so they are hidden from the
 // auto-generated list to avoid a duplicate "Services"/"Blog" section.
-const MERGED_GROUPS = new Set(['services', 'blog', 'about', 'nav', 'companyForm'])
+const MERGED_GROUPS = new Set(['services', 'blog', 'about', 'nav', 'companyForm', 'legal'])
 
 // Friendly labels for the second-level key segment (a sub-section heading).
 const SUBSECTION_LABELS = {
@@ -536,6 +610,9 @@ async function loadContentEditor() {
   processDraft.value = JSON.parse(JSON.stringify(collection('process', defaultProcess)))
   statsDraft.value = JSON.parse(JSON.stringify(collection('stats', defaultStats)))
   companyFormDraft.value = normalizeCompanyForm(JSON.parse(JSON.stringify(collection('companyForm', defaultCompanyForm))))
+  categoriesDraft.value = JSON.parse(JSON.stringify(collection('vacancyCategories', defaultVacancyCategories)))
+  privacyDraft.value = normalizePolicy(JSON.parse(JSON.stringify(collection('privacy', privacyDefault))), privacyDefault)
+  termsDraft.value = normalizePolicy(JSON.parse(JSON.stringify(collection('terms', termsDefault))), termsDefault)
   try {
     const rows = await loadAllContent()
     for (const r of rows) {
@@ -606,6 +683,30 @@ async function loadContentEditor() {
       if (r.type === 'json' && r.key === 'col.companyForm') {
         try {
           companyFormDraft.value = normalizeCompanyForm(JSON.parse(r.value))
+        } catch {
+          /* keep default */
+        }
+        continue
+      }
+      if (r.type === 'json' && r.key === 'col.vacancyCategories') {
+        try {
+          categoriesDraft.value = JSON.parse(r.value)
+        } catch {
+          /* keep default */
+        }
+        continue
+      }
+      if (r.type === 'json' && r.key === 'col.privacy') {
+        try {
+          privacyDraft.value = normalizePolicy(JSON.parse(r.value), privacyDefault)
+        } catch {
+          /* keep default */
+        }
+        continue
+      }
+      if (r.type === 'json' && r.key === 'col.terms') {
+        try {
+          termsDraft.value = normalizePolicy(JSON.parse(r.value), termsDefault)
         } catch {
           /* keep default */
         }
@@ -1101,25 +1202,54 @@ const statCards = computed(() => [
           </div>
           <button
             class="inline-flex items-center gap-1.5 gradient-bg text-white text-xs font-semibold px-4 py-2.5 rounded-xl hover:opacity-90 transition-opacity flex-shrink-0"
-            @click="addJobRow"
+            @click="openNewJob"
           >
             <BaseIcon name="plus" class="w-4 h-4" /> {{ t('admin.jobs.add') }}
           </button>
         </div>
 
-        <!-- Categories are dynamic: whatever you type here becomes a filter on the site -->
-        <div v-if="jobCategorySuggestions.length" class="flex flex-wrap items-center gap-2 mb-5 text-xs text-gray-400">
-          <span>{{ t('admin.jobs.activeCategories') }}:</span>
-          <span
-            v-for="c in jobCategorySuggestions"
-            :key="c"
-            class="px-2.5 py-0.5 bg-brand/10 text-brand font-semibold rounded-md"
-          >{{ c }}</span>
+        <!-- Managed categories: add / remove — these feed the vacancy dropdown and the site filters -->
+        <div class="bg-white rounded-2xl border border-gray-100 p-4 mb-6">
+          <p class="text-xs font-semibold text-gray-600 mb-3">{{ t('admin.jobs.categories') }}</p>
+          <div class="flex flex-wrap items-center gap-2 mb-3">
+            <span
+              v-for="(c, i) in categoriesDraft"
+              :key="c"
+              class="inline-flex items-center gap-1.5 px-3 py-1 bg-brand/10 text-brand text-xs font-semibold rounded-lg"
+            >
+              {{ c }}
+              <button type="button" class="hover:text-red-500" @click="removeCategory(i)">
+                <BaseIcon name="close" class="w-3.5 h-3.5" />
+              </button>
+            </span>
+            <span v-if="!categoriesDraft.length" class="text-xs text-gray-400">{{ t('admin.jobs.noCategories') }}</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <input
+              v-model="newCategory"
+              :placeholder="t('admin.jobs.newCategory')"
+              class="flex-1 px-3 py-2 bg-gray-50 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white"
+              @keydown.enter.prevent="addCategory"
+            />
+            <button type="button" class="inline-flex items-center gap-1 text-brand text-xs font-semibold px-2" @click="addCategory">
+              <BaseIcon name="plus" class="w-4 h-4" /> {{ t('admin.jobs.addCategory') }}
+            </button>
+            <button
+              type="button"
+              :disabled="categoriesSaving"
+              class="gradient-bg text-white text-xs font-semibold px-4 py-2 rounded-xl hover:opacity-90 transition-opacity"
+              :class="{ 'opacity-60': categoriesSaving }"
+              @click="saveCategories"
+            >
+              <span v-if="categoriesSaving" class="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin inline-block align-middle"></span>
+              <BaseIcon v-else name="check" class="w-4 h-4 inline" /> {{ t('admin.jobs.form.save') }}
+            </button>
+          </div>
         </div>
 
-        <!-- Shared category suggestions for every row's input -->
+        <!-- Category options for every vacancy's dropdown -->
         <datalist id="job-categories">
-          <option v-for="c in jobCategorySuggestions" :key="c" :value="c" />
+          <option v-for="c in categoriesDraft" :key="c" :value="c" />
         </datalist>
 
         <div v-if="jobsDraft.length" class="space-y-4">
@@ -1841,6 +1971,77 @@ const statCards = computed(() => [
             </div>
           </details>
 
+          <!-- Collection: Legal pages (Privacy & Terms, WYSIWYG) -->
+          <details v-if="!contentSearch && privacyDraft && termsDraft" class="bg-white rounded-2xl border border-gray-100 px-5 lg:px-6 py-4">
+            <summary class="font-brand text-sm text-gray-900 cursor-pointer select-none">
+              იურიდიული — Privacy &amp; Terms
+            </summary>
+            <div class="space-y-5 mt-5">
+              <!-- Page labels (legal.*) -->
+              <div class="border border-dashed border-gray-200 rounded-xl p-4 space-y-3 bg-gray-50/60">
+                <p class="text-[10px] uppercase tracking-wide text-gray-400 font-semibold">გვერდის წარწერები / Page labels</p>
+                <div v-for="it in groupTextItems('legal')" :key="it.key">
+                  <label class="block text-xs font-semibold text-gray-600 mb-1.5">{{ it.key.split('.').slice(1).join('.') }}</label>
+                  <div class="grid sm:grid-cols-2 gap-3">
+                    <textarea v-model="draft[`${it.key}|ka`]" rows="1" placeholder="ქარ" class="w-full px-3 py-2 bg-white rounded-lg text-sm resize-y focus:outline-none focus:ring-2 focus:ring-brand/20"></textarea>
+                    <textarea v-model="draft[`${it.key}|en`]" rows="1" placeholder="EN" class="w-full px-3 py-2 bg-white rounded-lg text-sm resize-y focus:outline-none focus:ring-2 focus:ring-brand/20"></textarea>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Privacy policy -->
+              <div class="border border-gray-100 rounded-xl p-4 space-y-3">
+                <p class="text-xs font-semibold text-gray-600">კონფიდენციალურობა / Privacy policy</p>
+                <div class="grid sm:grid-cols-2 gap-3">
+                  <input v-model="privacyDraft.updated.ka" placeholder="განახლდა (ქარ)" class="w-full px-3 py-2 bg-gray-50 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white" />
+                  <input v-model="privacyDraft.updated.en" placeholder="Updated (EN)" class="w-full px-3 py-2 bg-gray-50 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white" />
+                </div>
+                <div class="grid sm:grid-cols-2 gap-3">
+                  <div>
+                    <span class="block text-[10px] uppercase tracking-wide text-gray-300 mb-1">ტექსტი (ქარ)</span>
+                    <RichTextEditor v-model="privacyDraft.body.ka" />
+                  </div>
+                  <div>
+                    <span class="block text-[10px] uppercase tracking-wide text-gray-300 mb-1">Text (EN)</span>
+                    <RichTextEditor v-model="privacyDraft.body.en" />
+                  </div>
+                </div>
+              </div>
+
+              <!-- Terms -->
+              <div class="border border-gray-100 rounded-xl p-4 space-y-3">
+                <p class="text-xs font-semibold text-gray-600">წესები და პირობები / Terms &amp; Conditions</p>
+                <div class="grid sm:grid-cols-2 gap-3">
+                  <input v-model="termsDraft.updated.ka" placeholder="განახლდა (ქარ)" class="w-full px-3 py-2 bg-gray-50 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white" />
+                  <input v-model="termsDraft.updated.en" placeholder="Updated (EN)" class="w-full px-3 py-2 bg-gray-50 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white" />
+                </div>
+                <div class="grid sm:grid-cols-2 gap-3">
+                  <div>
+                    <span class="block text-[10px] uppercase tracking-wide text-gray-300 mb-1">ტექსტი (ქარ)</span>
+                    <RichTextEditor v-model="termsDraft.body.ka" />
+                  </div>
+                  <div>
+                    <span class="block text-[10px] uppercase tracking-wide text-gray-300 mb-1">Text (EN)</span>
+                    <RichTextEditor v-model="termsDraft.body.en" />
+                  </div>
+                </div>
+              </div>
+
+              <div class="flex justify-end pt-1">
+                <button
+                  type="button"
+                  :disabled="legalSaving"
+                  class="gradient-bg text-white text-xs font-semibold px-4 py-2 rounded-xl hover:opacity-90 transition-opacity"
+                  :class="{ 'opacity-60': legalSaving }"
+                  @click="saveLegal"
+                >
+                  <span v-if="legalSaving" class="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin inline-block align-middle"></span>
+                  <BaseIcon v-else name="check" class="w-4 h-4 inline" /> შენახვა
+                </button>
+              </div>
+            </div>
+          </details>
+
           <!-- Every content group as a structured block (sub-sections) -->
           <details
             v-for="g in visibleContentGroups"
@@ -1905,5 +2106,103 @@ const statCards = computed(() => [
         </div>
       </template>
     </main>
+
+    <!-- NEW VACANCY MODAL -->
+    <Transition name="page">
+      <div v-if="newJobOpen && newJob" class="fixed inset-0 z-[60]">
+        <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" @click="newJobOpen = false"></div>
+        <div class="absolute inset-0 flex items-center justify-center p-4" @click.self="newJobOpen = false">
+          <div class="relative bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto p-6 sm:p-8 shadow-2xl">
+            <button
+              class="absolute top-4 right-4 text-gray-300 hover:text-gray-600 transition-colors"
+              :aria-label="t('admin.jobs.cancel')"
+              @click="newJobOpen = false"
+            >
+              <BaseIcon name="close" class="w-6 h-6" />
+            </button>
+            <h3 class="text-lg font-extrabold text-gray-900 mb-5">{{ t('admin.jobs.add') }}</h3>
+
+            <form class="space-y-4" @submit.prevent="saveNewJob">
+              <div class="flex items-center gap-4">
+                <div class="w-20 h-20 rounded-xl bg-gray-100 overflow-hidden flex items-center justify-center flex-shrink-0">
+                  <img v-if="newJob.image" :src="newJob.image" alt="" class="w-full h-full object-cover" />
+                  <BaseIcon v-else name="briefcase" class="w-6 h-6 text-gray-300" />
+                </div>
+                <label class="inline-flex items-center gap-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-semibold px-4 py-2.5 rounded-xl cursor-pointer">
+                  <BaseIcon name="upload" class="w-4 h-4" /> {{ t('admin.jobs.form.chooseImage') }}
+                  <input type="file" accept="image/*" class="hidden" @change="onJobRowImage(newJob, $event)" />
+                </label>
+              </div>
+              <div class="grid sm:grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-xs font-medium text-gray-500 mb-1.5">{{ t('admin.jobs.form.titleKa') }} *</label>
+                  <input v-model="newJob.titleKa" type="text" required class="w-full px-4 py-3 bg-gray-50 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white" />
+                </div>
+                <div>
+                  <label class="block text-xs font-medium text-gray-500 mb-1.5">{{ t('admin.jobs.form.titleEn') }}</label>
+                  <input v-model="newJob.titleEn" type="text" class="w-full px-4 py-3 bg-gray-50 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white" />
+                </div>
+                <div>
+                  <label class="block text-xs font-medium text-gray-500 mb-1.5">{{ t('admin.jobs.form.sectorKa') }}</label>
+                  <input v-model="newJob.sectorKa" type="text" class="w-full px-4 py-3 bg-gray-50 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white" />
+                </div>
+                <div>
+                  <label class="block text-xs font-medium text-gray-500 mb-1.5">{{ t('admin.jobs.form.sectorEn') }}</label>
+                  <input v-model="newJob.sectorEn" type="text" class="w-full px-4 py-3 bg-gray-50 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white" />
+                </div>
+                <div>
+                  <label class="block text-xs font-medium text-gray-500 mb-1.5">{{ t('admin.jobs.form.category') }} *</label>
+                  <input v-model="newJob.category" list="job-categories" required class="w-full px-4 py-3 bg-gray-50 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white" />
+                </div>
+                <div>
+                  <label class="block text-xs font-medium text-gray-500 mb-1.5">{{ t('admin.jobs.form.salary') }}</label>
+                  <input v-model="newJob.salary" type="text" placeholder="2,000–3,000 ₾" class="w-full px-4 py-3 bg-gray-50 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white" />
+                </div>
+              </div>
+              <div class="flex gap-3 pt-2">
+                <button type="button" class="flex-1 bg-gray-100 text-gray-700 py-3 rounded-xl font-semibold text-sm hover:bg-gray-200 transition-colors" @click="newJobOpen = false">
+                  {{ t('admin.jobs.cancel') }}
+                </button>
+                <button
+                  type="submit"
+                  :disabled="newJob.saving"
+                  class="flex-1 gradient-bg text-white py-3 rounded-xl font-semibold text-sm hover:opacity-90 transition-opacity inline-flex items-center justify-center gap-2"
+                  :class="{ 'opacity-60': newJob.saving }"
+                >
+                  <span v-if="newJob.saving" class="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin"></span>
+                  {{ t('admin.jobs.form.save') }}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </Transition>
   </div>
 </template>
+
+<style scoped>
+/* Consistent left-side expand/collapse chevron on every section header */
+details > summary {
+  list-style: none;
+}
+details > summary::-webkit-details-marker {
+  display: none;
+}
+details > summary::before {
+  content: '';
+  display: inline-block;
+  width: 0.45em;
+  height: 0.45em;
+  margin-right: 0.7em;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: rotate(-45deg);
+  transition: transform 0.2s ease;
+  vertical-align: middle;
+  opacity: 0.45;
+}
+details[open] > summary::before {
+  transform: rotate(45deg);
+}
+</style>

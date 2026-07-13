@@ -373,6 +373,10 @@ export default {
       empty: 'No vacancies yet. Add the first one.',
       cancel: 'Cancel',
       activeCategories: 'Active categories',
+      categories: 'Categories (filters)',
+      noCategories: 'No categories yet.',
+      newCategory: 'New category (e.g. Marketing)',
+      addCategory: 'Add',
       needTitleCategory: 'Fill in the position (Georgian) and a category.',
       form: {
         titleKa: 'Position (Georgian)',

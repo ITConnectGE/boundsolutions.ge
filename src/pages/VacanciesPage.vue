@@ -4,6 +4,8 @@ import { useI18n } from 'vue-i18n'
 import { useLoc } from '@/composables/useLocale'
 import { usePageMeta } from '@/composables/usePageMeta'
 import { getJobs, getJobsSeed } from '@/composables/jobs.js'
+import { defaultVacancyCategories } from '@/data/jobs.js'
+import { collection } from '@/composables/content.js'
 import { addApplication } from '@/composables/applications.js'
 import PageHero from '@/components/PageHero.vue'
 import BaseIcon from '@/components/BaseIcon.vue'
@@ -24,15 +26,14 @@ onMounted(async () => {
   }
 })
 
-// Filters are dynamic — the distinct categories actually used by the vacancies,
-// so there is no fixed list to maintain in the admin.
+// Filters follow the admin-managed category order, showing only categories that
+// actually have vacancies; any legacy category not in the managed list is appended.
+const managedCats = computed(() => collection('vacancyCategories', defaultVacancyCategories))
 const categories = computed(() => {
-  const set = new Set()
-  for (const j of jobsList.value) {
-    const c = (j.category || '').trim()
-    if (c) set.add(c)
-  }
-  return [...set]
+  const used = new Set(jobsList.value.map((j) => (j.category || '').trim()).filter(Boolean))
+  const ordered = managedCats.value.filter((c) => used.has(c))
+  const extra = [...used].filter((c) => !managedCats.value.includes(c))
+  return [...ordered, ...extra]
 })
 
 const filtered = computed(() =>

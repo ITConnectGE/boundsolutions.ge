@@ -374,6 +374,10 @@ export default {
       empty: 'ვაკანსიები ჯერ არ არის. დაამატეთ პირველი.',
       cancel: 'გაუქმება',
       activeCategories: 'აქტიური კატეგორიები',
+      categories: 'კატეგორიები (ფილტრები)',
+      noCategories: 'კატეგორიები ჯერ არ არის.',
+      newCategory: 'ახალი კატეგორია (მაგ: Marketing)',
+      addCategory: 'დამატება',
       needTitleCategory: 'შეავსეთ პოზიცია (ქართ.) და კატეგორია.',
       form: {
         titleKa: 'პოზიცია (ქართულად)',
