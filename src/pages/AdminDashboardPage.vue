@@ -187,17 +187,9 @@ const contentSearch = ref('')
 // These i18n groups are edited inside their dedicated collection blocks
 // (page headings live next to the cards/posts), so they are hidden from the
 // auto-generated list to avoid a duplicate "Services"/"Blog" section.
-const MERGED_GROUPS = new Set(['services', 'blog', 'about', 'nav', 'companyForm', 'home', 'vacancies'])
+const MERGED_GROUPS = new Set(['services', 'blog', 'about', 'nav', 'companyForm'])
 
-// Groups rendered as structured blocks (sub-sections with friendly headings)
-// instead of a flat key list — like the Employer-form block.
-const STRUCTURED_GROUPS = [
-  { group: 'home', label: 'მთავარი გვერდი / Home page' },
-  { group: 'vacancies', label: 'ვაკანსიების გვერდი / Vacancies page' },
-]
-const structuredGroups = computed(() => (contentSearch.value ? [] : STRUCTURED_GROUPS))
-
-// Friendly labels for the second-level key segment (the sub-section).
+// Friendly labels for the second-level key segment (a sub-section heading).
 const SUBSECTION_LABELS = {
   _: 'ზოგადი / General',
   aboutTeaser: 'ჩვენ შესახებ — მოკლე ბლოკი / About teaser',
@@ -210,21 +202,23 @@ const SUBSECTION_LABELS = {
   noPosition: 'ვაკანსია ვერ იპოვეთ / No position',
   modal: 'CV ფორმა / CV form',
   consent: 'პერსონალურ მონაცემთა თანხმობა / Consent',
+  form: 'ფორმა / Form',
+  interestOptions: 'ინტერესის ვარიანტები / Interest options',
+  hero: 'სლაიდები / Slides',
 }
-// Group a merged group's text fields by their second-level key into sub-sections.
-function subGroups(groupName) {
+// Group a list of content items by their second-level key into sub-sections
+// (top-level fields collect under '_', shown first without a heading).
+function subGroups(items) {
   const map = new Map()
-  for (const it of groupTextItems(groupName)) {
+  for (const it of items) {
     const parts = it.key.split('.')
     const sub = parts.length > 2 ? parts[1] : '_'
     if (!map.has(sub)) map.set(sub, [])
     map.get(sub).push(it)
   }
-  return [...map.entries()].map(([sub, items]) => ({
-    sub,
-    label: SUBSECTION_LABELS[sub] || sub,
-    items,
-  }))
+  return [...map.entries()]
+    .sort((a, b) => (a[0] === '_' ? -1 : b[0] === '_' ? 1 : 0))
+    .map(([sub, list]) => ({ sub, label: SUBSECTION_LABELS[sub] || sub, items: list }))
 }
 // A short field label = the key path after the sub-section segment.
 function subFieldLabel(key) {
@@ -1847,39 +1841,7 @@ const statCards = computed(() => [
             </div>
           </details>
 
-          <!-- Structured page blocks (Home, Vacancies) — grouped sub-sections -->
-          <details
-            v-for="sg in structuredGroups"
-            :key="sg.group"
-            class="bg-white rounded-2xl border border-gray-100 px-5 lg:px-6 py-4"
-          >
-            <summary class="font-brand text-sm text-gray-900 cursor-pointer select-none">{{ sg.label }}</summary>
-            <div class="space-y-4 mt-5">
-              <div v-for="section in subGroups(sg.group)" :key="section.sub" class="border border-gray-100 rounded-xl p-4 space-y-3">
-                <p class="text-xs font-semibold text-gray-600">{{ section.label }}</p>
-                <div v-for="it in section.items" :key="it.key">
-                  <label class="block text-[11px] font-medium text-gray-400 mb-1">{{ subFieldLabel(it.key) }}</label>
-                  <div class="grid sm:grid-cols-2 gap-3">
-                    <textarea v-model="draft[`${it.key}|ka`]" rows="2" placeholder="ქარ" class="w-full px-3 py-2 bg-gray-50 rounded-lg text-sm resize-y focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white"></textarea>
-                    <textarea v-model="draft[`${it.key}|en`]" rows="2" placeholder="EN" class="w-full px-3 py-2 bg-gray-50 rounded-lg text-sm resize-y focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white"></textarea>
-                  </div>
-                </div>
-              </div>
-              <div class="flex justify-end pt-1">
-                <button
-                  type="button"
-                  :disabled="groupSaving[sg.group]"
-                  class="gradient-bg text-white text-xs font-semibold px-4 py-2 rounded-xl hover:opacity-90 transition-opacity"
-                  :class="{ 'opacity-60': groupSaving[sg.group] }"
-                  @click="saveGroup(sg.group)"
-                >
-                  <span v-if="groupSaving[sg.group]" class="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin inline-block align-middle"></span>
-                  <BaseIcon v-else name="check" class="w-4 h-4 inline" /> შენახვა
-                </button>
-              </div>
-            </div>
-          </details>
-
+          <!-- Every content group as a structured block (sub-sections) -->
           <details
             v-for="g in visibleContentGroups"
             :key="g.label"
@@ -1890,46 +1852,39 @@ const statCards = computed(() => [
               {{ g.label }}
               <span class="text-gray-300 font-sans font-normal normal-case tracking-normal">({{ g.items.length }})</span>
             </summary>
-            <div class="space-y-5 mt-5">
-              <div v-for="it in g.items" :key="it.key">
-                <!-- Text field: ka + en -->
-                <template v-if="it.type === 'text'">
-                  <label class="block text-xs font-semibold text-gray-600 mb-1.5">{{ it.label }}</label>
-                  <div class="grid sm:grid-cols-2 gap-3">
-                    <div>
-                      <span class="block text-[10px] uppercase tracking-wide text-gray-300 mb-1">ქარ</span>
-                      <textarea
-                        v-model="draft[`${it.key}|ka`]"
-                        rows="2"
-                        class="w-full px-3 py-2 bg-gray-50 rounded-lg text-sm resize-y focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white"
-                      ></textarea>
+            <div class="space-y-4 mt-5">
+              <div
+                v-for="section in subGroups(g.items)"
+                :key="section.sub"
+                class="border border-gray-100 rounded-xl p-4 space-y-3"
+              >
+                <p v-if="section.sub !== '_'" class="text-xs font-semibold text-gray-600">{{ section.label }}</p>
+                <div v-for="it in section.items" :key="it.key">
+                  <!-- Text field: ka + en -->
+                  <template v-if="it.type === 'text'">
+                    <label class="block text-[11px] font-medium text-gray-400 mb-1">{{ subFieldLabel(it.key) }}</label>
+                    <div class="grid sm:grid-cols-2 gap-3">
+                      <textarea v-model="draft[`${it.key}|ka`]" rows="2" placeholder="ქარ" class="w-full px-3 py-2 bg-gray-50 rounded-lg text-sm resize-y focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white"></textarea>
+                      <textarea v-model="draft[`${it.key}|en`]" rows="2" placeholder="EN" class="w-full px-3 py-2 bg-gray-50 rounded-lg text-sm resize-y focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white"></textarea>
                     </div>
-                    <div>
-                      <span class="block text-[10px] uppercase tracking-wide text-gray-300 mb-1">EN</span>
-                      <textarea
-                        v-model="draft[`${it.key}|en`]"
-                        rows="2"
-                        class="w-full px-3 py-2 bg-gray-50 rounded-lg text-sm resize-y focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white"
-                      ></textarea>
-                    </div>
-                  </div>
-                </template>
+                  </template>
 
-                <!-- Image field -->
-                <template v-else>
-                  <label class="block text-xs font-semibold text-gray-600 mb-1.5">{{ it.label }}</label>
-                  <div class="flex items-center gap-4">
-                    <div class="w-24 h-16 rounded-lg bg-gray-100 overflow-hidden flex items-center justify-center flex-shrink-0">
-                      <img v-if="imgFor(it)" :src="imgFor(it)" alt="" class="w-full h-full object-cover" />
-                      <BaseIcon v-else name="image" class="w-5 h-5 text-gray-300" />
+                  <!-- Image field -->
+                  <template v-else>
+                    <label class="block text-[11px] font-medium text-gray-400 mb-1">{{ subFieldLabel(it.key) }}</label>
+                    <div class="flex items-center gap-4">
+                      <div class="w-24 h-16 rounded-lg bg-gray-100 overflow-hidden flex items-center justify-center flex-shrink-0">
+                        <img v-if="imgFor(it)" :src="imgFor(it)" alt="" class="w-full h-full object-cover" />
+                        <BaseIcon v-else name="image" class="w-5 h-5 text-gray-300" />
+                      </div>
+                      <label class="inline-flex items-center gap-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-semibold px-4 py-2.5 rounded-xl cursor-pointer transition-colors">
+                        <BaseIcon name="upload" class="w-4 h-4" />
+                        {{ uploadingKey === it.key ? '…' : t('admin.content.changeImage') }}
+                        <input type="file" accept="image/*" class="hidden" @change="onContentImage(it, $event)" />
+                      </label>
                     </div>
-                    <label class="inline-flex items-center gap-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-semibold px-4 py-2.5 rounded-xl cursor-pointer transition-colors">
-                      <BaseIcon name="upload" class="w-4 h-4" />
-                      {{ uploadingKey === it.key ? '…' : t('admin.content.changeImage') }}
-                      <input type="file" accept="image/*" class="hidden" @change="onContentImage(it, $event)" />
-                    </label>
-                  </div>
-                </template>
+                  </template>
+                </div>
               </div>
 
               <!-- Per-section save (text groups only; images upload instantly) -->
