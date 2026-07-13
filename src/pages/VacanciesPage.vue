@@ -146,7 +146,7 @@ async function submit() {
         <div
           v-for="job in filtered"
           :key="job.id"
-          class="bg-gray-50 rounded-2xl p-5 lg:p-6 flex flex-col lg:flex-row lg:items-center gap-4"
+          class="bg-white border border-gray-100 rounded-2xl p-5 lg:p-6 flex flex-col lg:flex-row lg:items-center gap-4"
         >
           <img
             v-if="job.image"
@@ -162,13 +162,13 @@ async function submit() {
             <span v-if="job.category" class="px-3 py-1 bg-brand/10 text-brand text-xs font-semibold rounded-lg">{{
               catLabel(job.category)
             }}</span>
-            <span class="px-3 py-1 bg-white text-gray-500 text-xs rounded-lg">{{
+            <span class="px-3 py-1 bg-gray-100 text-gray-500 text-xs rounded-lg">{{
               t('vacancies.location')
             }}</span>
-            <span class="px-3 py-1 bg-white text-gray-500 text-xs rounded-lg">{{
+            <span class="px-3 py-1 bg-gray-100 text-gray-500 text-xs rounded-lg">{{
               t('vacancies.fullTime')
             }}</span>
-            <span class="px-3 py-1 bg-white text-gray-600 text-xs font-semibold rounded-lg">{{
+            <span class="px-3 py-1 bg-gray-100 text-gray-600 text-xs font-semibold rounded-lg">{{
               job.salary
             }}</span>
           </div>
