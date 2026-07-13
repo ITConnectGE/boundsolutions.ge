@@ -62,6 +62,12 @@ const user = ref('')
 const view = ref('inbox') // inbox | jobs | content
 const connError = ref(false)
 
+// Per-application expand/collapse for the details block.
+const expanded = ref({})
+function toggleExpanded(id) {
+  expanded.value = { ...expanded.value, [id]: !expanded.value[id] }
+}
+
 // Friendly handling for failed API calls (e.g. backend not running).
 function adminError(e) {
   if (e?.status === 401) {
@@ -1128,22 +1134,41 @@ const statCards = computed(() => [
               <span v-if="a.phone"> · </span>
               <a v-if="a.phone" :href="`tel:${a.phone}`" class="hover:text-brand">{{ a.phone }}</a>
             </p>
-            <p
-              v-if="a.message"
-              class="text-sm text-gray-500 mt-2 bg-gray-50 rounded-lg px-3 py-2 whitespace-pre-line"
-            >
-              {{ a.message }}
-            </p>
+            <!-- CV download (always visible for CV submissions) -->
             <a
               v-if="a.cvFile"
               :href="a.cvUrl || undefined"
               :target="a.cvUrl ? '_blank' : undefined"
               rel="noopener noreferrer"
-              class="text-xs text-brand mt-2 inline-flex items-center gap-1.5 font-medium"
-              :class="a.cvUrl ? 'hover:underline' : ''"
+              class="mt-2.5 inline-flex items-center gap-2 bg-brand/10 text-brand text-xs font-semibold px-3 py-2 rounded-lg transition-colors"
+              :class="a.cvUrl ? 'hover:bg-brand/20' : 'opacity-60 cursor-default'"
             >
-              <BaseIcon name="fileCheck" class="w-4 h-4" /> {{ a.cvFile }}
+              <BaseIcon name="fileCheck" class="w-4 h-4" />
+              {{ t('admin.downloadCv') }}
+              <span class="text-brand/60 font-normal">· {{ a.cvFile }}</span>
             </a>
+
+            <!-- Collapsible details -->
+            <div v-if="a.message" class="mt-2">
+              <button
+                type="button"
+                class="inline-flex items-center gap-1 text-xs font-semibold text-gray-500 hover:text-brand transition-colors"
+                @click="toggleExpanded(a.id)"
+              >
+                <BaseIcon
+                  name="chevronDown"
+                  class="w-4 h-4 transition-transform"
+                  :class="{ 'rotate-180': expanded[a.id] }"
+                />
+                {{ expanded[a.id] ? t('admin.hideDetails') : t('admin.showDetails') }}
+              </button>
+              <p
+                v-if="expanded[a.id]"
+                class="text-sm text-gray-500 mt-2 bg-gray-50 rounded-lg px-3 py-2 whitespace-pre-line"
+              >
+                {{ a.message }}
+              </p>
+            </div>
           </div>
 
           <div class="flex lg:flex-col items-center lg:items-end gap-2 flex-shrink-0">

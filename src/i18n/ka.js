@@ -411,6 +411,9 @@ export default {
       typeContact: 'შეტყობინება',
     },
     export: 'CSV ექსპორტი',
+    downloadCv: 'CV-ს ჩამოტვირთვა',
+    showDetails: 'დეტალების ჩვენება',
+    hideDetails: 'დეტალების დამალვა',
     table: {
       applicant: 'კანდიდატი',
       type: 'ტიპი',

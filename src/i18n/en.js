@@ -410,6 +410,9 @@ export default {
       typeContact: 'Message',
     },
     export: 'Export CSV',
+    downloadCv: 'Download CV',
+    showDetails: 'Show details',
+    hideDetails: 'Hide details',
     table: {
       applicant: 'Applicant',
       type: 'Type',
