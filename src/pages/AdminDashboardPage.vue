@@ -164,6 +164,27 @@ const contentSaving = ref(false)
 const contentSaved = ref(false)
 const uploadingKey = ref('')
 const defaultMsgs = { ka: kaMessages, en: enMessages }
+const contentSearch = ref('')
+
+// Filter content groups/items by key or by the current ka/en value.
+const visibleContentGroups = computed(() => {
+  const q = contentSearch.value.trim().toLowerCase()
+  if (!q) return contentGroups
+  return contentGroups
+    .map((g) => ({
+      ...g,
+      items: g.items.filter((it) => {
+        if (it.key.toLowerCase().includes(q) || (it.label || '').toLowerCase().includes(q)) return true
+        if (it.type === 'text') {
+          const ka = String(draft.value[`${it.key}|ka`] || '').toLowerCase()
+          const en = String(draft.value[`${it.key}|en`] || '').toLowerCase()
+          return ka.includes(q) || en.includes(q)
+        }
+        return false
+      }),
+    }))
+    .filter((g) => g.items.length)
+})
 
 function imgFor(item) {
   return imageOverrides[item.key] || item.default || ''
@@ -618,9 +639,24 @@ const statCards = computed(() => [
         </div>
 
         <div v-else class="space-y-4">
+          <!-- Search -->
+          <div class="relative">
+            <BaseIcon name="search" class="w-4 h-4 text-gray-300 absolute left-3.5 top-1/2 -translate-y-1/2" />
+            <input
+              v-model="contentSearch"
+              type="text"
+              :placeholder="t('admin.content.search')"
+              class="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-100 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand/20"
+            />
+          </div>
+          <p v-if="contentSearch && !visibleContentGroups.length" class="text-center text-gray-400 text-sm py-8">
+            {{ t('admin.empty') }}
+          </p>
+
           <details
-            v-for="g in contentGroups"
+            v-for="g in visibleContentGroups"
             :key="g.label"
+            :open="!!contentSearch"
             class="bg-white rounded-2xl border border-gray-100 px-5 lg:px-6 py-4"
           >
             <summary class="font-brand text-sm text-gray-900 cursor-pointer select-none flex items-center gap-2">

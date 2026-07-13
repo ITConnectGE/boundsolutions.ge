@@ -363,6 +363,7 @@ export default {
       save: 'შენახვა',
       saved: 'შენახულია ✓',
       changeImage: 'სურათის შეცვლა',
+      search: 'ძებნა ტექსტში ან key-ში...',
       needApi: 'კონტენტის რედაქტირებას სჭირდება backend (API). დააყენე VITE_API_BASE და გაუშვი Laravel სერვერი.',
     },
     jobs: {

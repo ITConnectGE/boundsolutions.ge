@@ -362,6 +362,7 @@ export default {
       save: 'Save',
       saved: 'Saved ✓',
       changeImage: 'Change image',
+      search: 'Search text or key...',
       needApi: 'Editing content needs the backend (API). Set VITE_API_BASE and run the Laravel server.',
     },
     jobs: {
