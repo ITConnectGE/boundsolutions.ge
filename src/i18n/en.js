@@ -373,6 +373,7 @@ export default {
       empty: 'No vacancies yet. Add the first one.',
       cancel: 'Cancel',
       activeCategories: 'Active categories',
+      confirmDelete: 'Delete this vacancy?',
       categories: 'Categories (filters)',
       noCategories: 'No categories yet.',
       newCategory: 'New category (e.g. Marketing)',

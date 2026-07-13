@@ -39,6 +39,8 @@ const categories = computed(() => {
   const used = new Set(jobsList.value.map((j) => norm(j.category)).filter(Boolean))
   return managedCats.value.filter((c) => used.has(norm(c)))
 })
+// Show the managed DB label for a vacancy's category (so a legacy "sales" shows as "Sales").
+const catLabel = (cat) => managedCats.value.find((c) => norm(c) === norm(cat)) || cat
 
 const filtered = computed(() =>
   active.value === 'all'
@@ -158,7 +160,7 @@ async function submit() {
           </div>
           <div class="flex flex-wrap items-center gap-2">
             <span v-if="job.category" class="px-3 py-1 bg-brand/10 text-brand text-xs font-semibold rounded-lg">{{
-              job.category
+              catLabel(job.category)
             }}</span>
             <span class="px-3 py-1 bg-white text-gray-500 text-xs rounded-lg">{{
               t('vacancies.location')

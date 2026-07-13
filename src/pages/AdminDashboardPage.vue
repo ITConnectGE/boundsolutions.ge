@@ -128,36 +128,8 @@ function onJobRowImage(row, e) {
   reader.readAsDataURL(f)
 }
 
-async function saveJobRow(row) {
-  if (!row.titleKa.trim() || !row.category.trim()) {
-    toast.error(t('admin.jobs.needTitleCategory'))
-    return
-  }
-  row.saving = true
-  try {
-    await saveJob(
-      {
-        id: row.id || undefined,
-        category: row.category.trim(),
-        title: { ka: row.titleKa, en: row.titleEn || row.titleKa },
-        sector: { ka: row.sectorKa, en: row.sectorEn || row.sectorKa },
-        salary: row.salary,
-      },
-      row.imageFile || null,
-    )
-    toast.success(t('admin.content.saved'))
-    await reloadJobs()
-  } catch (e) {
-    adminError(e)
-    row.saving = false
-  }
-}
-
-async function removeJobRow(row, i) {
-  if (!row.id) {
-    jobsDraft.value.splice(i, 1) // unsaved row — just drop it
-    return
-  }
+async function confirmDeleteJob(row) {
+  if (typeof window !== 'undefined' && !window.confirm(t('admin.jobs.confirmDelete'))) return
   try {
     await deleteJob(row.id)
     await reloadJobs()
@@ -202,15 +174,18 @@ async function saveCategories() {
   categoriesSaving.value = false
 }
 
-// ---- New-vacancy modal ----
-const newJobOpen = ref(false)
-const newJob = ref(null)
-function openNewJob() {
-  newJob.value = toJobDraft(null)
-  newJobOpen.value = true
+// ---- Vacancy add/edit modal ----
+const jobModalOpen = ref(false)
+const jobForm = ref(null)
+// Show the managed category label for a stored category (legacy "sales" -> "Sales").
+const catLabel = (cat) =>
+  categoriesDraft.value.find((c) => c.toLowerCase() === (cat || '').toLowerCase()) || cat
+function openJobModal(row) {
+  jobForm.value = row ? { ...row, imageFile: null, saving: false } : toJobDraft(null)
+  jobModalOpen.value = true
 }
-async function saveNewJob() {
-  const row = newJob.value
+async function saveJobModal() {
+  const row = jobForm.value
   if (!row.titleKa.trim() || !row.category.trim()) {
     toast.error(t('admin.jobs.needTitleCategory'))
     return
@@ -219,6 +194,7 @@ async function saveNewJob() {
   try {
     await saveJob(
       {
+        id: row.id || undefined,
         category: row.category.trim(),
         title: { ka: row.titleKa, en: row.titleEn || row.titleKa },
         sector: { ka: row.sectorKa, en: row.sectorEn || row.sectorKa },
@@ -226,7 +202,7 @@ async function saveNewJob() {
       },
       row.imageFile || null,
     )
-    newJobOpen.value = false
+    jobModalOpen.value = false
     toast.success(t('admin.content.saved'))
     await reloadJobs()
   } catch (e) {
@@ -1208,7 +1184,7 @@ const statCards = computed(() => [
           </div>
           <button
             class="inline-flex items-center gap-1.5 gradient-bg text-white text-xs font-semibold px-4 py-2.5 rounded-xl hover:opacity-90 transition-opacity flex-shrink-0"
-            @click="openNewJob"
+            @click="openJobModal(null)"
           >
             <BaseIcon name="plus" class="w-4 h-4" /> {{ t('admin.jobs.add') }}
           </button>
@@ -1262,60 +1238,50 @@ const statCards = computed(() => [
           <option v-for="c in categoriesDraft" :key="c" :value="c" />
         </datalist>
 
-        <div v-if="jobsDraft.length" class="space-y-4">
+        <div v-if="jobsDraft.length" class="space-y-3">
           <div
-            v-for="(row, i) in jobsDraft"
-            :key="row.id || 'new-' + i"
-            class="bg-white rounded-2xl border border-gray-100 p-4 lg:p-5 space-y-4"
+            v-for="row in jobsDraft"
+            :key="row.id"
+            class="bg-gray-50 rounded-2xl p-5 lg:p-6 flex flex-col lg:flex-row lg:items-center gap-4"
           >
-            <div class="flex items-start gap-4">
-              <div class="w-20 h-20 rounded-xl bg-gray-100 flex-shrink-0 overflow-hidden flex items-center justify-center">
-                <img v-if="row.image" :src="row.image" alt="" class="w-full h-full object-cover" />
-                <BaseIcon v-else name="briefcase" class="w-6 h-6 text-gray-300" />
-              </div>
-              <div class="flex-1 flex flex-wrap items-center gap-2">
-                <label class="inline-flex items-center gap-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-semibold px-4 py-2.5 rounded-xl cursor-pointer transition-colors">
-                  <BaseIcon name="upload" class="w-4 h-4" /> {{ t('admin.jobs.form.chooseImage') }}
-                  <input type="file" accept="image/*" class="hidden" @change="onJobRowImage(row, $event)" />
-                </label>
-                <button
-                  v-if="row.image"
-                  type="button"
-                  class="text-xs text-gray-400 hover:text-red-500 transition-colors"
-                  @click="row.image = ''; row.imageFile = null"
-                >
-                  {{ t('admin.jobs.form.removeImage') }}
-                </button>
-              </div>
+            <img
+              v-if="row.image"
+              :src="row.image"
+              :alt="row.titleKa || row.titleEn"
+              class="w-full lg:w-28 h-32 lg:h-20 object-cover rounded-xl flex-shrink-0"
+            />
+            <div
+              v-else
+              class="w-full lg:w-28 h-20 rounded-xl bg-gray-100 flex items-center justify-center flex-shrink-0"
+            >
+              <BaseIcon name="briefcase" class="w-6 h-6 text-gray-300" />
+            </div>
+            <div class="flex-1 min-w-0">
+              <h3 class="font-bold text-gray-800 truncate">{{ row.titleKa || row.titleEn }}</h3>
+              <p class="text-gray-400 text-sm mt-0.5 truncate">{{ row.sectorKa || row.sectorEn }}</p>
+            </div>
+            <div class="flex flex-wrap items-center gap-2">
+              <span v-if="row.category" class="px-3 py-1 bg-brand/10 text-brand text-xs font-semibold rounded-lg">{{ catLabel(row.category) }}</span>
+              <span class="px-3 py-1 bg-white text-gray-500 text-xs rounded-lg">{{ t('vacancies.location') }}</span>
+              <span class="px-3 py-1 bg-white text-gray-500 text-xs rounded-lg">{{ t('vacancies.fullTime') }}</span>
+              <span v-if="row.salary" class="px-3 py-1 bg-white text-gray-600 text-xs font-semibold rounded-lg">{{ row.salary }}</span>
+            </div>
+            <div class="flex items-center gap-2 flex-shrink-0">
               <button
                 type="button"
-                class="w-9 h-9 rounded-lg border border-gray-200 text-gray-400 hover:text-red-500 hover:border-red-200 flex items-center justify-center transition-colors flex-shrink-0"
+                class="w-9 h-9 rounded-lg border border-gray-200 text-gray-500 hover:text-brand hover:border-brand/30 flex items-center justify-center transition-colors"
+                :aria-label="t('admin.jobs.edit')"
+                @click="openJobModal(row)"
+              >
+                <BaseIcon name="pencil" class="w-4 h-4" />
+              </button>
+              <button
+                type="button"
+                class="w-9 h-9 rounded-lg border border-gray-200 text-gray-400 hover:text-red-500 hover:border-red-200 flex items-center justify-center transition-colors"
                 :aria-label="t('admin.actions.delete')"
-                @click="removeJobRow(row, i)"
+                @click="confirmDeleteJob(row)"
               >
                 <BaseIcon name="close" class="w-4 h-4" />
-              </button>
-            </div>
-
-            <div class="grid sm:grid-cols-2 gap-3">
-              <input v-model="row.titleKa" :placeholder="t('admin.jobs.form.titleKa')" class="w-full px-3 py-2 bg-gray-50 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white" />
-              <input v-model="row.titleEn" :placeholder="t('admin.jobs.form.titleEn')" class="w-full px-3 py-2 bg-gray-50 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white" />
-              <input v-model="row.sectorKa" :placeholder="t('admin.jobs.form.sectorKa')" class="w-full px-3 py-2 bg-gray-50 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white" />
-              <input v-model="row.sectorEn" :placeholder="t('admin.jobs.form.sectorEn')" class="w-full px-3 py-2 bg-gray-50 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white" />
-              <input v-model="row.category" list="job-categories" :placeholder="t('admin.jobs.form.category')" class="w-full px-3 py-2 bg-gray-50 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white" />
-              <input v-model="row.salary" placeholder="2,000–3,000 ₾" class="w-full px-3 py-2 bg-gray-50 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white" />
-            </div>
-
-            <div class="flex justify-end">
-              <button
-                type="button"
-                :disabled="row.saving"
-                class="gradient-bg text-white text-xs font-semibold px-4 py-2 rounded-xl hover:opacity-90 transition-opacity"
-                :class="{ 'opacity-60': row.saving }"
-                @click="saveJobRow(row)"
-              >
-                <span v-if="row.saving" class="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin inline-block align-middle"></span>
-                <BaseIcon v-else name="check" class="w-4 h-4 inline" /> {{ t('admin.jobs.form.save') }}
               </button>
             </div>
           </div>
@@ -2117,69 +2083,71 @@ const statCards = computed(() => [
       </template>
     </main>
 
-    <!-- NEW VACANCY MODAL -->
+    <!-- VACANCY ADD / EDIT MODAL -->
     <Transition name="page">
-      <div v-if="newJobOpen && newJob" class="fixed inset-0 z-[60]">
-        <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" @click="newJobOpen = false"></div>
-        <div class="absolute inset-0 flex items-center justify-center p-4" @click.self="newJobOpen = false">
+      <div v-if="jobModalOpen && jobForm" class="fixed inset-0 z-[60]">
+        <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" @click="jobModalOpen = false"></div>
+        <div class="absolute inset-0 flex items-center justify-center p-4" @click.self="jobModalOpen = false">
           <div class="relative bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto p-6 sm:p-8 shadow-2xl">
             <button
               class="absolute top-4 right-4 text-gray-300 hover:text-gray-600 transition-colors"
               :aria-label="t('admin.jobs.cancel')"
-              @click="newJobOpen = false"
+              @click="jobModalOpen = false"
             >
               <BaseIcon name="close" class="w-6 h-6" />
             </button>
-            <h3 class="text-lg font-extrabold text-gray-900 mb-5">{{ t('admin.jobs.add') }}</h3>
+            <h3 class="text-lg font-extrabold text-gray-900 mb-5">
+              {{ jobForm.id ? t('admin.jobs.edit') : t('admin.jobs.add') }}
+            </h3>
 
-            <form class="space-y-4" @submit.prevent="saveNewJob">
+            <form class="space-y-4" @submit.prevent="saveJobModal">
               <div class="flex items-center gap-4">
                 <div class="w-20 h-20 rounded-xl bg-gray-100 overflow-hidden flex items-center justify-center flex-shrink-0">
-                  <img v-if="newJob.image" :src="newJob.image" alt="" class="w-full h-full object-cover" />
+                  <img v-if="jobForm.image" :src="jobForm.image" alt="" class="w-full h-full object-cover" />
                   <BaseIcon v-else name="briefcase" class="w-6 h-6 text-gray-300" />
                 </div>
                 <label class="inline-flex items-center gap-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-semibold px-4 py-2.5 rounded-xl cursor-pointer">
                   <BaseIcon name="upload" class="w-4 h-4" /> {{ t('admin.jobs.form.chooseImage') }}
-                  <input type="file" accept="image/*" class="hidden" @change="onJobRowImage(newJob, $event)" />
+                  <input type="file" accept="image/*" class="hidden" @change="onJobRowImage(jobForm, $event)" />
                 </label>
               </div>
               <div class="grid sm:grid-cols-2 gap-4">
                 <div>
                   <label class="block text-xs font-medium text-gray-500 mb-1.5">{{ t('admin.jobs.form.titleKa') }} *</label>
-                  <input v-model="newJob.titleKa" type="text" required class="w-full px-4 py-3 bg-gray-50 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white" />
+                  <input v-model="jobForm.titleKa" type="text" required class="w-full px-4 py-3 bg-gray-50 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white" />
                 </div>
                 <div>
                   <label class="block text-xs font-medium text-gray-500 mb-1.5">{{ t('admin.jobs.form.titleEn') }}</label>
-                  <input v-model="newJob.titleEn" type="text" class="w-full px-4 py-3 bg-gray-50 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white" />
+                  <input v-model="jobForm.titleEn" type="text" class="w-full px-4 py-3 bg-gray-50 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white" />
                 </div>
                 <div>
                   <label class="block text-xs font-medium text-gray-500 mb-1.5">{{ t('admin.jobs.form.sectorKa') }}</label>
-                  <input v-model="newJob.sectorKa" type="text" class="w-full px-4 py-3 bg-gray-50 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white" />
+                  <input v-model="jobForm.sectorKa" type="text" class="w-full px-4 py-3 bg-gray-50 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white" />
                 </div>
                 <div>
                   <label class="block text-xs font-medium text-gray-500 mb-1.5">{{ t('admin.jobs.form.sectorEn') }}</label>
-                  <input v-model="newJob.sectorEn" type="text" class="w-full px-4 py-3 bg-gray-50 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white" />
+                  <input v-model="jobForm.sectorEn" type="text" class="w-full px-4 py-3 bg-gray-50 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white" />
                 </div>
                 <div>
                   <label class="block text-xs font-medium text-gray-500 mb-1.5">{{ t('admin.jobs.form.category') }} *</label>
-                  <input v-model="newJob.category" list="job-categories" required class="w-full px-4 py-3 bg-gray-50 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white" />
+                  <input v-model="jobForm.category" list="job-categories" required class="w-full px-4 py-3 bg-gray-50 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white" />
                 </div>
                 <div>
                   <label class="block text-xs font-medium text-gray-500 mb-1.5">{{ t('admin.jobs.form.salary') }}</label>
-                  <input v-model="newJob.salary" type="text" placeholder="2,000–3,000 ₾" class="w-full px-4 py-3 bg-gray-50 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white" />
+                  <input v-model="jobForm.salary" type="text" placeholder="2,000–3,000 ₾" class="w-full px-4 py-3 bg-gray-50 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white" />
                 </div>
               </div>
               <div class="flex gap-3 pt-2">
-                <button type="button" class="flex-1 bg-gray-100 text-gray-700 py-3 rounded-xl font-semibold text-sm hover:bg-gray-200 transition-colors" @click="newJobOpen = false">
+                <button type="button" class="flex-1 bg-gray-100 text-gray-700 py-3 rounded-xl font-semibold text-sm hover:bg-gray-200 transition-colors" @click="jobModalOpen = false">
                   {{ t('admin.jobs.cancel') }}
                 </button>
                 <button
                   type="submit"
-                  :disabled="newJob.saving"
+                  :disabled="jobForm.saving"
                   class="flex-1 gradient-bg text-white py-3 rounded-xl font-semibold text-sm hover:opacity-90 transition-opacity inline-flex items-center justify-center gap-2"
-                  :class="{ 'opacity-60': newJob.saving }"
+                  :class="{ 'opacity-60': jobForm.saving }"
                 >
-                  <span v-if="newJob.saving" class="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin"></span>
+                  <span v-if="jobForm.saving" class="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin"></span>
                   {{ t('admin.jobs.form.save') }}
                 </button>
               </div>

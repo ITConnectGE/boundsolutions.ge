@@ -374,6 +374,7 @@ export default {
       empty: 'ვაკანსიები ჯერ არ არის. დაამატეთ პირველი.',
       cancel: 'გაუქმება',
       activeCategories: 'აქტიური კატეგორიები',
+      confirmDelete: 'ნამდვილად წავშალო ეს ვაკანსია?',
       categories: 'კატეგორიები (ფილტრები)',
       noCategories: 'კატეგორიები ჯერ არ არის.',
       newCategory: 'ახალი კატეგორია (მაგ: Marketing)',
