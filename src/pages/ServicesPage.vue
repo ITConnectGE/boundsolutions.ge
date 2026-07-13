@@ -3,15 +3,19 @@ import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { usePageMeta } from '@/composables/usePageMeta'
 import { services as defaultServices } from '@/data/services.js'
+import { defaultProcess } from '@/data/lists.js'
 import { collection } from '@/composables/content.js'
+import { useLoc } from '@/composables/useLocale'
 import PageHero from '@/components/PageHero.vue'
 import ServiceCard from '@/components/ServiceCard.vue'
 import SectionHeading from '@/components/SectionHeading.vue'
 import ContactCta from '@/components/ContactCta.vue'
 
-const { t, tm, rt } = useI18n()
+const { t } = useI18n()
+const { loc } = useLoc()
 // Editable from the admin CMS (falls back to the built-in catalogue).
 const services = computed(() => collection('services', defaultServices))
+const process = computed(() => collection('process', defaultProcess))
 usePageMeta({ title: () => t('services.title'), description: () => t('services.subtitle') })
 </script>
 
@@ -38,15 +42,15 @@ usePageMeta({ title: () => t('services.title'), description: () => t('services.s
         class="mb-14"
       />
       <div class="grid md:grid-cols-4 gap-8">
-        <div v-for="(step, i) in tm('home.process.steps')" :key="i" class="fade-in text-center group">
+        <div v-for="(step, i) in process" :key="i" class="fade-in text-center group">
           <div
             class="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4 text-lg font-bold group-hover:scale-110 transition-transform duration-300"
             :class="i % 2 === 0 ? 'gradient-bg text-white shadow-lg shadow-brand/20' : 'bg-accent text-navy'"
           >
             {{ i + 1 }}
           </div>
-          <h3 class="font-bold text-gray-800 mb-2">{{ rt(step.title) }}</h3>
-          <p class="text-sm text-gray-400 leading-relaxed">{{ rt(step.text) }}</p>
+          <h3 class="font-bold text-gray-800 mb-2">{{ loc(step.title) }}</h3>
+          <p class="text-sm text-gray-400 leading-relaxed">{{ loc(step.text) }}</p>
         </div>
       </div>
     </div>

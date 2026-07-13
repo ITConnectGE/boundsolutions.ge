@@ -1,12 +1,19 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { usePageMeta } from '@/composables/usePageMeta'
 import { addApplication } from '@/composables/applications.js'
+import { collection } from '@/composables/content.js'
+import { defaultCompanyForm } from '@/data/lists.js'
+import { useLoc } from '@/composables/useLocale'
 import PageHero from '@/components/PageHero.vue'
 import BaseIcon from '@/components/BaseIcon.vue'
 
-const { t, tm, rt } = useI18n()
+const { t } = useI18n()
+const { loc } = useLoc()
+
+// Editable from the admin CMS: intro + the schedule / contract dropdown options.
+const cf = computed(() => collection('companyForm', defaultCompanyForm))
 
 usePageMeta({ title: () => t('companyForm.title'), description: () => t('companyForm.subtitle') })
 
@@ -104,9 +111,8 @@ const inputCls =
       </div>
 
       <template v-else>
-        <div class="bg-brand/5 rounded-2xl p-6 mb-8 space-y-3">
-          <p class="text-sm text-gray-600 leading-relaxed">{{ t('companyForm.intro1') }}</p>
-          <p class="text-sm text-gray-500 leading-relaxed">{{ t('companyForm.intro2') }}</p>
+        <div class="bg-brand/5 rounded-2xl p-6 mb-8">
+          <div class="rich text-sm text-gray-600 leading-relaxed" v-html="loc(cf.intro)"></div>
         </div>
 
         <form class="space-y-10" @submit.prevent="submit">
@@ -144,7 +150,7 @@ const inputCls =
               <label class="block text-xs font-medium text-gray-500 mb-1.5">{{ t('companyForm.schedule') }}</label>
               <select v-model="form.schedule" :class="inputCls">
                 <option value="">{{ t('companyForm.choose') }}</option>
-                <option v-for="(o, i) in tm('companyForm.scheduleOptions')" :key="i" :value="rt(o)">{{ rt(o) }}</option>
+                <option v-for="(o, i) in cf.schedule" :key="i" :value="loc(o)">{{ loc(o) }}</option>
               </select>
             </div>
             <div>
@@ -169,14 +175,14 @@ const inputCls =
                 <label class="block text-xs font-medium text-gray-500 mb-1.5">{{ t('companyForm.contractType') }}</label>
                 <select v-model="form.contractType" :class="inputCls">
                   <option value="">{{ t('companyForm.choose') }}</option>
-                  <option v-for="(o, i) in tm('companyForm.contractTypeOptions')" :key="i" :value="rt(o)">{{ rt(o) }}</option>
+                  <option v-for="(o, i) in cf.contractType" :key="i" :value="loc(o)">{{ loc(o) }}</option>
                 </select>
               </div>
               <div>
                 <label class="block text-xs font-medium text-gray-500 mb-1.5">{{ t('companyForm.contractPeriod') }}</label>
                 <select v-model="form.contractPeriod" :class="inputCls">
                   <option value="">{{ t('companyForm.choose') }}</option>
-                  <option v-for="(o, i) in tm('companyForm.contractPeriodOptions')" :key="i" :value="rt(o)">{{ rt(o) }}</option>
+                  <option v-for="(o, i) in cf.contractPeriod" :key="i" :value="loc(o)">{{ loc(o) }}</option>
                 </select>
               </div>
             </div>

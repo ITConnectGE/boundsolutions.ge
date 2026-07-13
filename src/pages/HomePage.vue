@@ -6,6 +6,7 @@ import { usePageMeta } from '@/composables/usePageMeta'
 import { services as defaultServices } from '@/data/services.js'
 import { collection } from '@/composables/content.js'
 import { aboutDefault } from '@/data/about.js'
+import { defaultStats } from '@/data/lists.js'
 import HeroSlider from '@/components/HeroSlider.vue'
 import EditableText from '@/components/EditableText.vue'
 import SectionHeading from '@/components/SectionHeading.vue'
@@ -20,6 +21,7 @@ const founderImgFailed = ref(false)
 // Editable from the admin CMS (falls back to the built-in catalogue).
 const services = computed(() => collection('services', defaultServices))
 const founder = computed(() => collection('about', aboutDefault).founder)
+const stats = computed(() => collection('stats', defaultStats))
 
 // no title => site default; description from i18n keeps it bilingual
 usePageMeta({ description: () => t('hero.subtitle') })
@@ -32,9 +34,9 @@ usePageMeta({ description: () => t('hero.subtitle') })
   <!-- STATS STRIP -->
   <section class="bg-white border-b border-gray-100">
     <div class="max-w-5xl mx-auto px-6 py-10 grid grid-cols-3 gap-4 sm:gap-8 text-center">
-      <div v-for="(s, i) in tm('hero.stats')" :key="i" class="fade-in">
-        <div class="text-3xl lg:text-4xl font-extrabold gradient-text">{{ rt(s.v) }}</div>
-        <p class="text-gray-400 text-xs sm:text-sm mt-1">{{ rt(s.l) }}</p>
+      <div v-for="(s, i) in stats" :key="i" class="fade-in">
+        <div class="text-3xl lg:text-4xl font-extrabold gradient-text">{{ loc(s.v) }}</div>
+        <p class="text-gray-400 text-xs sm:text-sm mt-1">{{ loc(s.l) }}</p>
       </div>
     </div>
   </section>

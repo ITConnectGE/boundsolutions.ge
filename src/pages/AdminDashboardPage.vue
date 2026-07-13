@@ -28,6 +28,7 @@ import { posts as defaultPosts } from '@/data/blog.js'
 import { aboutDefault } from '@/data/about.js'
 import { partners as defaultPartners } from '@/data/social.js'
 import { defaultNav } from '@/data/nav.js'
+import { defaultProcess, defaultStats, defaultCompanyForm } from '@/data/lists.js'
 import { toast } from '@/composables/toast'
 import kaMessages from '@/i18n/ka.js'
 import enMessages from '@/i18n/en.js'
@@ -488,6 +489,9 @@ async function loadContentEditor() {
   aboutDraft.value = normalizeAbout(JSON.parse(JSON.stringify(collection('about', aboutDefault))))
   partnersDraft.value = JSON.parse(JSON.stringify(collection('partners', defaultPartners)))
   navDraft.value = JSON.parse(JSON.stringify(collection('nav', defaultNav)))
+  processDraft.value = JSON.parse(JSON.stringify(collection('process', defaultProcess)))
+  statsDraft.value = JSON.parse(JSON.stringify(collection('stats', defaultStats)))
+  companyFormDraft.value = normalizeCompanyForm(JSON.parse(JSON.stringify(collection('companyForm', defaultCompanyForm))))
   try {
     const rows = await loadAllContent()
     for (const r of rows) {
@@ -534,6 +538,30 @@ async function loadContentEditor() {
       if (r.type === 'json' && r.key === 'col.nav') {
         try {
           navDraft.value = JSON.parse(r.value)
+        } catch {
+          /* keep default */
+        }
+        continue
+      }
+      if (r.type === 'json' && r.key === 'col.process') {
+        try {
+          processDraft.value = JSON.parse(r.value)
+        } catch {
+          /* keep default */
+        }
+        continue
+      }
+      if (r.type === 'json' && r.key === 'col.stats') {
+        try {
+          statsDraft.value = JSON.parse(r.value)
+        } catch {
+          /* keep default */
+        }
+        continue
+      }
+      if (r.type === 'json' && r.key === 'col.companyForm') {
+        try {
+          companyFormDraft.value = normalizeCompanyForm(JSON.parse(r.value))
         } catch {
           /* keep default */
         }
@@ -630,6 +658,84 @@ async function saveNav() {
     adminError(e)
   }
   navSaving.value = false
+}
+
+// ---- Collection: process steps (how we work) ----
+const processDraft = ref([])
+const processSaving = ref(false)
+function addStep() {
+  processDraft.value.push({ title: { ka: '', en: '' }, text: { ka: '', en: '' } })
+}
+function removeStep(i) {
+  processDraft.value.splice(i, 1)
+}
+async function saveProcess() {
+  processSaving.value = true
+  try {
+    await saveCollection('process', processDraft.value)
+    contentSaved.value = true
+    toast.success(t('admin.content.saved'))
+    setTimeout(() => (contentSaved.value = false), 2000)
+  } catch (e) {
+    adminError(e)
+  }
+  processSaving.value = false
+}
+
+// ---- Collection: hero stats ----
+const statsDraft = ref([])
+const statsSaving = ref(false)
+function addStat() {
+  statsDraft.value.push({ v: { ka: '', en: '' }, l: { ka: '', en: '' } })
+}
+function removeStat(i) {
+  statsDraft.value.splice(i, 1)
+}
+async function saveStats() {
+  statsSaving.value = true
+  try {
+    await saveCollection('stats', statsDraft.value)
+    contentSaved.value = true
+    toast.success(t('admin.content.saved'))
+    setTimeout(() => (contentSaved.value = false), 2000)
+  } catch (e) {
+    adminError(e)
+  }
+  statsSaving.value = false
+}
+
+// ---- Collection: company-request form (intro + dropdown options) ----
+const companyFormDraft = ref(null)
+const companyFormSaving = ref(false)
+const companyOptionLists = [
+  { key: 'schedule', label: 'სამუშაო გრაფიკი / Schedule' },
+  { key: 'contractType', label: 'ხელშეკრულების ტიპი / Contract type' },
+  { key: 'contractPeriod', label: 'ხელშეკრულების პერიოდი / Contract period' },
+]
+function normalizeCompanyForm(cf) {
+  cf.intro = cf.intro || { ka: '', en: '' }
+  for (const key of ['schedule', 'contractType', 'contractPeriod']) {
+    cf[key] = Array.isArray(cf[key]) ? cf[key] : []
+  }
+  return cf
+}
+function addOption(list) {
+  companyFormDraft.value[list].push({ ka: '', en: '' })
+}
+function removeOption(list, i) {
+  companyFormDraft.value[list].splice(i, 1)
+}
+async function saveCompanyForm() {
+  companyFormSaving.value = true
+  try {
+    await saveCollection('companyForm', companyFormDraft.value)
+    contentSaved.value = true
+    toast.success(t('admin.content.saved'))
+    setTimeout(() => (contentSaved.value = false), 2000)
+  } catch (e) {
+    adminError(e)
+  }
+  companyFormSaving.value = false
 }
 
 async function onContentImage(item, e) {
@@ -1495,6 +1601,139 @@ const statCards = computed(() => [
                   @click="savePartners"
                 >
                   <span v-if="partnersSaving" class="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin inline-block align-middle"></span>
+                  <BaseIcon v-else name="check" class="w-4 h-4 inline" /> შენახვა
+                </button>
+              </div>
+            </div>
+          </details>
+
+          <!-- Collection: Process steps (how we work) -->
+          <details v-if="!contentSearch" class="bg-white rounded-2xl border border-gray-100 px-5 lg:px-6 py-4">
+            <summary class="font-brand text-sm text-gray-900 cursor-pointer select-none">
+              პროცესი / Process
+              <span class="text-gray-300 font-sans font-normal normal-case tracking-normal">({{ processDraft.length }})</span>
+            </summary>
+            <div class="space-y-3 mt-5">
+              <div v-for="(s, i) in processDraft" :key="i" class="border border-gray-100 rounded-xl p-3 space-y-2">
+                <div class="flex items-center justify-between">
+                  <span class="text-xs font-semibold text-gray-500">#{{ i + 1 }}</span>
+                  <button type="button" class="text-gray-400 hover:text-red-500" @click="removeStep(i)">
+                    <BaseIcon name="close" class="w-4 h-4" />
+                  </button>
+                </div>
+                <div class="grid sm:grid-cols-2 gap-3">
+                  <input v-model="s.title.ka" placeholder="სათაური (ქარ)" class="w-full px-3 py-2 bg-gray-50 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white" />
+                  <input v-model="s.title.en" placeholder="Title (EN)" class="w-full px-3 py-2 bg-gray-50 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white" />
+                </div>
+                <div class="grid sm:grid-cols-2 gap-3">
+                  <textarea v-model="s.text.ka" rows="2" placeholder="ტექსტი (ქარ)" class="w-full px-3 py-2 bg-gray-50 rounded-lg text-sm resize-y focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white"></textarea>
+                  <textarea v-model="s.text.en" rows="2" placeholder="Text (EN)" class="w-full px-3 py-2 bg-gray-50 rounded-lg text-sm resize-y focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white"></textarea>
+                </div>
+              </div>
+              <div class="flex items-center justify-between pt-1">
+                <button type="button" class="inline-flex items-center gap-1 text-brand text-xs font-semibold" @click="addStep">
+                  <BaseIcon name="plus" class="w-4 h-4" /> ნაბიჯის დამატება
+                </button>
+                <button
+                  type="button"
+                  :disabled="processSaving"
+                  class="gradient-bg text-white text-xs font-semibold px-4 py-2 rounded-xl hover:opacity-90 transition-opacity"
+                  :class="{ 'opacity-60': processSaving }"
+                  @click="saveProcess"
+                >
+                  <span v-if="processSaving" class="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin inline-block align-middle"></span>
+                  <BaseIcon v-else name="check" class="w-4 h-4 inline" /> შენახვა
+                </button>
+              </div>
+            </div>
+          </details>
+
+          <!-- Collection: Hero stats -->
+          <details v-if="!contentSearch" class="bg-white rounded-2xl border border-gray-100 px-5 lg:px-6 py-4">
+            <summary class="font-brand text-sm text-gray-900 cursor-pointer select-none">
+              სტატისტიკა / Stats
+              <span class="text-gray-300 font-sans font-normal normal-case tracking-normal">({{ statsDraft.length }})</span>
+            </summary>
+            <div class="space-y-3 mt-5">
+              <div v-for="(s, i) in statsDraft" :key="i" class="border border-gray-100 rounded-xl p-3 space-y-2">
+                <div class="flex items-center justify-between">
+                  <span class="text-xs font-semibold text-gray-500">#{{ i + 1 }}</span>
+                  <button type="button" class="text-gray-400 hover:text-red-500" @click="removeStat(i)">
+                    <BaseIcon name="close" class="w-4 h-4" />
+                  </button>
+                </div>
+                <div class="grid sm:grid-cols-2 gap-3">
+                  <input v-model="s.v.ka" placeholder="მაჩვენებელი, მაგ: 500+ (ქარ)" class="w-full px-3 py-2 bg-gray-50 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white" />
+                  <input v-model="s.v.en" placeholder="Value, e.g. 500+ (EN)" class="w-full px-3 py-2 bg-gray-50 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white" />
+                  <input v-model="s.l.ka" placeholder="აღწერა (ქარ)" class="w-full px-3 py-2 bg-gray-50 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white" />
+                  <input v-model="s.l.en" placeholder="Label (EN)" class="w-full px-3 py-2 bg-gray-50 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white" />
+                </div>
+              </div>
+              <div class="flex items-center justify-between pt-1">
+                <button type="button" class="inline-flex items-center gap-1 text-brand text-xs font-semibold" @click="addStat">
+                  <BaseIcon name="plus" class="w-4 h-4" /> მაჩვენებლის დამატება
+                </button>
+                <button
+                  type="button"
+                  :disabled="statsSaving"
+                  class="gradient-bg text-white text-xs font-semibold px-4 py-2 rounded-xl hover:opacity-90 transition-opacity"
+                  :class="{ 'opacity-60': statsSaving }"
+                  @click="saveStats"
+                >
+                  <span v-if="statsSaving" class="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin inline-block align-middle"></span>
+                  <BaseIcon v-else name="check" class="w-4 h-4 inline" /> შენახვა
+                </button>
+              </div>
+            </div>
+          </details>
+
+          <!-- Collection: Employer request form (intro + dropdown options) -->
+          <details v-if="!contentSearch && companyFormDraft" class="bg-white rounded-2xl border border-gray-100 px-5 lg:px-6 py-4">
+            <summary class="font-brand text-sm text-gray-900 cursor-pointer select-none">
+              დამსაქმებლის ფორმა / Employer form
+            </summary>
+            <div class="space-y-5 mt-5">
+              <!-- Intro (WYSIWYG) -->
+              <div class="border border-gray-100 rounded-xl p-4 space-y-3">
+                <p class="text-xs font-semibold text-gray-600">შესავალი ტექსტი / Intro text</p>
+                <div class="grid sm:grid-cols-2 gap-3">
+                  <div>
+                    <span class="block text-[10px] uppercase tracking-wide text-gray-300 mb-1">ქარ</span>
+                    <RichTextEditor v-model="companyFormDraft.intro.ka" />
+                  </div>
+                  <div>
+                    <span class="block text-[10px] uppercase tracking-wide text-gray-300 mb-1">EN</span>
+                    <RichTextEditor v-model="companyFormDraft.intro.en" />
+                  </div>
+                </div>
+              </div>
+
+              <!-- Dropdown option lists -->
+              <div v-for="list in companyOptionLists" :key="list.key" class="border border-gray-100 rounded-xl p-4 space-y-2">
+                <p class="text-xs font-semibold text-gray-600">{{ list.label }}</p>
+                <div v-for="(o, i) in companyFormDraft[list.key]" :key="i" class="grid sm:grid-cols-2 gap-3 items-center">
+                  <input v-model="o.ka" placeholder="ვარიანტი (ქარ)" class="w-full px-3 py-2 bg-gray-50 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white" />
+                  <div class="flex items-center gap-2">
+                    <input v-model="o.en" placeholder="Option (EN)" class="flex-1 px-3 py-2 bg-gray-50 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white" />
+                    <button type="button" class="text-gray-400 hover:text-red-500 flex-shrink-0" @click="removeOption(list.key, i)">
+                      <BaseIcon name="close" class="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+                <button type="button" class="inline-flex items-center gap-1 text-brand text-xs font-semibold" @click="addOption(list.key)">
+                  <BaseIcon name="plus" class="w-4 h-4" /> ვარიანტის დამატება
+                </button>
+              </div>
+
+              <div class="flex justify-end pt-1">
+                <button
+                  type="button"
+                  :disabled="companyFormSaving"
+                  class="gradient-bg text-white text-xs font-semibold px-4 py-2 rounded-xl hover:opacity-90 transition-opacity"
+                  :class="{ 'opacity-60': companyFormSaving }"
+                  @click="saveCompanyForm"
+                >
+                  <span v-if="companyFormSaving" class="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin inline-block align-middle"></span>
                   <BaseIcon v-else name="check" class="w-4 h-4 inline" /> შენახვა
                 </button>
               </div>
