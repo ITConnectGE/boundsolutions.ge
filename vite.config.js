@@ -20,6 +20,10 @@ export default defineConfig({
   ssgOptions: {
     script: 'async',
     formatting: 'minify',
+    // Emit nested index.html files (blog/index.html, not blog.html) so routes with
+    // child pages (/blog, /services) resolve as directories — a trailing-slash URL
+    // like /blog/ no longer hits an index-less directory and 403s on nginx.
+    dirStyle: 'nested',
     // Expand dynamic routes so every service + blog post is pre-rendered to static HTML
     includedRoutes(paths) {
       const dynamic = [
