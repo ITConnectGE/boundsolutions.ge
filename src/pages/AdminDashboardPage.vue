@@ -18,8 +18,11 @@ import {
   uploadContentImage,
   imageOverrides,
   getNested,
+  collection,
+  saveCollection,
 } from '@/composables/content.js'
 import { editableContent } from '@/data/editableContent.js'
+import { testimonials as defaultTestimonials } from '@/data/social.js'
 import kaMessages from '@/i18n/ka.js'
 import enMessages from '@/i18n/en.js'
 import BaseIcon from '@/components/BaseIcon.vue'
@@ -190,13 +193,43 @@ function imgFor(item) {
   return imageOverrides[item.key] || item.default || ''
 }
 
+// ---- Collections (structured content: testimonials) ----
+const testimonialsDraft = ref([])
+const testimonialsSaving = ref(false)
+function addTestimonial() {
+  testimonialsDraft.value.push({ quote: { ka: '', en: '' }, author: { ka: '', en: '' }, role: { ka: '', en: '' } })
+}
+function removeTestimonial(i) {
+  testimonialsDraft.value.splice(i, 1)
+}
+async function saveTestimonials() {
+  testimonialsSaving.value = true
+  try {
+    await saveCollection('testimonials', testimonialsDraft.value)
+    contentSaved.value = true
+    setTimeout(() => (contentSaved.value = false), 2000)
+  } catch (e) {
+    adminError(e)
+  }
+  testimonialsSaving.value = false
+}
+
 async function loadContentEditor() {
   if (!apiOn) return
   contentLoading.value = true
   const saved = {}
+  testimonialsDraft.value = JSON.parse(JSON.stringify(collection('testimonials', defaultTestimonials)))
   try {
     const rows = await loadAllContent()
     for (const r of rows) {
+      if (r.type === 'json' && r.key === 'col.testimonials') {
+        try {
+          testimonialsDraft.value = JSON.parse(r.value)
+        } catch {
+          /* keep default */
+        }
+        continue
+      }
       if (r.type !== 'image') saved[`${r.key}|${r.locale}`] = r.value
     }
   } catch {
@@ -652,6 +685,51 @@ const statCards = computed(() => [
           <p v-if="contentSearch && !visibleContentGroups.length" class="text-center text-gray-400 text-sm py-8">
             {{ t('admin.empty') }}
           </p>
+
+          <!-- Collection: Testimonials -->
+          <details v-if="!contentSearch" class="bg-white rounded-2xl border border-gray-100 px-5 lg:px-6 py-4">
+            <summary class="font-brand text-sm text-gray-900 cursor-pointer select-none">
+              შეფასებები / Testimonials
+              <span class="text-gray-300 font-sans font-normal normal-case tracking-normal">({{ testimonialsDraft.length }})</span>
+            </summary>
+            <div class="space-y-4 mt-5">
+              <div v-for="(tm, i) in testimonialsDraft" :key="i" class="border border-gray-100 rounded-xl p-4 space-y-3">
+                <div class="flex items-center justify-between">
+                  <span class="text-xs font-semibold text-gray-500">#{{ i + 1 }}</span>
+                  <button type="button" class="text-gray-400 hover:text-red-500" @click="removeTestimonial(i)">
+                    <BaseIcon name="close" class="w-4 h-4" />
+                  </button>
+                </div>
+                <div>
+                  <label class="block text-[10px] uppercase tracking-wide text-gray-300 mb-1">ციტატა / Quote</label>
+                  <div class="grid sm:grid-cols-2 gap-3">
+                    <textarea v-model="tm.quote.ka" rows="3" placeholder="ქარ" class="w-full px-3 py-2 bg-gray-50 rounded-lg text-sm resize-y focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white"></textarea>
+                    <textarea v-model="tm.quote.en" rows="3" placeholder="EN" class="w-full px-3 py-2 bg-gray-50 rounded-lg text-sm resize-y focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white"></textarea>
+                  </div>
+                </div>
+                <div class="grid sm:grid-cols-2 gap-3">
+                  <input v-model="tm.author.ka" placeholder="ავტორი (ქარ)" class="w-full px-3 py-2 bg-gray-50 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white" />
+                  <input v-model="tm.author.en" placeholder="Author (EN)" class="w-full px-3 py-2 bg-gray-50 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white" />
+                  <input v-model="tm.role.ka" placeholder="როლი (ქარ)" class="w-full px-3 py-2 bg-gray-50 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white" />
+                  <input v-model="tm.role.en" placeholder="Role (EN)" class="w-full px-3 py-2 bg-gray-50 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white" />
+                </div>
+              </div>
+              <div class="flex items-center justify-between pt-1">
+                <button type="button" class="inline-flex items-center gap-1 text-brand text-xs font-semibold" @click="addTestimonial">
+                  <BaseIcon name="plus" class="w-4 h-4" /> დამატება
+                </button>
+                <button
+                  type="button"
+                  :disabled="testimonialsSaving"
+                  class="gradient-bg text-white text-xs font-semibold px-4 py-2 rounded-xl hover:opacity-90 transition-opacity"
+                  :class="{ 'opacity-60': testimonialsSaving }"
+                  @click="saveTestimonials"
+                >
+                  <BaseIcon name="check" class="w-4 h-4 inline" /> შენახვა
+                </button>
+              </div>
+            </div>
+          </details>
 
           <details
             v-for="g in visibleContentGroups"

@@ -9,6 +9,9 @@ import en from '@/i18n/en.js'
 
 // Reactive store of image overrides: key -> URL.
 export const imageOverrides = reactive({})
+// Reactive store of structured collections (testimonials, team, partners, ...):
+// name -> array/object. Stored in the DB under "col.<name>" as JSON.
+export const collectionOverrides = reactive({})
 
 let i18nRef = null
 const DEFAULTS = { ka, en }
@@ -45,6 +48,14 @@ function applyMap(locale, map) {
       imageOverrides[k] = v
       continue
     }
+    if (k.startsWith('col.')) {
+      try {
+        collectionOverrides[k.slice(4)] = JSON.parse(v)
+      } catch {
+        /* ignore malformed json */
+      }
+      continue
+    }
     setNested(base, k, v)
     hasText = true
   }
@@ -64,10 +75,31 @@ export async function initContent(i18n) {
   }
 }
 
+// A structured collection: DB override (parsed) or the built-in default array.
+export function collection(name, defaults) {
+  return collectionOverrides[name] ?? defaults
+}
+
+// Save a whole collection (array/object) as JSON under "col.<name>".
+export async function saveCollection(name, data) {
+  await saveTexts([
+    { key: `col.${name}`, locale: null, type: 'json', value: JSON.stringify(data), group: 'collections' },
+  ])
+  collectionOverrides[name] = data
+}
+
 // Live-apply a single override (used by inline editing after a save).
 export function applyOne(locale, key, value) {
   if (key.startsWith('img.')) {
     imageOverrides[key] = value
+    return
+  }
+  if (key.startsWith('col.')) {
+    try {
+      collectionOverrides[key.slice(4)] = JSON.parse(value)
+    } catch {
+      /* ignore */
+    }
     return
   }
   if (!i18nRef) return

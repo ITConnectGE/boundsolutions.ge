@@ -1,10 +1,14 @@
 <script setup>
+import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useLoc } from '@/composables/useLocale'
-import { testimonials } from '@/data/social.js'
+import { testimonials as defaultTestimonials } from '@/data/social.js'
+import { collection } from '@/composables/content.js'
 
 const { t } = useI18n()
 const { loc } = useLoc()
+// Editable from the admin CMS (falls back to the built-in list).
+const testimonials = computed(() => collection('testimonials', defaultTestimonials))
 </script>
 
 <template>
