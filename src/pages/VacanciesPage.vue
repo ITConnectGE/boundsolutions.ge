@@ -26,20 +26,20 @@ onMounted(async () => {
   }
 })
 
-// Filters follow the admin-managed category order, showing only categories that
-// actually have vacancies; any legacy category not in the managed list is appended.
+// Filters come from the admin-managed categories in the DB (col.vacancyCategories),
+// in admin order, showing only those that actually have vacancies. Matching is
+// case-insensitive so legacy lowercase categories (hr, sales…) still line up.
 const managedCats = computed(() => collection('vacancyCategories', defaultVacancyCategories))
+const norm = (c) => (c || '').trim().toLowerCase()
 const categories = computed(() => {
-  const used = new Set(jobsList.value.map((j) => (j.category || '').trim()).filter(Boolean))
-  const ordered = managedCats.value.filter((c) => used.has(c))
-  const extra = [...used].filter((c) => !managedCats.value.includes(c))
-  return [...ordered, ...extra]
+  const used = new Set(jobsList.value.map((j) => norm(j.category)).filter(Boolean))
+  return managedCats.value.filter((c) => used.has(norm(c)))
 })
 
 const filtered = computed(() =>
   active.value === 'all'
     ? jobsList.value
-    : jobsList.value.filter((j) => j.category === active.value),
+    : jobsList.value.filter((j) => norm(j.category) === norm(active.value)),
 )
 
 // CV modal state
@@ -140,7 +140,7 @@ async function submit() {
         <div
           v-for="job in filtered"
           :key="job.id"
-          class="fade-in bg-gray-50 rounded-2xl p-5 lg:p-6 flex flex-col lg:flex-row lg:items-center gap-4"
+          class="bg-gray-50 rounded-2xl p-5 lg:p-6 flex flex-col lg:flex-row lg:items-center gap-4"
         >
           <img
             v-if="job.image"

@@ -52,7 +52,8 @@ onMounted(() => {
   const main = document.querySelector('main')
   if (main && typeof MutationObserver !== 'undefined') {
     mo = new MutationObserver(() => reveal())
-    mo.observe(main, { childList: true })
+    // subtree so async-loaded content (e.g. vacancies fetched after mount) is revealed too
+    mo.observe(main, { childList: true, subtree: true })
   }
 })
 onBeforeUnmount(() => {
