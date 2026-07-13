@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\ApplicationController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\ContentController;
+use App\Http\Controllers\Api\VacancyCategoryController;
 use App\Http\Controllers\Api\VacancyController;
 use Illuminate\Support\Facades\Route;
 
@@ -10,6 +11,7 @@ use Illuminate\Support\Facades\Route;
 Route::post('auth/login', [AuthController::class, 'login']);
 Route::post('applications', [ApplicationController::class, 'store']);
 Route::get('vacancies', [VacancyController::class, 'index']);
+Route::get('vacancy-categories', [VacancyCategoryController::class, 'index']);
 Route::get('content', [ContentController::class, 'index']);
 
 // ---- Admin (Sanctum token required) ----
@@ -27,6 +29,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('vacancies', [VacancyController::class, 'store']);
     Route::post('vacancies/{vacancy}', [VacancyController::class, 'update']); // POST for multipart
     Route::delete('vacancies/{vacancy}', [VacancyController::class, 'destroy']);
+
+    // Vacancy categories (managed filter set)
+    Route::put('vacancy-categories', [VacancyCategoryController::class, 'sync']);
 
     // Content (CMS)
     Route::get('admin/content', [ContentController::class, 'all']);

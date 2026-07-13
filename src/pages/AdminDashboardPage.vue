@@ -10,7 +10,13 @@ import {
   deleteApplication,
 } from '@/composables/applications.js'
 import { downloadApplicationsCsv } from '@/composables/exportCsv.js'
-import { getJobs, saveJob, deleteJob } from '@/composables/jobs.js'
+import {
+  getJobs,
+  saveJob,
+  deleteJob,
+  getVacancyCategories,
+  saveVacancyCategories,
+} from '@/composables/jobs.js'
 import { hasApi } from '@/composables/api.js'
 import {
   loadAllContent,
@@ -161,13 +167,20 @@ async function removeJobRow(row, i) {
   }
 }
 
-// ---- Managed vacancy categories (add / remove from the CRM) ----
+// ---- Managed vacancy categories (stored in vacancy_categories, add/remove here) ----
 const categoriesDraft = ref([])
 const categoriesSaving = ref(false)
 const newCategory = ref('')
+async function reloadCategories() {
+  try {
+    categoriesDraft.value = await getVacancyCategories()
+  } catch {
+    categoriesDraft.value = [...defaultVacancyCategories]
+  }
+}
 function addCategory() {
   const c = newCategory.value.trim()
-  if (!c || categoriesDraft.value.includes(c)) {
+  if (!c || categoriesDraft.value.some((x) => x.toLowerCase() === c.toLowerCase())) {
     newCategory.value = ''
     return
   }
@@ -181,7 +194,7 @@ async function saveCategories() {
   addCategory() // commit any category still typed in the input before saving
   categoriesSaving.value = true
   try {
-    await saveCollection('vacancyCategories', categoriesDraft.value)
+    categoriesDraft.value = await saveVacancyCategories(categoriesDraft.value)
     toast.success(t('admin.content.saved'))
   } catch (e) {
     adminError(e)
@@ -611,7 +624,6 @@ async function loadContentEditor() {
   processDraft.value = JSON.parse(JSON.stringify(collection('process', defaultProcess)))
   statsDraft.value = JSON.parse(JSON.stringify(collection('stats', defaultStats)))
   companyFormDraft.value = normalizeCompanyForm(JSON.parse(JSON.stringify(collection('companyForm', defaultCompanyForm))))
-  categoriesDraft.value = JSON.parse(JSON.stringify(collection('vacancyCategories', defaultVacancyCategories)))
   privacyDraft.value = normalizePolicy(JSON.parse(JSON.stringify(collection('privacy', privacyDefault))), privacyDefault)
   termsDraft.value = normalizePolicy(JSON.parse(JSON.stringify(collection('terms', termsDefault))), termsDefault)
   try {
@@ -684,14 +696,6 @@ async function loadContentEditor() {
       if (r.type === 'json' && r.key === 'col.companyForm') {
         try {
           companyFormDraft.value = normalizeCompanyForm(JSON.parse(r.value))
-        } catch {
-          /* keep default */
-        }
-        continue
-      }
-      if (r.type === 'json' && r.key === 'col.vacancyCategories') {
-        try {
-          categoriesDraft.value = JSON.parse(r.value)
         } catch {
           /* keep default */
         }
@@ -909,6 +913,7 @@ onMounted(() => {
   user.value = currentUser() || ''
   reload()
   reloadJobs()
+  reloadCategories()
   loadContentEditor()
   ready.value = true
 })

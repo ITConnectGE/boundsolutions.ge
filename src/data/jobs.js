@@ -1,5 +1,5 @@
-// Managed vacancy categories (admin-editable via col.vacancyCategories). Used
-// as the category palette in the admin and to order the public filter bar.
+// Default vacancy categories — SSR/offline fallback only. The live set is stored
+// in the vacancy_categories table and managed from the admin (CRM).
 export const defaultVacancyCategories = ['HR', 'Sales', 'HORECA', 'Finance', 'Events']
 
 // Active vacancies (SSR seed / offline fallback). `category` is free text — the

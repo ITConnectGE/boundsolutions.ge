@@ -3,9 +3,8 @@ import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useLoc } from '@/composables/useLocale'
 import { usePageMeta } from '@/composables/usePageMeta'
-import { getJobs, getJobsSeed } from '@/composables/jobs.js'
+import { getJobs, getJobsSeed, getVacancyCategories } from '@/composables/jobs.js'
 import { defaultVacancyCategories } from '@/data/jobs.js'
-import { collection } from '@/composables/content.js'
 import { addApplication } from '@/composables/applications.js'
 import PageHero from '@/components/PageHero.vue'
 import BaseIcon from '@/components/BaseIcon.vue'
@@ -16,20 +15,25 @@ const { loc } = useLoc()
 usePageMeta({ title: () => t('vacancies.title'), description: () => t('vacancies.subtitle') })
 
 const active = ref('all')
-// Seed for SSR/first paint; refresh from the (admin-managed) store after mount.
+// Seed for SSR/first paint; refresh from the (admin-managed) DB after mount.
 const jobsList = ref(getJobsSeed())
+const managedCats = ref([...defaultVacancyCategories])
 onMounted(async () => {
   try {
     jobsList.value = await getJobs()
   } catch {
     // keep the seed if the API is unreachable
   }
+  try {
+    managedCats.value = await getVacancyCategories()
+  } catch {
+    // keep the default categories if the API is unreachable
+  }
 })
 
-// Filters come from the admin-managed categories in the DB (col.vacancyCategories),
-// in admin order, showing only those that actually have vacancies. Matching is
+// Filters come from the admin-managed categories (vacancy_categories table), in
+// admin order, showing only those that actually have vacancies. Matching is
 // case-insensitive so legacy lowercase categories (hr, sales…) still line up.
-const managedCats = computed(() => collection('vacancyCategories', defaultVacancyCategories))
 const norm = (c) => (c || '').trim().toLowerCase()
 const categories = computed(() => {
   const used = new Set(jobsList.value.map((j) => norm(j.category)).filter(Boolean))

@@ -34,3 +34,13 @@ export async function deleteJob(id) {
   const numericId = String(id).replace(/^v/, '')
   return api(`/vacancies/${numericId}`, { method: 'DELETE', auth: true })
 }
+
+// ---- Vacancy categories (managed filter set, stored in vacancy_categories) ----
+export async function getVacancyCategories() {
+  return api('/vacancy-categories')
+}
+
+// names: ordered array of category strings. Replaces the whole set.
+export async function saveVacancyCategories(names) {
+  return api('/vacancy-categories', { method: 'PUT', body: { names }, auth: true })
+}
