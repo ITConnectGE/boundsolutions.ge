@@ -178,6 +178,7 @@ function removeCategory(i) {
   categoriesDraft.value.splice(i, 1)
 }
 async function saveCategories() {
+  addCategory() // commit any category still typed in the input before saving
   categoriesSaving.value = true
   try {
     await saveCollection('vacancyCategories', categoriesDraft.value)
@@ -1231,7 +1232,11 @@ const statCards = computed(() => [
               class="flex-1 px-3 py-2 bg-gray-50 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white"
               @keydown.enter.prevent="addCategory"
             />
-            <button type="button" class="inline-flex items-center gap-1 text-brand text-xs font-semibold px-2" @click="addCategory">
+            <button
+              type="button"
+              class="inline-flex items-center gap-1 bg-brand/10 text-brand text-xs font-semibold px-3 py-2 rounded-xl hover:bg-brand/20 transition-colors"
+              @click="addCategory"
+            >
               <BaseIcon name="plus" class="w-4 h-4" /> {{ t('admin.jobs.addCategory') }}
             </button>
             <button
