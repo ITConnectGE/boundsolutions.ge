@@ -64,7 +64,7 @@ usePageMeta({
     <section class="py-16 lg:py-24">
       <div class="max-w-5xl mx-auto px-6 grid lg:grid-cols-3 gap-12">
         <div class="lg:col-span-2">
-          <p class="text-gray-600 text-[17px] leading-relaxed">{{ loc(service.body) }}</p>
+          <div class="rich text-gray-600 text-[17px] leading-relaxed" v-html="loc(service.body)"></div>
         </div>
         <aside>
           <div class="bg-gray-50 rounded-2xl p-6 sticky top-24">

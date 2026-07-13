@@ -28,6 +28,7 @@ import kaMessages from '@/i18n/ka.js'
 import enMessages from '@/i18n/en.js'
 import BaseIcon from '@/components/BaseIcon.vue'
 import LangSwitcher from '@/components/LangSwitcher.vue'
+import RichTextEditor from '@/components/RichTextEditor.vue'
 
 const { t, locale } = useI18n()
 const router = useRouter()
@@ -828,8 +829,14 @@ const statCards = computed(() => [
                   <textarea v-model="svc.summary.en" rows="2" placeholder="Summary (EN)" class="w-full px-3 py-2 bg-gray-50 rounded-lg text-sm resize-y focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white"></textarea>
                 </div>
                 <div class="grid sm:grid-cols-2 gap-3">
-                  <textarea v-model="svc.body.ka" rows="3" placeholder="სრული ტექსტი (ქარ)" class="w-full px-3 py-2 bg-gray-50 rounded-lg text-sm resize-y focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white"></textarea>
-                  <textarea v-model="svc.body.en" rows="3" placeholder="Full text (EN)" class="w-full px-3 py-2 bg-gray-50 rounded-lg text-sm resize-y focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white"></textarea>
+                  <div>
+                    <span class="block text-[10px] uppercase tracking-wide text-gray-300 mb-1">სრული ტექსტი (ქარ)</span>
+                    <RichTextEditor v-model="svc.body.ka" />
+                  </div>
+                  <div>
+                    <span class="block text-[10px] uppercase tracking-wide text-gray-300 mb-1">Full text (EN)</span>
+                    <RichTextEditor v-model="svc.body.en" />
+                  </div>
                 </div>
                 <div class="grid sm:grid-cols-2 gap-3">
                   <textarea :value="(svc.bullets && svc.bullets.ka ? svc.bullets.ka : []).join('\n')" rows="3" placeholder="ბულეთები — თითო ხაზზე (ქარ)" class="w-full px-3 py-2 bg-gray-50 rounded-lg text-sm resize-y focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white" @input="setBullets(svc, 'ka', $event.target.value)"></textarea>
