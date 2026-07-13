@@ -13,7 +13,6 @@ const { loc } = useLoc()
 
 usePageMeta({ title: () => t('vacancies.title'), description: () => t('vacancies.subtitle') })
 
-const filterKeys = ['all', 'horeca', 'finance', 'events', 'hr', 'sales']
 const active = ref('all')
 // Seed for SSR/first paint; refresh from the (admin-managed) store after mount.
 const jobsList = ref(getJobsSeed())
@@ -24,6 +23,18 @@ onMounted(async () => {
     // keep the seed if the API is unreachable
   }
 })
+
+// Filters are dynamic — the distinct categories actually used by the vacancies,
+// so there is no fixed list to maintain in the admin.
+const categories = computed(() => {
+  const set = new Set()
+  for (const j of jobsList.value) {
+    const c = (j.category || '').trim()
+    if (c) set.add(c)
+  }
+  return [...set]
+})
+
 const filtered = computed(() =>
   active.value === 'all'
     ? jobsList.value
@@ -103,20 +114,23 @@ async function submit() {
 
   <section class="py-14 lg:py-20">
     <div class="max-w-6xl mx-auto px-6">
-      <!-- Filters -->
+      <!-- Filters (auto-derived from the vacancies' categories) -->
       <div class="flex flex-wrap gap-2 mb-8">
         <button
-          v-for="k in filterKeys"
-          :key="k"
           class="px-4 py-2 rounded-xl text-xs font-semibold transition-all duration-200"
-          :class="
-            active === k
-              ? 'bg-navy text-white'
-              : 'bg-gray-100 text-gray-500 hover:text-gray-900'
-          "
-          @click="active = k"
+          :class="active === 'all' ? 'bg-navy text-white' : 'bg-gray-100 text-gray-500 hover:text-gray-900'"
+          @click="active = 'all'"
         >
-          {{ t(`vacancies.filters.${k}`) }}
+          {{ t('vacancies.filters.all') }}
+        </button>
+        <button
+          v-for="c in categories"
+          :key="c"
+          class="px-4 py-2 rounded-xl text-xs font-semibold transition-all duration-200"
+          :class="active === c ? 'bg-navy text-white' : 'bg-gray-100 text-gray-500 hover:text-gray-900'"
+          @click="active = c"
+        >
+          {{ c }}
         </button>
       </div>
 
@@ -138,8 +152,8 @@ async function submit() {
             <p class="text-gray-400 text-sm mt-0.5">{{ loc(job.sector) }}</p>
           </div>
           <div class="flex flex-wrap items-center gap-2">
-            <span class="px-3 py-1 bg-brand/10 text-brand text-xs font-semibold rounded-lg">{{
-              t(`vacancies.filters.${job.category}`)
+            <span v-if="job.category" class="px-3 py-1 bg-brand/10 text-brand text-xs font-semibold rounded-lg">{{
+              job.category
             }}</span>
             <span class="px-3 py-1 bg-white text-gray-500 text-xs rounded-lg">{{
               t('vacancies.location')

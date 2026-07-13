@@ -78,89 +78,96 @@ async function reload() {
   }
 }
 
-// ---- Vacancy management ----
-const jobs = ref([])
-const jobCategories = ['horeca', 'finance', 'events', 'hr', 'sales']
-const jobModalOpen = ref(false)
-const editingJob = ref(null)
+// ---- Vacancy management (inline, free-text categories) ----
+// Categories are just typed per vacancy; the public filter bar derives itself
+// from the distinct categories in use, so there is no fixed list to maintain.
+const jobsDraft = ref([])
+
+function toJobDraft(job) {
+  return {
+    id: job?.id || '',
+    category: job?.category || '',
+    titleKa: job?.title?.ka || '',
+    titleEn: job?.title?.en || '',
+    sectorKa: job?.sector?.ka || '',
+    sectorEn: job?.sector?.en || '',
+    salary: job?.salary || '',
+    image: job?.image || '',
+    imageFile: null,
+    saving: false,
+  }
+}
 
 async function reloadJobs() {
   try {
-    jobs.value = await getJobs()
+    const list = await getJobs()
+    jobsDraft.value = list.map(toJobDraft)
     connError.value = false
   } catch (e) {
-    jobs.value = []
+    jobsDraft.value = []
     if (hasApi()) connError.value = true
   }
 }
 
-function blankJob() {
-  return {
-    id: '',
-    category: 'hr',
-    titleKa: '',
-    titleEn: '',
-    sectorKa: '',
-    sectorEn: '',
-    salary: '',
-    image: '',
-    imageFile: null,
+// Distinct categories already in use — offered as quick-pick suggestions.
+const jobCategorySuggestions = computed(() => {
+  const set = new Set()
+  for (const j of jobsDraft.value) {
+    const c = (j.category || '').trim()
+    if (c) set.add(c)
   }
+  return [...set]
+})
+
+function addJobRow() {
+  jobsDraft.value.unshift(toJobDraft(null))
 }
 
-function openJobModal(job) {
-  editingJob.value = job
-    ? {
-        id: job.id,
-        category: job.category || 'hr',
-        titleKa: job.title?.ka || '',
-        titleEn: job.title?.en || '',
-        sectorKa: job.sector?.ka || '',
-        sectorEn: job.sector?.en || '',
-        salary: job.salary || '',
-        image: job.image || '',
-        imageFile: null,
-      }
-    : blankJob()
-  jobModalOpen.value = true
-}
-
-function onJobImage(e) {
+function onJobRowImage(row, e) {
   const f = e.target.files?.[0]
   if (!f) return
-  editingJob.value.imageFile = f // sent to the API
+  row.imageFile = f
   const reader = new FileReader()
   reader.onload = () => {
-    editingJob.value.image = reader.result // preview / localStorage fallback
+    row.image = reader.result // instant preview
   }
   reader.readAsDataURL(f)
 }
 
-async function saveJobForm() {
-  const j = editingJob.value
+async function saveJobRow(row) {
+  if (!row.titleKa.trim() || !row.category.trim()) {
+    toast.error(t('admin.jobs.needTitleCategory'))
+    return
+  }
+  row.saving = true
   try {
     await saveJob(
       {
-        id: j.id || undefined,
-        category: j.category,
-        title: { ka: j.titleKa, en: j.titleEn || j.titleKa },
-        sector: { ka: j.sectorKa, en: j.sectorEn || j.sectorKa },
-        salary: j.salary,
-        image: j.image || '',
+        id: row.id || undefined,
+        category: row.category.trim(),
+        title: { ka: row.titleKa, en: row.titleEn || row.titleKa },
+        sector: { ka: row.sectorKa, en: row.sectorEn || row.sectorKa },
+        salary: row.salary,
       },
-      j.imageFile || null,
+      row.imageFile || null,
     )
-    jobModalOpen.value = false
-    reloadJobs()
+    toast.success(t('admin.content.saved'))
+    await reloadJobs()
   } catch (e) {
     adminError(e)
+    row.saving = false
   }
 }
 
-async function removeJob(id) {
+async function removeJobRow(row, i) {
+  if (!row.id) {
+    jobsDraft.value.splice(i, 1) // unsaved row — just drop it
+    return
+  }
   try {
-    await deleteJob(id)
-    reloadJobs()
+    await deleteJob(row.id)
+    await reloadJobs()
+    toast.success(t('admin.content.saved'))
   } catch (e) {
     adminError(e)
   }
@@ -1057,52 +1064,81 @@ const statCards = computed(() => [
           </div>
           <button
             class="inline-flex items-center gap-1.5 gradient-bg text-white text-xs font-semibold px-4 py-2.5 rounded-xl hover:opacity-90 transition-opacity flex-shrink-0"
-            @click="openJobModal(null)"
+            @click="addJobRow"
           >
             <BaseIcon name="plus" class="w-4 h-4" /> {{ t('admin.jobs.add') }}
           </button>
         </div>
 
-        <div v-if="jobs.length" class="space-y-3">
+        <!-- Categories are dynamic: whatever you type here becomes a filter on the site -->
+        <div v-if="jobCategorySuggestions.length" class="flex flex-wrap items-center gap-2 mb-5 text-xs text-gray-400">
+          <span>{{ t('admin.jobs.activeCategories') }}:</span>
+          <span
+            v-for="c in jobCategorySuggestions"
+            :key="c"
+            class="px-2.5 py-0.5 bg-brand/10 text-brand font-semibold rounded-md"
+          >{{ c }}</span>
+        </div>
+
+        <!-- Shared category suggestions for every row's input -->
+        <datalist id="job-categories">
+          <option v-for="c in jobCategorySuggestions" :key="c" :value="c" />
+        </datalist>
+
+        <div v-if="jobsDraft.length" class="space-y-4">
           <div
-            v-for="job in jobs"
-            :key="job.id"
-            class="bg-white rounded-2xl border border-gray-100 p-4 flex items-center gap-4"
+            v-for="(row, i) in jobsDraft"
+            :key="row.id || 'new-' + i"
+            class="bg-white rounded-2xl border border-gray-100 p-4 lg:p-5 space-y-4"
           >
-            <div
-              class="w-16 h-16 rounded-xl bg-gray-100 flex-shrink-0 overflow-hidden flex items-center justify-center"
-            >
-              <img v-if="job.image" :src="job.image" alt="" class="w-full h-full object-cover" />
-              <BaseIcon v-else name="briefcase" class="w-6 h-6 text-gray-300" />
-            </div>
-            <div class="flex-1 min-w-0">
-              <h3 class="font-bold text-gray-800 truncate">
-                {{ job.title?.ka || job.title?.en }}
-              </h3>
-              <p class="text-xs text-gray-400 mt-0.5 truncate">
-                {{ job.sector?.ka || job.sector?.en }}
-              </p>
-              <div class="flex flex-wrap items-center gap-2 mt-1.5">
-                <span class="px-2 py-0.5 bg-brand/10 text-brand text-[11px] font-semibold rounded-md">
-                  {{ t(`vacancies.filters.${job.category}`) }}
-                </span>
-                <span v-if="job.salary" class="text-[11px] text-gray-500 font-medium">{{ job.salary }}</span>
+            <div class="flex items-start gap-4">
+              <div class="w-20 h-20 rounded-xl bg-gray-100 flex-shrink-0 overflow-hidden flex items-center justify-center">
+                <img v-if="row.image" :src="row.image" alt="" class="w-full h-full object-cover" />
+                <BaseIcon v-else name="briefcase" class="w-6 h-6 text-gray-300" />
               </div>
-            </div>
-            <div class="flex items-center gap-2 flex-shrink-0">
+              <div class="flex-1 flex flex-wrap items-center gap-2">
+                <label class="inline-flex items-center gap-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-semibold px-4 py-2.5 rounded-xl cursor-pointer transition-colors">
+                  <BaseIcon name="upload" class="w-4 h-4" /> {{ t('admin.jobs.form.chooseImage') }}
+                  <input type="file" accept="image/*" class="hidden" @change="onJobRowImage(row, $event)" />
+                </label>
+                <button
+                  v-if="row.image"
+                  type="button"
+                  class="text-xs text-gray-400 hover:text-red-500 transition-colors"
+                  @click="row.image = ''; row.imageFile = null"
+                >
+                  {{ t('admin.jobs.form.removeImage') }}
+                </button>
+              </div>
               <button
-                class="w-9 h-9 rounded-lg border border-gray-200 text-gray-500 hover:text-brand hover:border-brand/30 flex items-center justify-center transition-colors"
-                :aria-label="t('admin.jobs.edit')"
-                @click="openJobModal(job)"
-              >
-                <BaseIcon name="pencil" class="w-4 h-4" />
-              </button>
-              <button
-                class="w-9 h-9 rounded-lg border border-gray-200 text-gray-400 hover:text-red-500 hover:border-red-200 flex items-center justify-center transition-colors"
+                type="button"
+                class="w-9 h-9 rounded-lg border border-gray-200 text-gray-400 hover:text-red-500 hover:border-red-200 flex items-center justify-center transition-colors flex-shrink-0"
                 :aria-label="t('admin.actions.delete')"
-                @click="removeJob(job.id)"
+                @click="removeJobRow(row, i)"
               >
                 <BaseIcon name="close" class="w-4 h-4" />
+              </button>
+            </div>
+
+            <div class="grid sm:grid-cols-2 gap-3">
+              <input v-model="row.titleKa" :placeholder="t('admin.jobs.form.titleKa')" class="w-full px-3 py-2 bg-gray-50 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white" />
+              <input v-model="row.titleEn" :placeholder="t('admin.jobs.form.titleEn')" class="w-full px-3 py-2 bg-gray-50 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white" />
+              <input v-model="row.sectorKa" :placeholder="t('admin.jobs.form.sectorKa')" class="w-full px-3 py-2 bg-gray-50 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white" />
+              <input v-model="row.sectorEn" :placeholder="t('admin.jobs.form.sectorEn')" class="w-full px-3 py-2 bg-gray-50 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white" />
+              <input v-model="row.category" list="job-categories" :placeholder="t('admin.jobs.form.category')" class="w-full px-3 py-2 bg-gray-50 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white" />
+              <input v-model="row.salary" placeholder="2,000–3,000 ₾" class="w-full px-3 py-2 bg-gray-50 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white" />
+            </div>
+
+            <div class="flex justify-end">
+              <button
+                type="button"
+                :disabled="row.saving"
+                class="gradient-bg text-white text-xs font-semibold px-4 py-2 rounded-xl hover:opacity-90 transition-opacity"
+                :class="{ 'opacity-60': row.saving }"
+                @click="saveJobRow(row)"
+              >
+                <span v-if="row.saving" class="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin inline-block align-middle"></span>
+                <BaseIcon v-else name="check" class="w-4 h-4 inline" /> {{ t('admin.jobs.form.save') }}
               </button>
             </div>
           </div>
@@ -1838,96 +1874,5 @@ const statCards = computed(() => [
         </div>
       </template>
     </main>
-
-    <!-- JOB EDITOR MODAL -->
-    <Transition name="page">
-      <div v-if="jobModalOpen" class="fixed inset-0 z-[60]">
-        <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" @click="jobModalOpen = false"></div>
-        <div class="absolute inset-0 flex items-center justify-center p-4" @click.self="jobModalOpen = false">
-          <div class="relative bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto p-6 sm:p-8 shadow-2xl">
-            <button
-              class="absolute top-4 right-4 text-gray-300 hover:text-gray-600 transition-colors"
-              :aria-label="t('admin.jobs.cancel')"
-              @click="jobModalOpen = false"
-            >
-              <BaseIcon name="close" class="w-6 h-6" />
-            </button>
-            <h3 class="text-lg font-extrabold text-gray-900 mb-5">
-              {{ editingJob.id ? t('admin.jobs.edit') : t('admin.jobs.add') }}
-            </h3>
-
-            <form class="space-y-4" @submit.prevent="saveJobForm">
-              <div class="grid sm:grid-cols-2 gap-4">
-                <div>
-                  <label class="block text-xs font-medium text-gray-500 mb-1.5">{{ t('admin.jobs.form.titleKa') }} *</label>
-                  <input v-model="editingJob.titleKa" type="text" required class="w-full px-4 py-3 bg-gray-50 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white" />
-                </div>
-                <div>
-                  <label class="block text-xs font-medium text-gray-500 mb-1.5">{{ t('admin.jobs.form.titleEn') }}</label>
-                  <input v-model="editingJob.titleEn" type="text" class="w-full px-4 py-3 bg-gray-50 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white" />
-                </div>
-              </div>
-              <div class="grid sm:grid-cols-2 gap-4">
-                <div>
-                  <label class="block text-xs font-medium text-gray-500 mb-1.5">{{ t('admin.jobs.form.sectorKa') }}</label>
-                  <input v-model="editingJob.sectorKa" type="text" class="w-full px-4 py-3 bg-gray-50 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white" />
-                </div>
-                <div>
-                  <label class="block text-xs font-medium text-gray-500 mb-1.5">{{ t('admin.jobs.form.sectorEn') }}</label>
-                  <input v-model="editingJob.sectorEn" type="text" class="w-full px-4 py-3 bg-gray-50 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white" />
-                </div>
-              </div>
-              <div class="grid sm:grid-cols-2 gap-4">
-                <div>
-                  <label class="block text-xs font-medium text-gray-500 mb-1.5">{{ t('admin.jobs.form.category') }}</label>
-                  <select v-model="editingJob.category" class="w-full px-4 py-3 bg-gray-50 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white">
-                    <option v-for="c in jobCategories" :key="c" :value="c">{{ t(`vacancies.filters.${c}`) }}</option>
-                  </select>
-                </div>
-                <div>
-                  <label class="block text-xs font-medium text-gray-500 mb-1.5">{{ t('admin.jobs.form.salary') }}</label>
-                  <input v-model="editingJob.salary" type="text" placeholder="2,000–3,000 ₾" class="w-full px-4 py-3 bg-gray-50 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white" />
-                </div>
-              </div>
-
-              <!-- Image -->
-              <div>
-                <label class="block text-xs font-medium text-gray-500 mb-1.5">{{ t('admin.jobs.form.image') }}</label>
-                <div class="flex items-center gap-4">
-                  <div class="w-20 h-20 rounded-xl bg-gray-100 overflow-hidden flex items-center justify-center flex-shrink-0">
-                    <img v-if="editingJob.image" :src="editingJob.image" alt="" class="w-full h-full object-cover" />
-                    <BaseIcon v-else name="image" class="w-6 h-6 text-gray-300" />
-                  </div>
-                  <div class="flex-1">
-                    <label class="inline-flex items-center gap-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-semibold px-4 py-2.5 rounded-xl cursor-pointer transition-colors">
-                      <BaseIcon name="upload" class="w-4 h-4" /> {{ t('admin.jobs.form.chooseImage') }}
-                      <input type="file" accept="image/*" class="hidden" @change="onJobImage" />
-                    </label>
-                    <button
-                      v-if="editingJob.image"
-                      type="button"
-                      class="ml-2 text-xs text-gray-400 hover:text-red-500 transition-colors"
-                      @click="editingJob.image = ''"
-                    >
-                      {{ t('admin.jobs.form.removeImage') }}
-                    </button>
-                    <p class="text-[11px] text-gray-300 mt-1.5">{{ t('admin.jobs.form.imageHint') }}</p>
-                  </div>
-                </div>
-              </div>
-
-              <div class="flex gap-3 pt-2">
-                <button type="button" class="flex-1 bg-gray-100 text-gray-700 py-3 rounded-xl font-semibold text-sm hover:bg-gray-200 transition-colors" @click="jobModalOpen = false">
-                  {{ t('admin.jobs.cancel') }}
-                </button>
-                <button type="submit" class="flex-1 gradient-bg text-white py-3 rounded-xl font-semibold text-sm hover:opacity-90 transition-opacity">
-                  {{ t('admin.jobs.form.save') }}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      </div>
-    </Transition>
   </div>
 </template>
