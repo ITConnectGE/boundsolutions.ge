@@ -187,7 +187,50 @@ const contentSearch = ref('')
 // These i18n groups are edited inside their dedicated collection blocks
 // (page headings live next to the cards/posts), so they are hidden from the
 // auto-generated list to avoid a duplicate "Services"/"Blog" section.
-const MERGED_GROUPS = new Set(['services', 'blog', 'about', 'nav', 'companyForm'])
+const MERGED_GROUPS = new Set(['services', 'blog', 'about', 'nav', 'companyForm', 'home', 'vacancies'])
+
+// Groups rendered as structured blocks (sub-sections with friendly headings)
+// instead of a flat key list — like the Employer-form block.
+const STRUCTURED_GROUPS = [
+  { group: 'home', label: 'მთავარი გვერდი / Home page' },
+  { group: 'vacancies', label: 'ვაკანსიების გვერდი / Vacancies page' },
+]
+const structuredGroups = computed(() => (contentSearch.value ? [] : STRUCTURED_GROUPS))
+
+// Friendly labels for the second-level key segment (the sub-section).
+const SUBSECTION_LABELS = {
+  _: 'ზოგადი / General',
+  aboutTeaser: 'ჩვენ შესახებ — მოკლე ბლოკი / About teaser',
+  services: 'სერვისები — სათაური / Services heading',
+  testimonials: 'შეფასებები — სათაური / Testimonials heading',
+  partners: 'პარტნიორები — სათაური / Partners heading',
+  process: 'პროცესი — სათაური / Process heading',
+  contactCta: 'კონტაქტის ბლოკი / Contact CTA',
+  filters: 'ფილტრები / Filters',
+  noPosition: 'ვაკანსია ვერ იპოვეთ / No position',
+  modal: 'CV ფორმა / CV form',
+  consent: 'პერსონალურ მონაცემთა თანხმობა / Consent',
+}
+// Group a merged group's text fields by their second-level key into sub-sections.
+function subGroups(groupName) {
+  const map = new Map()
+  for (const it of groupTextItems(groupName)) {
+    const parts = it.key.split('.')
+    const sub = parts.length > 2 ? parts[1] : '_'
+    if (!map.has(sub)) map.set(sub, [])
+    map.get(sub).push(it)
+  }
+  return [...map.entries()].map(([sub, items]) => ({
+    sub,
+    label: SUBSECTION_LABELS[sub] || sub,
+    items,
+  }))
+}
+// A short field label = the key path after the sub-section segment.
+function subFieldLabel(key) {
+  const parts = key.split('.')
+  return parts.slice(parts.length > 2 ? 2 : 1).join('.')
+}
 
 // Text fields of a given i18n group (used to render its headings inside a
 // collection block and to persist them alongside the collection).
@@ -1798,6 +1841,39 @@ const statCards = computed(() => [
                   @click="saveCompanyForm"
                 >
                   <span v-if="companyFormSaving" class="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin inline-block align-middle"></span>
+                  <BaseIcon v-else name="check" class="w-4 h-4 inline" /> შენახვა
+                </button>
+              </div>
+            </div>
+          </details>
+
+          <!-- Structured page blocks (Home, Vacancies) — grouped sub-sections -->
+          <details
+            v-for="sg in structuredGroups"
+            :key="sg.group"
+            class="bg-white rounded-2xl border border-gray-100 px-5 lg:px-6 py-4"
+          >
+            <summary class="font-brand text-sm text-gray-900 cursor-pointer select-none">{{ sg.label }}</summary>
+            <div class="space-y-4 mt-5">
+              <div v-for="section in subGroups(sg.group)" :key="section.sub" class="border border-gray-100 rounded-xl p-4 space-y-3">
+                <p class="text-xs font-semibold text-gray-600">{{ section.label }}</p>
+                <div v-for="it in section.items" :key="it.key">
+                  <label class="block text-[11px] font-medium text-gray-400 mb-1">{{ subFieldLabel(it.key) }}</label>
+                  <div class="grid sm:grid-cols-2 gap-3">
+                    <textarea v-model="draft[`${it.key}|ka`]" rows="2" placeholder="ქარ" class="w-full px-3 py-2 bg-gray-50 rounded-lg text-sm resize-y focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white"></textarea>
+                    <textarea v-model="draft[`${it.key}|en`]" rows="2" placeholder="EN" class="w-full px-3 py-2 bg-gray-50 rounded-lg text-sm resize-y focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white"></textarea>
+                  </div>
+                </div>
+              </div>
+              <div class="flex justify-end pt-1">
+                <button
+                  type="button"
+                  :disabled="groupSaving[sg.group]"
+                  class="gradient-bg text-white text-xs font-semibold px-4 py-2 rounded-xl hover:opacity-90 transition-opacity"
+                  :class="{ 'opacity-60': groupSaving[sg.group] }"
+                  @click="saveGroup(sg.group)"
+                >
+                  <span v-if="groupSaving[sg.group]" class="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin inline-block align-middle"></span>
                   <BaseIcon v-else name="check" class="w-4 h-4 inline" /> შენახვა
                 </button>
               </div>

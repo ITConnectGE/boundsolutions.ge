@@ -18,6 +18,8 @@ const SKIP_KEY_PATTERNS = [
   /^companyForm\.contractPeriodOptions\./, // -> col.companyForm.contractPeriod
   /^nav\.(home|team|forCompanies)$/, //    top nav is col.nav; these are unused
   /^vacancies\.filters\.(horeca|finance|events|hr|sales)$/, // dynamic categories now
+  /^home\.whyHr\./, //  not rendered on the site
+  /^home\.events\./, // not rendered on the site
 ]
 const isSkippedKey = (k) => SKIP_KEY_PATTERNS.some((re) => re.test(k))
 
