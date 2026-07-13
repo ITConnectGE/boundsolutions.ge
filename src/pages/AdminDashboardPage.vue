@@ -68,6 +68,27 @@ function toggleExpanded(id) {
   expanded.value = { ...expanded.value, [id]: !expanded.value[id] }
 }
 
+// Reusable confirmation dialog: { message, onConfirm }.
+const confirmDialog = ref(null)
+const confirmBusy = ref(false)
+function askConfirm(message, onConfirm) {
+  confirmDialog.value = { message, onConfirm }
+}
+async function runConfirm() {
+  const cb = confirmDialog.value?.onConfirm
+  if (!cb) {
+    confirmDialog.value = null
+    return
+  }
+  confirmBusy.value = true
+  try {
+    await cb()
+  } finally {
+    confirmBusy.value = false
+    confirmDialog.value = null
+  }
+}
+
 // Friendly handling for failed API calls (e.g. backend not running).
 function adminError(e) {
   if (e?.status === 401) {
@@ -134,15 +155,16 @@ function onJobRowImage(row, e) {
   reader.readAsDataURL(f)
 }
 
-async function confirmDeleteJob(row) {
-  if (typeof window !== 'undefined' && !window.confirm(t('admin.jobs.confirmDelete'))) return
-  try {
-    await deleteJob(row.id)
-    await reloadJobs()
-    toast.success(t('admin.content.saved'))
-  } catch (e) {
-    adminError(e)
-  }
+function confirmDeleteJob(row) {
+  askConfirm(t('admin.jobs.confirmDelete'), async () => {
+    try {
+      await deleteJob(row.id)
+      await reloadJobs()
+      toast.success(t('admin.content.saved'))
+    } catch (e) {
+      adminError(e)
+    }
+  })
 }
 
 // ---- Managed vacancy categories (stored in vacancy_categories, add/remove here) ----
@@ -955,13 +977,15 @@ async function toggleStatus(a) {
     adminError(e)
   }
 }
-async function remove(a) {
-  try {
-    await deleteApplication(a.id)
-    reload()
-  } catch (e) {
-    adminError(e)
-  }
+function remove(a) {
+  askConfirm(t('admin.confirmDeleteApp'), async () => {
+    try {
+      await deleteApplication(a.id)
+      reload()
+    } catch (e) {
+      adminError(e)
+    }
+  })
 }
 async function doLogout() {
   await logout()
@@ -2107,6 +2131,41 @@ const statCards = computed(() => [
         </div>
       </template>
     </main>
+
+    <!-- CONFIRMATION MODAL (delete) -->
+    <Transition name="page">
+      <div v-if="confirmDialog" class="fixed inset-0 z-[70]">
+        <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" @click="confirmDialog = null"></div>
+        <div class="absolute inset-0 flex items-center justify-center p-4" @click.self="confirmDialog = null">
+          <div class="relative bg-white rounded-2xl w-full max-w-sm p-6 sm:p-7 shadow-2xl text-center">
+            <div class="w-14 h-14 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
+              <BaseIcon name="close" class="w-7 h-7 text-red-500" />
+            </div>
+            <h3 class="text-lg font-extrabold text-gray-900 mb-2">{{ t('admin.confirm.title') }}</h3>
+            <p class="text-sm text-gray-500 mb-6">{{ confirmDialog.message }}</p>
+            <div class="flex gap-3">
+              <button
+                type="button"
+                class="flex-1 bg-gray-100 text-gray-700 py-2.5 rounded-xl font-semibold text-sm hover:bg-gray-200 transition-colors"
+                @click="confirmDialog = null"
+              >
+                {{ t('admin.confirm.cancel') }}
+              </button>
+              <button
+                type="button"
+                :disabled="confirmBusy"
+                class="flex-1 bg-red-500 text-white py-2.5 rounded-xl font-semibold text-sm hover:bg-red-600 transition-colors inline-flex items-center justify-center gap-2"
+                :class="{ 'opacity-60': confirmBusy }"
+                @click="runConfirm"
+              >
+                <span v-if="confirmBusy" class="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin"></span>
+                {{ t('admin.confirm.delete') }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Transition>
 
     <!-- VACANCY ADD / EDIT MODAL -->
     <Transition name="page">

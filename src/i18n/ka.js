@@ -414,6 +414,12 @@ export default {
     downloadCv: 'CV-ს ჩამოტვირთვა',
     showDetails: 'დეტალების ჩვენება',
     hideDetails: 'დეტალების დამალვა',
+    confirmDeleteApp: 'ნამდვილად წავშალო ეს განაცხადი? ეს ქმედება შეუქცევადია.',
+    confirm: {
+      title: 'დარწმუნებული ხართ?',
+      delete: 'წაშლა',
+      cancel: 'გაუქმება',
+    },
     table: {
       applicant: 'კანდიდატი',
       type: 'ტიპი',

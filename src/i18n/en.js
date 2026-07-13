@@ -413,6 +413,12 @@ export default {
     downloadCv: 'Download CV',
     showDetails: 'Show details',
     hideDetails: 'Hide details',
+    confirmDeleteApp: 'Delete this application? This cannot be undone.',
+    confirm: {
+      title: 'Are you sure?',
+      delete: 'Delete',
+      cancel: 'Cancel',
+    },
     table: {
       applicant: 'Applicant',
       type: 'Type',
