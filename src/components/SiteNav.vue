@@ -1,23 +1,20 @@
 <script setup>
-import { ref, onMounted, onBeforeUnmount, watch } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
+import { useLoc } from '@/composables/useLocale'
+import { collection } from '@/composables/content.js'
+import { defaultNav } from '@/data/nav.js'
 import BaseIcon from './BaseIcon.vue'
 import SocialLinks from './SocialLinks.vue'
 import LangSwitcher from './LangSwitcher.vue'
 
 const { t } = useI18n()
+const { loc } = useLoc()
 const route = useRoute()
 
-// Team is intentionally not a top-level item — the team lives under About.
-const links = [
-  { to: '/', key: 'home' },
-  { to: '/about', key: 'about' },
-  { to: '/services', key: 'services' },
-  { to: '/blog', key: 'blog' },
-  { to: '/vacancies', key: 'vacancies', badge: 6 },
-  { to: '/for-companies', key: 'forCompanies' },
-]
+// Editable from the admin CMS (add / remove / re-title pages).
+const links = computed(() => collection('nav', defaultNav))
 
 const open = ref(false)
 const scrolled = ref(false)
@@ -59,7 +56,7 @@ watch(() => route.fullPath, () => (open.value = false))
           class="transition-colors duration-200 flex items-center gap-1.5"
           :class="isActive(l.to) ? 'text-brand' : 'text-gray-500 hover:text-gray-900'"
         >
-          {{ t(`nav.${l.key}`) }}
+          {{ loc(l.label) }}
           <span
             v-if="l.badge"
             class="bg-brand text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center"
@@ -99,7 +96,7 @@ watch(() => route.fullPath, () => (open.value = false))
         class="flex items-center justify-between py-3.5 border-b border-gray-50 text-sm font-medium"
         :class="isActive(l.to) ? 'text-brand' : 'text-gray-600'"
       >
-        {{ t(`nav.${l.key}`) }}
+        {{ loc(l.label) }}
         <span
           v-if="l.badge"
           class="bg-brand text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center"

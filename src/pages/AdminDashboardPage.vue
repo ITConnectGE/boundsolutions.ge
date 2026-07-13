@@ -27,6 +27,7 @@ import { services as defaultServices } from '@/data/services.js'
 import { posts as defaultPosts } from '@/data/blog.js'
 import { aboutDefault } from '@/data/about.js'
 import { partners as defaultPartners } from '@/data/social.js'
+import { defaultNav } from '@/data/nav.js'
 import { toast } from '@/composables/toast'
 import kaMessages from '@/i18n/ka.js'
 import enMessages from '@/i18n/en.js'
@@ -486,6 +487,7 @@ async function loadContentEditor() {
   blogDraft.value = normalizePosts(JSON.parse(JSON.stringify(collection('blog', defaultPosts))))
   aboutDraft.value = normalizeAbout(JSON.parse(JSON.stringify(collection('about', aboutDefault))))
   partnersDraft.value = JSON.parse(JSON.stringify(collection('partners', defaultPartners)))
+  navDraft.value = JSON.parse(JSON.stringify(collection('nav', defaultNav)))
   try {
     const rows = await loadAllContent()
     for (const r of rows) {
@@ -524,6 +526,14 @@ async function loadContentEditor() {
       if (r.type === 'json' && r.key === 'col.partners') {
         try {
           partnersDraft.value = JSON.parse(r.value)
+        } catch {
+          /* keep default */
+        }
+        continue
+      }
+      if (r.type === 'json' && r.key === 'col.nav') {
+        try {
+          navDraft.value = JSON.parse(r.value)
         } catch {
           /* keep default */
         }
@@ -575,6 +585,51 @@ async function saveContent() {
     adminError(e)
   }
   contentSaving.value = false
+}
+
+// Save just one auto-generated group's text fields (its own save button).
+const groupSaving = ref({})
+async function saveGroup(groupName) {
+  groupSaving.value = { ...groupSaving.value, [groupName]: true }
+  try {
+    const items = textItemsPayload(groupName)
+    if (items.length) await saveTexts(items)
+    toast.success(t('admin.content.saved'))
+  } catch (e) {
+    adminError(e)
+  }
+  groupSaving.value = { ...groupSaving.value, [groupName]: false }
+}
+
+// ---- Collection: primary navigation (add / remove / re-title pages) ----
+const navDraft = ref([])
+const navSaving = ref(false)
+function addNavItem() {
+  navDraft.value.push({ to: '/', label: { ka: '', en: '' } })
+}
+function removeNavItem(i) {
+  navDraft.value.splice(i, 1)
+}
+async function saveNav() {
+  navSaving.value = true
+  try {
+    // Drop empty rows and coerce badge to a number (or remove it).
+    const clean = navDraft.value
+      .filter((l) => (l.to || '').trim())
+      .map((l) => {
+        const item = { to: l.to.trim(), label: { ka: l.label.ka, en: l.label.en } }
+        const b = parseInt(l.badge, 10)
+        if (!Number.isNaN(b) && b > 0) item.badge = b
+        return item
+      })
+    await saveCollection('nav', clean)
+    contentSaved.value = true
+    toast.success(t('admin.content.saved'))
+    setTimeout(() => (contentSaved.value = false), 2000)
+  } catch (e) {
+    adminError(e)
+  }
+  navSaving.value = false
 }
 
 async function onContentImage(item, e) {
@@ -986,6 +1041,47 @@ const statCards = computed(() => [
           <p v-if="contentSearch && !visibleContentGroups.length" class="text-center text-gray-400 text-sm py-8">
             {{ t('admin.empty') }}
           </p>
+
+          <!-- Collection: Navigation (add / remove / re-title pages) -->
+          <details v-if="!contentSearch" class="bg-white rounded-2xl border border-gray-100 px-5 lg:px-6 py-4">
+            <summary class="font-brand text-sm text-gray-900 cursor-pointer select-none">
+              ნავიგაცია / Navigation
+              <span class="text-gray-300 font-sans font-normal normal-case tracking-normal">({{ navDraft.length }})</span>
+            </summary>
+            <div class="space-y-3 mt-5">
+              <div v-for="(l, i) in navDraft" :key="i" class="border border-gray-100 rounded-xl p-3 space-y-2">
+                <div class="flex items-center justify-between">
+                  <span class="text-xs font-semibold text-gray-500">#{{ i + 1 }}</span>
+                  <button type="button" class="text-gray-400 hover:text-red-500" @click="removeNavItem(i)">
+                    <BaseIcon name="close" class="w-4 h-4" />
+                  </button>
+                </div>
+                <div class="grid sm:grid-cols-2 gap-3">
+                  <input v-model="l.label.ka" placeholder="სათაური (ქარ)" class="w-full px-3 py-2 bg-gray-50 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white" />
+                  <input v-model="l.label.en" placeholder="Title (EN)" class="w-full px-3 py-2 bg-gray-50 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white" />
+                </div>
+                <div class="grid sm:grid-cols-2 gap-3">
+                  <input v-model="l.to" placeholder="ბმული / Link (მაგ: /about)" class="w-full px-3 py-2 bg-gray-50 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white" />
+                  <input v-model="l.badge" type="number" min="0" placeholder="ბეჯი / Badge (არასავალდებულო)" class="w-full px-3 py-2 bg-gray-50 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white" />
+                </div>
+              </div>
+              <div class="flex items-center justify-between pt-1">
+                <button type="button" class="inline-flex items-center gap-1 text-brand text-xs font-semibold" @click="addNavItem">
+                  <BaseIcon name="plus" class="w-4 h-4" /> გვერდის დამატება
+                </button>
+                <button
+                  type="button"
+                  :disabled="navSaving"
+                  class="gradient-bg text-white text-xs font-semibold px-4 py-2 rounded-xl hover:opacity-90 transition-opacity"
+                  :class="{ 'opacity-60': navSaving }"
+                  @click="saveNav"
+                >
+                  <span v-if="navSaving" class="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin inline-block align-middle"></span>
+                  <BaseIcon v-else name="check" class="w-4 h-4 inline" /> შენახვა
+                </button>
+              </div>
+            </div>
+          </details>
 
           <!-- Collection: Testimonials -->
           <details v-if="!contentSearch" class="bg-white rounded-2xl border border-gray-100 px-5 lg:px-6 py-4">
@@ -1456,21 +1552,22 @@ const statCards = computed(() => [
                   </div>
                 </template>
               </div>
+
+              <!-- Per-section save (text groups only; images upload instantly) -->
+              <div v-if="g.group !== 'images'" class="flex justify-end pt-2">
+                <button
+                  type="button"
+                  :disabled="groupSaving[g.group]"
+                  class="gradient-bg text-white text-xs font-semibold px-4 py-2 rounded-xl hover:opacity-90 transition-opacity"
+                  :class="{ 'opacity-60': groupSaving[g.group] }"
+                  @click="saveGroup(g.group)"
+                >
+                  <span v-if="groupSaving[g.group]" class="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin inline-block align-middle"></span>
+                  <BaseIcon v-else name="check" class="w-4 h-4 inline" /> შენახვა
+                </button>
+              </div>
             </div>
           </details>
-
-          <div class="flex justify-end">
-            <button
-              :disabled="contentSaving"
-              class="inline-flex items-center gap-1.5 gradient-bg text-white text-sm font-semibold px-6 py-3 rounded-xl hover:opacity-90 transition-opacity"
-              :class="{ 'opacity-60': contentSaving }"
-              @click="saveContent"
-            >
-              <span v-if="contentSaving" class="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin"></span>
-              <BaseIcon v-else name="check" class="w-4 h-4" />
-              {{ contentSaved ? t('admin.content.saved') : t('admin.content.save') }}
-            </button>
-          </div>
         </div>
       </template>
     </main>
