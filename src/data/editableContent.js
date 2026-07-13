@@ -59,16 +59,14 @@ function flattenKeys(node, prefix) {
   return out
 }
 
-const IMAGES = {
-  group: 'images',
-  label: 'სურათები / Images',
-  items: [
-    { key: 'img.hero.slide1', type: 'image', label: 'ჰირო სლაიდი 1', default: '/images/3/boundsolutions 1.jpg' },
-    { key: 'img.hero.slide2', type: 'image', label: 'ჰირო სლაიდი 2', default: '/images/bound.jpg' },
-    { key: 'img.hero.slide3', type: 'image', label: 'ჰირო სლაიდი 3', default: '/images/3/team building.jpg' },
-    { key: 'img.hero.slide4', type: 'image', label: 'ჰირო სლაიდი 4', default: '/images/bound.jpg' },
-  ],
-}
+// The hero slide images — merged into the Hero group (they belong to the hero
+// slider), so there is no separate "Images" section.
+const HERO_SLIDES = [
+  { key: 'img.hero.slide1', type: 'image', label: 'ჰირო სლაიდი 1', default: '/images/3/boundsolutions 1.jpg' },
+  { key: 'img.hero.slide2', type: 'image', label: 'ჰირო სლაიდი 2', default: '/images/bound.jpg' },
+  { key: 'img.hero.slide3', type: 'image', label: 'ჰირო სლაიდი 3', default: '/images/3/team building.jpg' },
+  { key: 'img.hero.slide4', type: 'image', label: 'ჰირო სლაიდი 4', default: '/images/bound.jpg' },
+]
 
 // One group per top-level i18n section, with every string exposed as a text field.
 export const editableContent = (() => {
@@ -83,6 +81,9 @@ export const editableContent = (() => {
       items: keys.map((k) => ({ key: k, type: 'text', label: k })),
     })
   }
-  groups.push(IMAGES)
+  // Fold the hero slide images into the Hero group.
+  const hero = groups.find((g) => g.group === 'hero')
+  if (hero) hero.items.push(...HERO_SLIDES)
+  else groups.push({ group: 'hero', label: SECTION_LABELS.hero || 'hero', items: HERO_SLIDES })
   return groups
 })()
