@@ -1,30 +1,6 @@
 // Applications store — always talks to the Laravel API (data lives in the DB).
+// The backend also emails the team (with the CV attached) on each submission.
 import { api, storageUrl } from './api'
-import { sendViaWeb3Forms } from './web3forms'
-
-// Human-readable email built from a submission (contact / CV / employer form).
-function emailSubject(app) {
-  const kind = app.type === 'cv' ? 'CV' : app.type === 'company' ? 'Employer request' : 'Contact message'
-  const who = app.name || app.contactName || app.email || ''
-  return `New ${kind}${who ? ' — ' + who : ''}`
-}
-function emailFields(app) {
-  const map = {
-    Type: app.type,
-    Name: app.name,
-    'Contact person': app.contactName,
-    Email: app.email,
-    Phone: app.phone,
-    Position: app.position,
-    Sector: app.sector,
-    Message: app.message,
-  }
-  const out = {}
-  for (const [k, v] of Object.entries(map)) {
-    if (v != null && String(v).trim() !== '') out[k] = v
-  }
-  return out
-}
 
 // Normalise a backend row to the shape the UI uses (camelCase + display fields).
 function normalize(r) {
@@ -60,7 +36,6 @@ export async function addApplication(app, file) {
   }
   delete payload.cvFile // filename string — the actual file goes as `cv`
 
-  let result
   if (file) {
     const fd = new FormData()
     for (const [k, v] of Object.entries(payload)) {
@@ -71,20 +46,9 @@ export async function addApplication(app, file) {
       fd.append(k, val)
     }
     fd.append('cv', file)
-    result = await api('/applications', { method: 'POST', body: fd, form: true })
-  } else {
-    result = await api('/applications', { method: 'POST', body: payload })
+    return api('/applications', { method: 'POST', body: fd, form: true })
   }
-
-  // Best-effort email notification (CV attached when present). Never blocks the
-  // submission — the record is already saved to the admin inbox above.
-  try {
-    await sendViaWeb3Forms({ subject: emailSubject(app), fields: emailFields(app), file: file || null })
-  } catch {
-    /* email is optional; ignore failures */
-  }
-
-  return result
+  return api('/applications', { method: 'POST', body: payload })
 }
 
 export async function setApplicationStatus(id, status) {

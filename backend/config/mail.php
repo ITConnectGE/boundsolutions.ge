@@ -115,4 +115,16 @@ return [
         'name' => env('MAIL_FROM_NAME', env('APP_NAME', 'Laravel')),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Notification Recipient
+    |--------------------------------------------------------------------------
+    |
+    | Where website form submissions (contact / CV / employer) are emailed.
+    | Falls back to the "from" address when not set.
+    |
+    */
+
+    'to_address' => env('MAIL_TO_ADDRESS'),
+
 ];

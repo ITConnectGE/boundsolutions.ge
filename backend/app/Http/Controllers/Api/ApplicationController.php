@@ -3,8 +3,11 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Mail\NewApplicationMail;
 use App\Models\Application;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 
 class ApplicationController extends Controller
 {
@@ -54,7 +57,20 @@ class ApplicationController extends Controller
         unset($data['cv']);
         $data['status'] = 'new';
 
-        return response()->json(Application::create($data), 201);
+        $application = Application::create($data);
+
+        // Best-effort email notification (with the CV attached). Never breaks the
+        // submission — the record is already saved to the admin inbox above.
+        try {
+            $to = config('mail.to_address') ?: config('mail.from.address');
+            if ($to && config('mail.default') !== 'log') {
+                Mail::to($to)->send(new NewApplicationMail($application));
+            }
+        } catch (\Throwable $e) {
+            Log::warning('Application email failed: ' . $e->getMessage());
+        }
+
+        return response()->json($application, 201);
     }
 
     // Admin: flip new <-> reviewed.
