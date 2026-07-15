@@ -1,11 +1,13 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useHead } from '@unhead/vue'
 import { useLoc } from '@/composables/useLocale'
 import { usePageMeta } from '@/composables/usePageMeta'
 import { getJobs, getJobsSeed, getVacancyCategories } from '@/composables/jobs.js'
 import { defaultVacancyCategories } from '@/data/jobs.js'
 import { addApplication } from '@/composables/applications.js'
+import { isValidEmail } from '@/utils/validation.js'
 import PageHero from '@/components/PageHero.vue'
 import BaseIcon from '@/components/BaseIcon.vue'
 
@@ -48,6 +50,40 @@ const filtered = computed(() =>
     : jobsList.value.filter((j) => norm(j.category) === norm(active.value)),
 )
 
+// JobPosting structured data so vacancies can appear in Google's job results.
+const jobsSchema = computed(() => {
+  const today = new Date().toISOString().slice(0, 10)
+  const posts = jobsList.value.map((j) => ({
+    '@context': 'https://schema.org',
+    '@type': 'JobPosting',
+    title: loc(j.title),
+    description: loc(j.sector) || loc(j.title),
+    datePosted: today,
+    employmentType: 'FULL_TIME',
+    industry: j.category || undefined,
+    hiringOrganization: {
+      '@type': 'Organization',
+      name: 'Bound Solutions',
+      sameAs: 'https://boundsolutions.ge',
+    },
+    jobLocation: {
+      '@type': 'Place',
+      address: { '@type': 'PostalAddress', addressLocality: 'Tbilisi', addressCountry: 'GE' },
+    },
+    ...(j.salary
+      ? {
+          baseSalary: {
+            '@type': 'MonetaryAmount',
+            currency: 'GEL',
+            value: { '@type': 'QuantitativeValue', value: j.salary, unitText: 'MONTH' },
+          },
+        }
+      : {}),
+  }))
+  return JSON.stringify(posts)
+})
+useHead({ script: [{ type: 'application/ld+json', innerHTML: jobsSchema }] })
+
 // CV modal state
 const modalOpen = ref(false)
 const submitted = ref(false)
@@ -59,6 +95,10 @@ const form = ref({ name: '', email: '', phone: '', message: '' })
 const agreed = ref(false)
 const consentOpen = ref(false)
 const sending = ref(false)
+const emailTouched = ref(false)
+const emailError = computed(
+  () => emailTouched.value && form.value.email.length > 0 && !isValidEmail(form.value.email),
+)
 
 function openModal(job) {
   if (job) {
@@ -72,6 +112,7 @@ function openModal(job) {
   fileName.value = ''
   cvFileObj.value = null
   agreed.value = false
+  emailTouched.value = false
   form.value = { name: '', email: '', phone: '', message: '' }
   modalOpen.value = true
 }
@@ -86,6 +127,8 @@ function onFile(e) {
   }
 }
 async function submit() {
+  emailTouched.value = true
+  if (!isValidEmail(form.value.email)) return // block fake / malformed emails
   if (!agreed.value || sending.value) return
   sending.value = true
   try {
@@ -224,46 +267,63 @@ async function submit() {
               {{ currentTitle }}<span v-if="currentSector"> — {{ currentSector }}</span>
             </p>
 
-            <form class="space-y-4" @submit.prevent="submit">
+            <form method="post" class="space-y-4" @submit.prevent="submit">
               <div>
-                <label class="block text-xs font-medium text-gray-500 mb-1.5">{{
+                <label for="cv-name" class="block text-xs font-medium text-gray-500 mb-1.5">{{
                   t('vacancies.modal.name')
                 }}</label>
                 <input
+                  id="cv-name"
                   v-model="form.name"
+                  name="name"
                   type="text"
                   required
+                  autocomplete="name"
                   class="w-full px-4 py-3 bg-gray-50 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white transition-all"
                 />
               </div>
               <div>
-                <label class="block text-xs font-medium text-gray-500 mb-1.5">{{
+                <label for="cv-email" class="block text-xs font-medium text-gray-500 mb-1.5">{{
                   t('vacancies.modal.email')
                 }}</label>
                 <input
+                  id="cv-email"
                   v-model="form.email"
+                  name="email"
                   type="email"
                   required
-                  class="w-full px-4 py-3 bg-gray-50 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white transition-all"
+                  autocomplete="email"
+                  placeholder="name@example.com"
+                  class="w-full px-4 py-3 rounded-xl text-sm focus:outline-none transition-all"
+                  :class="emailError
+                    ? 'bg-red-50 ring-2 ring-red-300 focus:ring-red-400'
+                    : 'bg-gray-50 focus:ring-2 focus:ring-brand/20 focus:bg-white'"
+                  @blur="emailTouched = true"
                 />
+                <p v-if="emailError" class="text-red-500 text-xs mt-1.5">{{ t('common.invalidEmail') }}</p>
               </div>
               <div>
-                <label class="block text-xs font-medium text-gray-500 mb-1.5">{{
+                <label for="cv-phone" class="block text-xs font-medium text-gray-500 mb-1.5">{{
                   t('vacancies.modal.phone')
                 }}</label>
                 <input
+                  id="cv-phone"
                   v-model="form.phone"
+                  name="phone"
                   type="tel"
                   required
+                  autocomplete="tel"
                   class="w-full px-4 py-3 bg-gray-50 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white transition-all"
                 />
               </div>
               <div>
-                <label class="block text-xs font-medium text-gray-500 mb-1.5">{{
+                <label for="cv-message" class="block text-xs font-medium text-gray-500 mb-1.5">{{
                   t('vacancies.modal.message')
                 }}</label>
                 <textarea
+                  id="cv-message"
                   v-model="form.message"
+                  name="message"
                   rows="3"
                   class="w-full px-4 py-3 bg-gray-50 rounded-xl text-sm resize-none focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white transition-all"
                 ></textarea>
@@ -318,11 +378,12 @@ async function submit() {
               <button
                 type="submit"
                 :disabled="!agreed || sending"
-                class="w-full gradient-bg text-white py-3.5 rounded-xl font-semibold text-sm mt-2 transition-opacity"
+                class="w-full gradient-bg text-white py-3.5 rounded-xl font-semibold text-base mt-2 transition-opacity"
                 :class="agreed && !sending ? 'hover:opacity-90' : 'opacity-40 cursor-not-allowed'"
               >
                 {{ t('vacancies.modal.submit') }}
               </button>
+              <p class="text-center text-xs text-gray-400">{{ t('common.responsePromise') }}</p>
             </form>
           </template>
 

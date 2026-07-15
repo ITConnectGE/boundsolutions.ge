@@ -10,7 +10,6 @@ import PageHero from '@/components/PageHero.vue'
 import SectionHeading from '@/components/SectionHeading.vue'
 import TeamMemberCard from '@/components/TeamMemberCard.vue'
 import PartnerMarquee from '@/components/PartnerMarquee.vue'
-import Testimonials from '@/components/Testimonials.vue'
 import ContactCta from '@/components/ContactCta.vue'
 import BaseIcon from '@/components/BaseIcon.vue'
 
@@ -141,9 +140,6 @@ usePageMeta({ title: () => t('about.title'), description: () => loc(about.value.
       </div>
     </div>
   </section>
-
-  <!-- PARTNER REVIEWS -->
-  <Testimonials />
 
   <!-- PARTNERS -->
   <section class="py-16 lg:py-20">

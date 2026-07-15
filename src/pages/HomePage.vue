@@ -7,7 +7,10 @@ import { services as defaultServices } from '@/data/services.js'
 import { collection } from '@/composables/content.js'
 import { aboutDefault } from '@/data/about.js'
 import { defaultStats } from '@/data/lists.js'
+import { partners as defaultPartners } from '@/data/social.js'
 import HeroSlider from '@/components/HeroSlider.vue'
+import PartnerMarquee from '@/components/PartnerMarquee.vue'
+import CountUp from '@/components/CountUp.vue'
 import EditableText from '@/components/EditableText.vue'
 import SectionHeading from '@/components/SectionHeading.vue'
 import ServiceCard from '@/components/ServiceCard.vue'
@@ -22,6 +25,7 @@ const founderImgFailed = ref(false)
 const services = computed(() => collection('services', defaultServices))
 const founder = computed(() => collection('about', aboutDefault).founder)
 const stats = computed(() => collection('stats', defaultStats))
+const partners = computed(() => collection('partners', defaultPartners))
 
 // no title => site default; description from i18n keeps it bilingual
 usePageMeta({ description: () => t('hero.subtitle') })
@@ -35,13 +39,48 @@ usePageMeta({ description: () => t('hero.subtitle') })
   <section class="bg-white border-b border-gray-100">
     <div class="max-w-5xl mx-auto px-6 py-10 grid grid-cols-3 gap-4 sm:gap-8 text-center">
       <div v-for="(s, i) in stats" :key="i" class="fade-in">
-        <div class="text-3xl lg:text-4xl font-extrabold gradient-text">{{ loc(s.v) }}</div>
+        <div class="text-3xl lg:text-4xl font-extrabold gradient-text">
+          <CountUp :value="loc(s.v)" />
+        </div>
         <p class="text-gray-400 text-xs sm:text-sm mt-1">{{ loc(s.l) }}</p>
       </div>
     </div>
   </section>
 
-  <!-- ABOUT teaser (Nino) — placed before services per request -->
+  <!-- CLIENT LOGOS (social proof, up front) -->
+  <section class="py-10 lg:py-14 bg-white border-b border-gray-100">
+    <div class="max-w-6xl mx-auto px-6">
+      <p class="text-center text-gray-400 text-xs uppercase tracking-widest mb-7">
+        {{ t('home.partners.title') }}
+      </p>
+      <PartnerMarquee :partners="partners" />
+    </div>
+  </section>
+
+  <!-- SERVICES -->
+  <section id="services" class="py-20 lg:py-28 bg-gray-50/80">
+    <div class="max-w-6xl mx-auto px-6">
+      <SectionHeading
+        eyebrow-key="home.services.eyebrow"
+        title-key="home.services.title"
+        subtitle-key="home.services.subtitle"
+        class="mb-14"
+      />
+      <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
+        <ServiceCard v-for="s in services" :key="s.slug" :service="s" />
+      </div>
+      <div class="mt-10">
+        <RouterLink
+          to="/services"
+          class="inline-flex items-center gap-2 text-brand font-semibold text-sm hover:gap-3 transition-all"
+        >
+          {{ t('common.viewAll') }} <BaseIcon name="arrowRight" class="w-4 h-4" />
+        </RouterLink>
+      </div>
+    </div>
+  </section>
+
+  <!-- ABOUT teaser (Nino) — after services -->
   <section class="py-20 lg:py-28">
     <div class="max-w-5xl mx-auto px-6">
       <div class="grid lg:grid-cols-5 gap-12 lg:gap-16 items-center fade-in">
@@ -78,29 +117,6 @@ usePageMeta({ description: () => t('hero.subtitle') })
             {{ t('home.aboutTeaser.cta') }} <BaseIcon name="arrowRight" class="w-4 h-4" />
           </RouterLink>
         </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- SERVICES -->
-  <section id="services" class="py-20 lg:py-28 bg-gray-50/80">
-    <div class="max-w-6xl mx-auto px-6">
-      <SectionHeading
-        eyebrow-key="home.services.eyebrow"
-        title-key="home.services.title"
-        subtitle-key="home.services.subtitle"
-        class="mb-14"
-      />
-      <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
-        <ServiceCard v-for="s in services" :key="s.slug" :service="s" />
-      </div>
-      <div class="mt-10">
-        <RouterLink
-          to="/services"
-          class="inline-flex items-center gap-2 text-brand font-semibold text-sm hover:gap-3 transition-all"
-        >
-          {{ t('common.viewAll') }} <BaseIcon name="arrowRight" class="w-4 h-4" />
-        </RouterLink>
       </div>
     </div>
   </section>

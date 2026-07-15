@@ -51,16 +51,16 @@ onBeforeUnmount(() => clearInterval(timer))
     <!-- Content -->
     <div class="relative h-full flex items-center">
       <div class="max-w-6xl mx-auto px-6 w-full">
-        <div class="max-w-3xl">
+        <div class="max-w-3xl mx-auto text-center translate-y-16 lg:translate-y-24">
           <h1
             class="font-brand text-white text-2xl sm:text-4xl lg:text-5xl leading-[1.1] mb-6 drop-shadow"
           >
             <EditableText tkey="hero.slogan1" /><br /><span class="gradient-text"><EditableText tkey="hero.slogan2" /></span>
           </h1>
-          <p class="text-white/80 text-lg max-w-xl mb-9 leading-relaxed">
+          <p class="text-white/80 text-lg max-w-xl mx-auto mb-9 leading-relaxed">
             <EditableText tkey="hero.subtitle" />
           </p>
-          <div class="flex flex-wrap gap-4">
+          <div class="flex flex-wrap gap-4 justify-center">
             <RouterLink
               to="/contact"
               class="gradient-bg text-white px-8 py-3.5 rounded-2xl font-semibold text-sm hover:shadow-xl hover:shadow-brand/30 transition-all duration-300 hover:-translate-y-0.5"

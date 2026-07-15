@@ -8,16 +8,15 @@ import BaseIcon from '@/components/BaseIcon.vue'
 
 const { t } = useI18n()
 const router = useRouter()
-const { login, isAuthed, DEMO_EMAIL, DEMO_PASSWORD } = useAdminAuth()
+const { login, isAuthed } = useAdminAuth()
 
 useHead({
   title: () => t('admin.login.title'),
   meta: [{ name: 'robots', content: 'noindex, nofollow' }],
 })
 
-// Prefilled with the demo credentials for convenience.
-const email = ref(DEMO_EMAIL)
-const password = ref(DEMO_PASSWORD)
+const email = ref('')
+const password = ref('')
 const error = ref(false)
 const loading = ref(false)
 
@@ -87,13 +86,6 @@ async function submit() {
         >
           {{ t('admin.login.signIn') }}
         </button>
-
-        <div class="bg-cream-light rounded-xl p-3 text-center">
-          <p class="text-[11px] font-semibold text-brand/70 uppercase tracking-wide mb-1">
-            {{ t('admin.login.demoHint') }}
-          </p>
-          <p class="text-xs text-gray-500">{{ DEMO_EMAIL }} · {{ DEMO_PASSWORD }}</p>
-        </div>
       </form>
 
       <div class="text-center mt-6">

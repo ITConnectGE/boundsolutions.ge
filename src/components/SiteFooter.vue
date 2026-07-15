@@ -70,7 +70,7 @@ const services = computed(() => collection('services', defaultServices))
             </p>
           </div>
           <p class="text-white/60 text-xs mb-2">{{ t('footer.newsletterText') }}</p>
-          <NewsletterForm dark />
+          <NewsletterForm dark input-id="nl-email-footer" />
         </div>
       </div>
 

@@ -1,83 +1,78 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, reactive, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { usePageMeta } from '@/composables/usePageMeta'
 import { addApplication } from '@/composables/applications.js'
 import { collection } from '@/composables/content.js'
-import { defaultCompanyForm } from '@/data/lists.js'
+import { defaultCompanyForm, companyFormFields, defaultCompanyFormEnabled } from '@/data/lists.js'
 import { useLoc } from '@/composables/useLocale'
+import { isValidEmail } from '@/utils/validation.js'
 import PageHero from '@/components/PageHero.vue'
 import BaseIcon from '@/components/BaseIcon.vue'
 
 const { t } = useI18n()
 const { loc } = useLoc()
 
-// Editable from the admin CMS: intro + the schedule / contract dropdown options.
+// Editable from the admin CMS: intro, which fields show (enabled), and the
+// dropdown options for select fields.
 const cf = computed(() => collection('companyForm', defaultCompanyForm))
+const enabledKeys = computed(() => cf.value.enabled || defaultCompanyFormEnabled)
+const visibleFields = computed(() => companyFormFields.filter((f) => enabledKeys.value.includes(f.key)))
+
+// Group visible fields under their section legend, in a fixed order.
+const SECTIONS = [
+  { key: 'company', legend: 'sectionCompany' },
+  { key: 'position', legend: 'sectionPosition' },
+  { key: 'contract', legend: 'sectionContract' },
+  { key: 'contact', legend: 'sectionContact' },
+]
+const sections = computed(() =>
+  SECTIONS.map((s) => ({ ...s, fields: visibleFields.value.filter((f) => f.section === s.key) })).filter(
+    (s) => s.fields.length,
+  ),
+)
+const optionsFor = (f) => (f.opt ? cf.value[f.opt] || [] : [])
 
 usePageMeta({ title: () => t('companyForm.title'), description: () => t('companyForm.subtitle') })
 
 const submitted = ref(false)
+const sending = ref(false)
+// A value slot for every possible field (unused ones stay empty).
+const values = reactive(Object.fromEntries(companyFormFields.map((f) => [f.key, ''])))
 
-const blank = () => ({
-  companyName: '',
-  idCode: '',
-  industry: '',
-  location: '',
-  positionTitle: '',
-  schedule: '',
-  jobDescription: '',
-  structure: '',
-  qualifications: '',
-  contractType: '',
-  contractPeriod: '',
-  salary: '',
-  bonus: '',
-  comment: '',
-  contactName: '',
-  email: '',
-  phone: '',
-})
-const form = ref(blank())
+const emailShown = computed(() => enabledKeys.value.includes('email'))
+const emailTouched = ref(false)
+const emailError = computed(
+  () => emailTouched.value && values.email.length > 0 && !isValidEmail(values.email),
+)
 
 function summary() {
-  const f = form.value
-  const rows = [
-    [t('companyForm.idCode'), f.idCode],
-    [t('companyForm.industry'), f.industry],
-    [t('companyForm.location'), f.location],
-    [t('companyForm.positionTitle'), f.positionTitle],
-    [t('companyForm.schedule'), f.schedule],
-    [t('companyForm.jobDescription'), f.jobDescription],
-    [t('companyForm.structure'), f.structure],
-    [t('companyForm.qualifications'), f.qualifications],
-    [t('companyForm.contractType'), f.contractType],
-    [t('companyForm.contractPeriod'), f.contractPeriod],
-    [t('companyForm.salary'), f.salary],
-    [t('companyForm.bonus'), f.bonus],
-    [t('companyForm.comment'), f.comment],
-  ]
-  return rows
-    .filter(([, v]) => v && String(v).trim())
-    .map(([k, v]) => `${k}: ${v}`)
-    .join('\n')
+  const rows = []
+  for (const f of visibleFields.value) {
+    if (f.map) continue // mapped to a column, not the free-text summary
+    const v = values[f.key]
+    if (v && String(v).trim()) rows.push(`${t('companyForm.' + f.key)}: ${v}`)
+  }
+  return rows.join('\n')
 }
 
-const sending = ref(false)
-
 async function submit() {
+  if (emailShown.value) {
+    emailTouched.value = true
+    if (!isValidEmail(values.email)) return // block fake / malformed emails
+  }
   if (sending.value) return
   sending.value = true
   try {
     await addApplication({
       type: 'company',
-      name: form.value.companyName,
-      email: form.value.email,
-      phone: form.value.phone,
-      position: form.value.positionTitle,
-      sector: form.value.industry,
+      name: values.companyName,
+      email: values.email,
+      phone: values.phone,
+      position: values.positionTitle,
+      sector: values.industry,
       message: summary(),
-      contactName: form.value.contactName,
+      contactName: values.contactName,
     })
     submitted.value = true
     if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -115,118 +110,65 @@ const inputCls =
           <div class="rich text-sm text-gray-600 leading-relaxed" v-html="loc(cf.intro)"></div>
         </div>
 
-        <form class="space-y-10" @submit.prevent="submit">
-          <!-- Company -->
-          <fieldset class="space-y-4">
-            <legend class="font-brand text-sm text-gray-900 mb-3">{{ t('companyForm.sectionCompany') }}</legend>
-            <div>
-              <label class="block text-xs font-medium text-gray-500 mb-1.5">{{ t('companyForm.companyName') }} *</label>
-              <input v-model="form.companyName" type="text" required :class="inputCls" />
-            </div>
-            <div class="grid sm:grid-cols-2 gap-4">
-              <div>
-                <label class="block text-xs font-medium text-gray-500 mb-1.5">{{ t('companyForm.idCode') }}</label>
-                <input v-model="form.idCode" type="text" :class="inputCls" />
-              </div>
-              <div>
-                <label class="block text-xs font-medium text-gray-500 mb-1.5">{{ t('companyForm.location') }}</label>
-                <input v-model="form.location" type="text" :class="inputCls" />
-              </div>
-            </div>
-            <div>
-              <label class="block text-xs font-medium text-gray-500 mb-1.5">{{ t('companyForm.industry') }}</label>
-              <input v-model="form.industry" type="text" :class="inputCls" />
-            </div>
-          </fieldset>
+        <form method="post" class="space-y-10" @submit.prevent="submit">
+          <fieldset v-for="sec in sections" :key="sec.key" class="space-y-4">
+            <legend class="font-brand text-sm text-gray-900 mb-3">{{ t('companyForm.' + sec.legend) }}</legend>
+            <div v-for="f in sec.fields" :key="f.key">
+              <label :for="'cf-' + f.key" class="block text-xs font-medium text-gray-500 mb-1.5">
+                {{ t('companyForm.' + f.key) }}<span v-if="f.required"> *</span>
+              </label>
 
-          <!-- Position -->
-          <fieldset class="space-y-4">
-            <legend class="font-brand text-sm text-gray-900 mb-3">{{ t('companyForm.sectionPosition') }}</legend>
-            <div>
-              <label class="block text-xs font-medium text-gray-500 mb-1.5">{{ t('companyForm.positionTitle') }} *</label>
-              <input v-model="form.positionTitle" type="text" required :class="inputCls" />
-            </div>
-            <div>
-              <label class="block text-xs font-medium text-gray-500 mb-1.5">{{ t('companyForm.schedule') }}</label>
-              <select v-model="form.schedule" :class="inputCls">
+              <!-- text / email / tel -->
+              <template v-if="f.type === 'text' || f.type === 'email' || f.type === 'tel'">
+                <input
+                  :id="'cf-' + f.key"
+                  v-model="values[f.key]"
+                  :name="f.key"
+                  :type="f.type"
+                  :required="f.required"
+                  :placeholder="f.type === 'email' ? 'name@example.com' : ''"
+                  :class="f.key === 'email' && emailError ? inputCls + ' ring-2 ring-red-300 bg-red-50' : inputCls"
+                  @blur="f.key === 'email' && (emailTouched = true)"
+                />
+                <p v-if="f.key === 'email' && emailError" class="text-red-500 text-xs mt-1">
+                  {{ t('common.invalidEmail') }}
+                </p>
+              </template>
+
+              <!-- textarea -->
+              <textarea
+                v-else-if="f.type === 'textarea'"
+                :id="'cf-' + f.key"
+                v-model="values[f.key]"
+                :name="f.key"
+                rows="3"
+                :class="inputCls + ' resize-none'"
+              ></textarea>
+
+              <!-- select -->
+              <select
+                v-else-if="f.type === 'select'"
+                :id="'cf-' + f.key"
+                v-model="values[f.key]"
+                :name="f.key"
+                :class="inputCls"
+              >
                 <option value="">{{ t('companyForm.choose') }}</option>
-                <option v-for="(o, i) in cf.schedule" :key="i" :value="loc(o)">{{ loc(o) }}</option>
+                <option v-for="(o, i) in optionsFor(f)" :key="i" :value="loc(o)">{{ loc(o) }}</option>
               </select>
             </div>
-            <div>
-              <label class="block text-xs font-medium text-gray-500 mb-1.5">{{ t('companyForm.jobDescription') }}</label>
-              <textarea v-model="form.jobDescription" rows="3" :class="inputCls + ' resize-none'"></textarea>
-            </div>
-            <div>
-              <label class="block text-xs font-medium text-gray-500 mb-1.5">{{ t('companyForm.structure') }}</label>
-              <input v-model="form.structure" type="text" :class="inputCls" />
-            </div>
-            <div>
-              <label class="block text-xs font-medium text-gray-500 mb-1.5">{{ t('companyForm.qualifications') }}</label>
-              <textarea v-model="form.qualifications" rows="3" :class="inputCls + ' resize-none'"></textarea>
-            </div>
           </fieldset>
 
-          <!-- Contract -->
-          <fieldset class="space-y-4">
-            <legend class="font-brand text-sm text-gray-900 mb-3">{{ t('companyForm.sectionContract') }}</legend>
-            <div class="grid sm:grid-cols-2 gap-4">
-              <div>
-                <label class="block text-xs font-medium text-gray-500 mb-1.5">{{ t('companyForm.contractType') }}</label>
-                <select v-model="form.contractType" :class="inputCls">
-                  <option value="">{{ t('companyForm.choose') }}</option>
-                  <option v-for="(o, i) in cf.contractType" :key="i" :value="loc(o)">{{ loc(o) }}</option>
-                </select>
-              </div>
-              <div>
-                <label class="block text-xs font-medium text-gray-500 mb-1.5">{{ t('companyForm.contractPeriod') }}</label>
-                <select v-model="form.contractPeriod" :class="inputCls">
-                  <option value="">{{ t('companyForm.choose') }}</option>
-                  <option v-for="(o, i) in cf.contractPeriod" :key="i" :value="loc(o)">{{ loc(o) }}</option>
-                </select>
-              </div>
-            </div>
-            <div class="grid sm:grid-cols-2 gap-4">
-              <div>
-                <label class="block text-xs font-medium text-gray-500 mb-1.5">{{ t('companyForm.salary') }}</label>
-                <input v-model="form.salary" type="text" :class="inputCls" />
-              </div>
-              <div>
-                <label class="block text-xs font-medium text-gray-500 mb-1.5">{{ t('companyForm.bonus') }}</label>
-                <input v-model="form.bonus" type="text" :class="inputCls" />
-              </div>
-            </div>
-            <div>
-              <label class="block text-xs font-medium text-gray-500 mb-1.5">{{ t('companyForm.comment') }}</label>
-              <textarea v-model="form.comment" rows="2" :class="inputCls + ' resize-none'"></textarea>
-            </div>
-          </fieldset>
-
-          <!-- Contact -->
-          <fieldset class="space-y-4">
-            <legend class="font-brand text-sm text-gray-900 mb-3">{{ t('companyForm.sectionContact') }}</legend>
-            <div class="grid sm:grid-cols-3 gap-4">
-              <div>
-                <label class="block text-xs font-medium text-gray-500 mb-1.5">{{ t('companyForm.contactName') }}</label>
-                <input v-model="form.contactName" type="text" :class="inputCls" />
-              </div>
-              <div>
-                <label class="block text-xs font-medium text-gray-500 mb-1.5">{{ t('companyForm.email') }} *</label>
-                <input v-model="form.email" type="email" required :class="inputCls" />
-              </div>
-              <div>
-                <label class="block text-xs font-medium text-gray-500 mb-1.5">{{ t('companyForm.phone') }}</label>
-                <input v-model="form.phone" type="tel" :class="inputCls" />
-              </div>
-            </div>
-          </fieldset>
-
-          <button
-            type="submit"
-            class="w-full gradient-bg text-white py-3.5 rounded-xl font-semibold text-sm hover:opacity-90 transition-opacity"
-          >
-            {{ t('companyForm.submit') }}
-          </button>
+          <div>
+            <button
+              type="submit"
+              :disabled="sending"
+              class="w-full gradient-bg text-white py-3.5 rounded-xl font-semibold text-base hover:opacity-90 transition-opacity disabled:opacity-60"
+            >
+              {{ t('companyForm.submit') }}
+            </button>
+            <p class="text-center text-xs text-gray-400 mt-3">{{ t('common.responsePromise') }}</p>
+          </div>
         </form>
       </template>
     </div>

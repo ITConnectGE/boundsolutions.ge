@@ -22,6 +22,8 @@ export async function saveJob(job, file) {
   fd.append('title_en', job.title?.en || '')
   fd.append('sector_ka', job.sector?.ka || '')
   fd.append('sector_en', job.sector?.en || '')
+  fd.append('description_ka', job.description?.ka || '')
+  fd.append('description_en', job.description?.en || '')
   fd.append('salary', job.salary || '')
   fd.append('is_active', '1')
   if (file) fd.append('image', file)

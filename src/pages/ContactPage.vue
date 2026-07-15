@@ -1,8 +1,9 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { usePageMeta } from '@/composables/usePageMeta'
 import { addApplication } from '@/composables/applications.js'
+import { isValidEmail } from '@/utils/validation.js'
 import PageHero from '@/components/PageHero.vue'
 import SocialLinks from '@/components/SocialLinks.vue'
 import BaseIcon from '@/components/BaseIcon.vue'
@@ -14,8 +15,14 @@ usePageMeta({ title: () => t('contact.title'), description: () => t('contact.sub
 const submitted = ref(false)
 const sending = ref(false)
 const form = ref({ name: '', email: '', phone: '', interest: '', message: '' })
+const emailTouched = ref(false)
+const emailError = computed(
+  () => emailTouched.value && form.value.email.length > 0 && !isValidEmail(form.value.email),
+)
 
 async function submit() {
+  emailTouched.value = true
+  if (!isValidEmail(form.value.email)) return // block fake / malformed emails
   if (sending.value) return
   sending.value = true
   try {
@@ -80,45 +87,62 @@ const cards = [
           {{ t('contact.formTitle') }}
         </h2>
 
-        <form v-if="!submitted" class="space-y-4" @submit.prevent="submit">
+        <form v-if="!submitted" method="post" class="space-y-4" @submit.prevent="submit">
           <div>
-            <label class="block text-xs font-medium text-gray-500 mb-1.5"
+            <label for="contact-name" class="block text-xs font-medium text-gray-500 mb-1.5"
               >{{ t('contact.form.name') }} *</label
             >
             <input
+              id="contact-name"
               v-model="form.name"
+              name="name"
               type="text"
               required
+              autocomplete="name"
               class="w-full px-4 py-3 bg-gray-50 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white transition-all"
             />
           </div>
           <div>
-            <label class="block text-xs font-medium text-gray-500 mb-1.5"
+            <label for="contact-email" class="block text-xs font-medium text-gray-500 mb-1.5"
               >{{ t('contact.form.email') }} *</label
             >
             <input
+              id="contact-email"
               v-model="form.email"
+              name="email"
               type="email"
               required
-              class="w-full px-4 py-3 bg-gray-50 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white transition-all"
+              autocomplete="email"
+              placeholder="name@example.com"
+              class="w-full px-4 py-3 rounded-xl text-sm focus:outline-none transition-all"
+              :class="emailError
+                ? 'bg-red-50 ring-2 ring-red-300 focus:ring-red-400'
+                : 'bg-gray-50 focus:ring-2 focus:ring-brand/20 focus:bg-white'"
+              @blur="emailTouched = true"
             />
+            <p v-if="emailError" class="text-red-500 text-xs mt-1.5">{{ t('common.invalidEmail') }}</p>
           </div>
           <div>
-            <label class="block text-xs font-medium text-gray-500 mb-1.5">{{
+            <label for="contact-phone" class="block text-xs font-medium text-gray-500 mb-1.5">{{
               t('contact.form.phone')
             }}</label>
             <input
+              id="contact-phone"
               v-model="form.phone"
+              name="phone"
               type="tel"
+              autocomplete="tel"
               class="w-full px-4 py-3 bg-gray-50 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white transition-all"
             />
           </div>
           <div>
-            <label class="block text-xs font-medium text-gray-500 mb-1.5">{{
+            <label for="contact-interest" class="block text-xs font-medium text-gray-500 mb-1.5">{{
               t('contact.form.interest')
             }}</label>
             <select
+              id="contact-interest"
               v-model="form.interest"
+              name="interest"
               class="w-full px-4 py-3 bg-gray-50 rounded-xl text-sm text-gray-600 focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white transition-all"
             >
               <option value="">{{ t('contact.form.interestChoose') }}</option>
@@ -128,11 +152,13 @@ const cards = [
             </select>
           </div>
           <div>
-            <label class="block text-xs font-medium text-gray-500 mb-1.5"
+            <label for="contact-message" class="block text-xs font-medium text-gray-500 mb-1.5"
               >{{ t('contact.form.message') }} *</label
             >
             <textarea
+              id="contact-message"
               v-model="form.message"
+              name="message"
               required
               rows="4"
               class="w-full px-4 py-3 bg-gray-50 rounded-xl text-sm resize-none focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white transition-all"
@@ -140,10 +166,12 @@ const cards = [
           </div>
           <button
             type="submit"
-            class="w-full gradient-bg text-white py-3.5 rounded-xl font-semibold"
+            :disabled="sending"
+            class="w-full gradient-bg text-white py-3.5 rounded-xl font-semibold text-base disabled:opacity-60"
           >
             {{ t('contact.form.send') }}
           </button>
+          <p class="text-center text-xs text-gray-400">{{ t('common.responsePromise') }}</p>
         </form>
 
         <div v-else class="text-center py-12">

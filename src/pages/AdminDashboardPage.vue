@@ -34,7 +34,13 @@ import { posts as defaultPosts } from '@/data/blog.js'
 import { aboutDefault } from '@/data/about.js'
 import { partners as defaultPartners } from '@/data/social.js'
 import { defaultNav } from '@/data/nav.js'
-import { defaultProcess, defaultStats, defaultCompanyForm } from '@/data/lists.js'
+import {
+  defaultProcess,
+  defaultStats,
+  defaultCompanyForm,
+  companyFormFields,
+  defaultCompanyFormEnabled,
+} from '@/data/lists.js'
 import { defaultVacancyCategories } from '@/data/jobs.js'
 import { privacyDefault, termsDefault } from '@/data/legal.js'
 import { toast } from '@/composables/toast'
@@ -57,7 +63,6 @@ const apps = ref([])
 const ready = ref(false)
 const search = ref('')
 const statusFilter = ref('all') // all | new | reviewed
-const typeFilter = ref('all') // all | cv | company | contact
 const user = ref('')
 const view = ref('inbox') // inbox | jobs | content
 const connError = ref(false)
@@ -126,6 +131,8 @@ function toJobDraft(job) {
     titleEn: job?.title?.en || '',
     sectorKa: job?.sector?.ka || '',
     sectorEn: job?.sector?.en || '',
+    descriptionKa: job?.description?.ka || '',
+    descriptionEn: job?.description?.en || '',
     salary: job?.salary || '',
     image: job?.image || '',
     imageFile: null,
@@ -226,6 +233,7 @@ async function saveJobModal() {
         category: row.category.trim(),
         title: { ka: row.titleKa, en: row.titleEn || row.titleKa },
         sector: { ka: row.sectorKa, en: row.sectorEn || row.sectorKa },
+        description: { ka: row.descriptionKa, en: row.descriptionEn },
         salary: row.salary,
       },
       row.imageFile || null,
@@ -873,7 +881,15 @@ function normalizeCompanyForm(cf) {
   for (const key of ['schedule', 'contractType', 'contractPeriod']) {
     cf[key] = Array.isArray(cf[key]) ? cf[key] : []
   }
+  cf.enabled = Array.isArray(cf.enabled) ? cf.enabled : [...defaultCompanyFormEnabled]
   return cf
+}
+// Toggle a form field on/off (removes it from the public employer form).
+function toggleCompanyField(key) {
+  const arr = companyFormDraft.value.enabled
+  const i = arr.indexOf(key)
+  if (i === -1) arr.push(key)
+  else arr.splice(i, 1)
 }
 function addOption(list) {
   companyFormDraft.value[list].push({ ka: '', en: '' })
@@ -922,19 +938,17 @@ onMounted(() => {
   ready.value = true
 })
 
-const filtered = computed(() => {
+function matchesSearchStatus(a) {
+  if (statusFilter.value !== 'all' && a.status !== statusFilter.value) return false
   const q = search.value.trim().toLowerCase()
-  return apps.value.filter((a) => {
-    if (statusFilter.value !== 'all' && a.status !== statusFilter.value) return false
-    if (typeFilter.value !== 'all' && a.type !== typeFilter.value) return false
-    if (q) {
-      const hay =
-        `${a.name} ${a.contactName || ''} ${a.email} ${a.position} ${a.sector} ${a.phone}`.toLowerCase()
-      if (!hay.includes(q)) return false
-    }
-    return true
-  })
-})
+  if (q) {
+    const hay =
+      `${a.name} ${a.contactName || ''} ${a.email} ${a.position} ${a.sector} ${a.phone}`.toLowerCase()
+    if (!hay.includes(q)) return false
+  }
+  return true
+}
+const filtered = computed(() => apps.value.filter(matchesSearchStatus))
 
 const stats = computed(() => ({
   total: apps.value.length,
@@ -943,6 +957,38 @@ const stats = computed(() => ({
   company: apps.value.filter((a) => a.type === 'company').length,
   contact: apps.value.filter((a) => a.type === 'contact').length,
 }))
+
+// ---- Inbox as a folder tree: CVs grouped by the vacancy they applied to,
+// general (no-position) CVs, employer requests, and contact messages ----
+const folder = ref('') // selected folder id
+const generalTitles = [
+  kaMessages.vacancies?.modal?.generalTitle,
+  enMessages.vacancies?.modal?.generalTitle,
+].filter(Boolean)
+
+const folders = computed(() => {
+  const cvGroups = new Map()
+  const general = []
+  const company = []
+  const contact = []
+  for (const a of apps.value) {
+    if (a.type === 'company') { company.push(a); continue }
+    if (a.type === 'contact') { contact.push(a); continue }
+    const pos = (a.position || '').trim() // CV
+    if (!pos || generalTitles.includes(pos)) { general.push(a); continue }
+    if (!cvGroups.has(pos)) cvGroups.set(pos, [])
+    cvGroups.get(pos).push(a)
+  }
+  const list = [...cvGroups.entries()]
+    .map(([pos, items]) => ({ id: 'vac:' + pos, label: pos, icon: 'briefcase', items }))
+    .sort((a, b) => a.label.localeCompare(b.label))
+  if (general.length) list.push({ id: 'general', label: t('admin.folders.general'), icon: 'fileCheck', items: general })
+  if (company.length) list.push({ id: 'company', label: t('admin.folders.company'), icon: 'briefcase', items: company })
+  if (contact.length) list.push({ id: 'contact', label: t('admin.folders.contact'), icon: 'mail', items: contact })
+  return list
+})
+const currentFolder = computed(() => folders.value.find((f) => f.id === folder.value) || folders.value[0] || null)
+const currentItems = computed(() => (currentFolder.value ? currentFolder.value.items.filter(matchesSearchStatus) : []))
 
 function exportCsv() {
   const stamp = new Date().toISOString().slice(0, 10)
@@ -1085,7 +1131,7 @@ const statCards = computed(() => [
       </div>
 
       <!-- Toolbar -->
-      <div class="flex flex-col lg:flex-row lg:items-center gap-3 mb-5">
+      <div class="flex flex-col sm:flex-row sm:items-center gap-3 mb-5">
         <div class="relative flex-1">
           <BaseIcon name="search" class="w-4 h-4 text-gray-300 absolute left-3.5 top-1/2 -translate-y-1/2" />
           <input
@@ -1106,17 +1152,6 @@ const statCards = computed(() => [
             {{ t(`admin.filters.${s}`) }}
           </button>
         </div>
-        <div class="flex gap-2">
-          <button
-            v-for="ty in [['all', 'all'], ['cv', 'typeCv'], ['company', 'typeCompany'], ['contact', 'typeContact']]"
-            :key="ty[0]"
-            class="px-4 py-2 rounded-xl text-xs font-semibold transition-all"
-            :class="typeFilter === ty[0] ? 'bg-brand text-white' : 'bg-white border border-gray-100 text-gray-500 hover:text-gray-900'"
-            @click="typeFilter = ty[0]"
-          >
-            {{ t(`admin.filters.${ty[1]}`) }}
-          </button>
-        </div>
         <button
           class="inline-flex items-center justify-center gap-1.5 bg-navy text-white text-xs font-semibold px-4 py-2.5 rounded-xl hover:bg-navy/90 transition-colors whitespace-nowrap"
           @click="exportCsv"
@@ -1125,96 +1160,110 @@ const statCards = computed(() => [
         </button>
       </div>
 
-      <!-- List -->
-      <div v-if="filtered.length" class="space-y-3">
-        <div
-          v-for="a in filtered"
-          :key="a.id"
-          class="bg-white rounded-2xl border p-5 flex flex-col lg:flex-row lg:items-start gap-4 transition-colors"
-          :class="a.status === 'new' ? 'border-brand/30' : 'border-gray-100'"
-        >
-          <div class="flex-1 min-w-0">
-            <div class="flex flex-wrap items-center gap-2 mb-1">
-              <h3 class="font-bold text-gray-800">{{ a.name }}</h3>
-              <span
-                class="px-2.5 py-0.5 rounded-lg text-[11px] font-semibold"
-                :class="typeBadge(a.type)"
-              >
-                {{ t(`admin.type.${a.type}`) }}
-              </span>
-              <span
-                v-if="a.status === 'new'"
-                class="px-2.5 py-0.5 rounded-lg text-[11px] font-semibold bg-green-50 text-green-600"
-              >
-                {{ t('admin.status.new') }}
-              </span>
-            </div>
-            <p v-if="a.position || a.sector" class="text-sm text-gray-600 font-medium">
-              {{ a.position }}<span v-if="a.sector" class="text-gray-400"> · {{ a.sector }}</span>
-            </p>
-            <p v-if="a.contactName" class="text-xs text-gray-400 mt-0.5">{{ a.contactName }}</p>
-            <p class="text-xs text-gray-400 mt-1">
-              <a :href="`mailto:${a.email}`" class="hover:text-brand">{{ a.email }}</a>
-              <span v-if="a.phone"> · </span>
-              <a v-if="a.phone" :href="`tel:${a.phone}`" class="hover:text-brand">{{ a.phone }}</a>
-            </p>
-            <!-- CV download (always visible for CV submissions) -->
-            <a
-              v-if="a.cvFile"
-              :href="a.cvUrl || undefined"
-              :target="a.cvUrl ? '_blank' : undefined"
-              rel="noopener noreferrer"
-              class="mt-2.5 inline-flex items-center gap-2 bg-brand/10 text-brand text-xs font-semibold px-3 py-2 rounded-lg transition-colors"
-              :class="a.cvUrl ? 'hover:bg-brand/20' : 'opacity-60 cursor-default'"
-            >
-              <BaseIcon name="fileCheck" class="w-4 h-4" />
-              {{ t('admin.downloadCv') }}
-              <span class="text-brand/60 font-normal">· {{ a.cvFile }}</span>
-            </a>
+      <!-- Folder tree (by vacancy) + compact table -->
+      <div v-if="folders.length" class="grid lg:grid-cols-[240px_1fr] gap-5 items-start">
+        <!-- Tree -->
+        <div class="bg-white rounded-2xl border border-gray-100 p-2 lg:sticky lg:top-24">
+          <button
+            v-for="f in folders"
+            :key="f.id"
+            class="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-sm text-left transition-colors"
+            :class="(currentFolder && currentFolder.id === f.id) ? 'bg-brand/10 text-brand font-semibold' : 'text-gray-600 hover:bg-gray-50'"
+            @click="folder = f.id"
+          >
+            <BaseIcon :name="f.icon" class="w-4 h-4 flex-shrink-0 opacity-70" />
+            <span class="truncate flex-1">{{ f.label }}</span>
+            <span class="text-xs text-gray-400 flex-shrink-0">{{ f.items.length }}</span>
+          </button>
+        </div>
 
-            <!-- Collapsible details -->
-            <div v-if="a.message" class="mt-2">
-              <button
-                type="button"
-                class="inline-flex items-center gap-1 text-xs font-semibold text-gray-500 hover:text-brand transition-colors"
-                @click="toggleExpanded(a.id)"
-              >
-                <BaseIcon
-                  name="chevronDown"
-                  class="w-4 h-4 transition-transform"
-                  :class="{ 'rotate-180': expanded[a.id] }"
-                />
-                {{ expanded[a.id] ? t('admin.hideDetails') : t('admin.showDetails') }}
-              </button>
-              <p
-                v-if="expanded[a.id]"
-                class="text-sm text-gray-500 mt-2 bg-gray-50 rounded-lg px-3 py-2 whitespace-pre-line"
-              >
-                {{ a.message }}
-              </p>
-            </div>
+        <!-- Table for the selected folder -->
+        <div class="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+          <div class="px-5 py-3 border-b border-gray-100 flex items-center gap-2">
+            <BaseIcon :name="currentFolder ? currentFolder.icon : 'clipboard'" class="w-4 h-4 text-gray-400" />
+            <h3 class="font-bold text-gray-800 text-sm truncate">{{ currentFolder ? currentFolder.label : '' }}</h3>
+            <span class="text-xs text-gray-400">· {{ currentItems.length }}</span>
           </div>
-
-          <div class="flex lg:flex-col items-center lg:items-end gap-2 flex-shrink-0">
-            <span class="text-xs text-gray-400 whitespace-nowrap">{{ fmt(a.date) }}</span>
-            <div class="flex gap-2">
-              <button
-                class="px-3 py-1.5 rounded-lg text-[11px] font-semibold border transition-colors"
-                :class="a.status === 'new'
-                  ? 'border-gray-200 text-gray-500 hover:bg-gray-50'
-                  : 'border-brand/30 text-brand hover:bg-brand/5'"
-                @click="toggleStatus(a)"
-              >
-                {{ a.status === 'new' ? t('admin.actions.markReviewed') : t('admin.actions.markNew') }}
-              </button>
-              <button
-                class="w-8 h-8 rounded-lg border border-gray-200 text-gray-400 hover:text-red-500 hover:border-red-200 flex items-center justify-center transition-colors"
-                :aria-label="t('admin.actions.delete')"
-                @click="remove(a)"
-              >
-                <BaseIcon name="close" class="w-4 h-4" />
-              </button>
-            </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead>
+                <tr class="text-left text-[11px] uppercase tracking-wide text-gray-400 border-b border-gray-100">
+                  <th class="px-5 py-2.5 font-semibold">{{ t('admin.table.applicant') }}</th>
+                  <th class="px-3 py-2.5 font-semibold">{{ t('admin.table.contact') }}</th>
+                  <th class="px-3 py-2.5 font-semibold whitespace-nowrap">{{ t('admin.table.date') }}</th>
+                  <th class="px-3 py-2.5 font-semibold text-right">{{ t('admin.table.actions') }}</th>
+                </tr>
+              </thead>
+              <tbody>
+                <template v-for="a in currentItems" :key="a.id">
+                  <tr class="border-b border-gray-50 hover:bg-gray-50/60 align-top">
+                    <td class="px-5 py-3">
+                      <div class="flex items-center gap-2">
+                        <span
+                          v-if="a.status === 'new'"
+                          class="w-1.5 h-1.5 rounded-full bg-green-500 flex-shrink-0"
+                          :title="t('admin.status.new')"
+                        ></span>
+                        <span class="font-semibold text-gray-800">{{ a.name }}</span>
+                      </div>
+                      <div v-if="a.contactName" class="text-xs text-gray-400 mt-0.5">{{ a.contactName }}</div>
+                      <div class="flex items-center gap-3 mt-1.5">
+                        <a
+                          v-if="a.cvFile"
+                          :href="a.cvUrl || undefined"
+                          :target="a.cvUrl ? '_blank' : undefined"
+                          rel="noopener noreferrer"
+                          class="inline-flex items-center gap-1 text-xs font-semibold text-brand hover:underline"
+                          :class="a.cvUrl ? '' : 'opacity-60 pointer-events-none'"
+                        >
+                          <BaseIcon name="fileCheck" class="w-3.5 h-3.5" /> {{ t('admin.downloadCv') }}
+                        </a>
+                        <button
+                          v-if="a.message"
+                          type="button"
+                          class="inline-flex items-center gap-1 text-xs font-medium text-gray-400 hover:text-brand"
+                          @click="toggleExpanded(a.id)"
+                        >
+                          <BaseIcon name="chevronDown" class="w-3.5 h-3.5 transition-transform" :class="{ 'rotate-180': expanded[a.id] }" />
+                          {{ expanded[a.id] ? t('admin.hideDetails') : t('admin.showDetails') }}
+                        </button>
+                      </div>
+                    </td>
+                    <td class="px-3 py-3 text-xs">
+                      <a :href="`mailto:${a.email}`" class="text-gray-600 hover:text-brand block truncate max-w-[180px]">{{ a.email }}</a>
+                      <a v-if="a.phone" :href="`tel:${a.phone}`" class="text-gray-400 hover:text-brand">{{ a.phone }}</a>
+                    </td>
+                    <td class="px-3 py-3 text-xs text-gray-400 whitespace-nowrap">{{ fmt(a.date) }}</td>
+                    <td class="px-3 py-3">
+                      <div class="flex items-center justify-end gap-1.5">
+                        <button
+                          class="px-2.5 py-1 rounded-lg text-[11px] font-semibold border transition-colors whitespace-nowrap"
+                          :class="a.status === 'new' ? 'border-gray-200 text-gray-500 hover:bg-gray-50' : 'border-brand/30 text-brand hover:bg-brand/5'"
+                          @click="toggleStatus(a)"
+                        >
+                          {{ a.status === 'new' ? t('admin.actions.markReviewed') : t('admin.actions.markNew') }}
+                        </button>
+                        <button
+                          class="w-7 h-7 rounded-lg border border-gray-200 text-gray-400 hover:text-red-500 hover:border-red-200 flex items-center justify-center transition-colors flex-shrink-0"
+                          :aria-label="t('admin.actions.delete')"
+                          @click="remove(a)"
+                        >
+                          <BaseIcon name="close" class="w-4 h-4" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr v-if="a.message && expanded[a.id]" :key="a.id + '-d'">
+                    <td colspan="4" class="px-5 pb-4">
+                      <p class="text-sm text-gray-500 bg-gray-50 rounded-lg px-3 py-2 whitespace-pre-line">{{ a.message }}</p>
+                    </td>
+                  </tr>
+                </template>
+                <tr v-if="!currentItems.length">
+                  <td colspan="4" class="px-5 py-16 text-center text-gray-400">{{ t('admin.empty') }}</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
       </div>
@@ -1952,6 +2001,27 @@ const statCards = computed(() => [
                 </div>
               </div>
 
+              <!-- Fields: show / hide (each field removable from the public form) -->
+              <div class="border border-gray-100 rounded-xl p-4 space-y-2">
+                <p class="text-xs font-semibold text-gray-600">ველები / Form fields</p>
+                <p class="text-[11px] text-gray-400">მოხსენით მონიშვნა, რომ ველი ფორმიდან წაიშალოს.</p>
+                <div class="grid sm:grid-cols-2 gap-x-4">
+                  <label
+                    v-for="f in companyFormFields"
+                    :key="f.key"
+                    class="flex items-center gap-2 text-sm text-gray-700 cursor-pointer py-1.5"
+                  >
+                    <input
+                      type="checkbox"
+                      :checked="companyFormDraft.enabled.includes(f.key)"
+                      class="w-4 h-4 accent-brand flex-shrink-0"
+                      @change="toggleCompanyField(f.key)"
+                    />
+                    <span>{{ t('companyForm.' + f.key) }}<span v-if="f.required" class="text-brand"> *</span></span>
+                  </label>
+                </div>
+              </div>
+
               <!-- Field labels (companyForm.*) -->
               <div class="border border-dashed border-gray-200 rounded-xl p-4 space-y-3 bg-gray-50/60">
                 <p class="text-[10px] uppercase tracking-wide text-gray-400 font-semibold">ველების წარწერები / Field labels</p>
@@ -2219,6 +2289,16 @@ const statCards = computed(() => [
                 <div>
                   <label class="block text-xs font-medium text-gray-500 mb-1.5">{{ t('admin.jobs.form.salary') }}</label>
                   <input v-model="jobForm.salary" type="text" placeholder="2,000–3,000 ₾" class="w-full px-4 py-3 bg-gray-50 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white" />
+                </div>
+              </div>
+              <div class="grid sm:grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-xs font-medium text-gray-500 mb-1.5">{{ t('admin.jobs.form.descriptionKa') }}</label>
+                  <textarea v-model="jobForm.descriptionKa" rows="4" class="w-full px-4 py-3 bg-gray-50 rounded-xl text-sm resize-y focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white"></textarea>
+                </div>
+                <div>
+                  <label class="block text-xs font-medium text-gray-500 mb-1.5">{{ t('admin.jobs.form.descriptionEn') }}</label>
+                  <textarea v-model="jobForm.descriptionEn" rows="4" class="w-full px-4 py-3 bg-gray-50 rounded-xl text-sm resize-y focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white"></textarea>
                 </div>
               </div>
               <div class="flex gap-3 pt-2">

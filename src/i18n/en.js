@@ -22,6 +22,8 @@ export default {
     backToServices: 'All services',
     backToBlog: 'Back to blog',
     whatsIncluded: "What's included",
+    invalidEmail: 'Enter a valid email (e.g. name@gmail.com)',
+    responsePromise: 'We reply within one working day.',
   },
 
   hero: {
@@ -35,7 +37,7 @@ export default {
     ctaSecondary: 'Our services',
     stats: [
       { v: '500+', l: 'Successful placements' },
-      { v: '5+', l: 'Partner companies' },
+      { v: '6+', l: 'Partner companies' },
       { v: '20+', l: 'Years of experience' },
     ],
   },
@@ -223,8 +225,8 @@ export default {
     eyebrow: 'For employers',
     title: 'Request a candidate',
     subtitle: 'Fill in the questionnaire about your company and vacancy — we will find the right candidates.',
-    intro1: 'Please complete the questionnaire below with information about your company and the vacancy. The data you provide is important for planning the search and selection process correctly.',
-    intro2: 'We kindly ask you to fill in the questionnaire as completely as possible. The information will help us define the position requirements precisely and select suitable candidates for your company. All information is confidential and used only within the recruitment process.',
+    intro1: 'Please complete the questionnaire below with information about your company and the vacancy. The data you provide is important for planning the search and selection process correctly. The information will be confidential and used only within the recruitment process.',
+    intro2: '',
     sectionCompany: 'Company information',
     sectionPosition: 'Position information',
     sectionContract: 'Contract & compensation',
@@ -318,6 +320,7 @@ export default {
     linksHeading: 'Links',
     legalHeading: 'Legal',
     newsletterHeading: 'Newsletter',
+    newsletterTitle: 'Stay in the loop — subscribe to updates & jobs',
     newsletterText: 'Subscribe — we’ll send you news and openings.',
     newsletterPlaceholder: 'Your email',
     subscribe: 'Subscribe',
@@ -384,6 +387,8 @@ export default {
         titleEn: 'Position (English)',
         sectorKa: 'Sector (Georgian)',
         sectorEn: 'Sector (English)',
+        descriptionKa: 'Description (Georgian)',
+        descriptionEn: 'Description (English)',
         category: 'Category (e.g. HR, Sales)',
         salary: 'Salary',
         image: 'Image',
@@ -429,6 +434,7 @@ export default {
       actions: 'Actions',
     },
     status: { new: 'New', reviewed: 'Reviewed' },
+    folders: { general: 'General CVs (no position)', company: 'Employer requests', contact: 'Messages' },
     type: { cv: 'CV', company: 'Company', contact: 'Message' },
     actions: { markReviewed: 'Mark reviewed', markNew: 'Mark new', delete: 'Delete' },
     err: {

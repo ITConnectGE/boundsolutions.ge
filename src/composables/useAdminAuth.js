@@ -3,10 +3,6 @@
 // all real data lives in the database.
 import { api, getToken, setToken, getStoredUser, setStoredUser } from './api'
 
-// Prefilled on the login form for convenience (not a credential check).
-const DEMO_EMAIL = 'nino@gmail.com'
-const DEMO_PASSWORD = 'Tbilisi1!'
-
 export function useAdminAuth() {
   async function login(email, password) {
     try {
@@ -37,5 +33,5 @@ export function useAdminAuth() {
     await revoke
   }
 
-  return { login, isAuthed, currentUser, logout, DEMO_EMAIL, DEMO_PASSWORD }
+  return { login, isAuthed, currentUser, logout }
 }
