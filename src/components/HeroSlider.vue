@@ -51,7 +51,7 @@ onBeforeUnmount(() => clearInterval(timer))
     <!-- Content -->
     <div class="relative h-full flex items-center">
       <div class="max-w-6xl mx-auto px-6 w-full">
-        <div class="max-w-3xl mx-auto text-center translate-y-16 lg:translate-y-24">
+        <div class="max-w-3xl mx-auto text-center translate-y-28 lg:translate-y-40">
           <h1
             class="font-brand text-white text-2xl sm:text-4xl lg:text-5xl leading-[1.1] mb-6 drop-shadow"
           >

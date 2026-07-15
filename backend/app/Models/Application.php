@@ -8,7 +8,7 @@ class Application extends Model
 {
     protected $fillable = [
         'type', 'name', 'contact_name', 'email', 'phone',
-        'position', 'sector', 'message', 'cv_path', 'details',
+        'position', 'vacancy_id', 'sector', 'message', 'cv_path', 'details',
         'consent', 'status',
     ];
 

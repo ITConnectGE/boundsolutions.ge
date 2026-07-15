@@ -11,6 +11,11 @@ export const routes = [
   { path: '/blog/:slug', name: 'post', component: () => import('@/pages/BlogPostPage.vue') },
   { path: '/vacancies', name: 'vacancies', component: () => import('@/pages/VacanciesPage.vue') },
   {
+    path: '/vacancies/:id',
+    name: 'vacancy',
+    component: () => import('@/pages/VacancyDetailPage.vue'),
+  },
+  {
     path: '/for-companies',
     name: 'for-companies',
     component: () => import('@/pages/CompanyRequestPage.vue'),

@@ -44,6 +44,7 @@ class ApplicationController extends Controller
             'email' => 'nullable|email|max:255',
             'phone' => 'nullable|string|max:50',
             'position' => 'nullable|string|max:255',
+            'vacancy_id' => 'nullable|integer',
             'sector' => 'nullable|string|max:255',
             'message' => 'nullable|string',
             'details' => 'nullable|array',

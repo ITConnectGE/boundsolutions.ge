@@ -185,6 +185,10 @@ export default {
     },
     fullTime: 'Full-time',
     location: 'Tbilisi',
+    details: 'Details',
+    backToList: 'All vacancies',
+    descriptionHeading: 'Job description',
+    notFound: 'Vacancy not found',
     noPosition: {
       title: "Didn't find the right position?",
       text: 'Send us your CV and we will reach out when a suitable opportunity appears.',

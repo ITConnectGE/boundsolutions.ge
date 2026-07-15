@@ -975,12 +975,15 @@ const folders = computed(() => {
     if (a.type === 'company') { company.push(a); continue }
     if (a.type === 'contact') { contact.push(a); continue }
     const pos = (a.position || '').trim() // CV
-    if (!pos || generalTitles.includes(pos)) { general.push(a); continue }
-    if (!cvGroups.has(pos)) cvGroups.set(pos, [])
-    cvGroups.get(pos).push(a)
+    // General = no vacancy link and no (or generic) position title.
+    if (!a.vacancyId && (!pos || generalTitles.includes(pos))) { general.push(a); continue }
+    // Group by vacancy id when present (robust across locales), else by title.
+    const gkey = a.vacancyId ? 'id:' + a.vacancyId : 'pos:' + pos
+    if (!cvGroups.has(gkey)) cvGroups.set(gkey, { label: pos || '#' + a.vacancyId, items: [] })
+    cvGroups.get(gkey).items.push(a)
   }
   const list = [...cvGroups.entries()]
-    .map(([pos, items]) => ({ id: 'vac:' + pos, label: pos, icon: 'briefcase', items }))
+    .map(([gkey, g]) => ({ id: 'vac:' + gkey, label: g.label, icon: 'briefcase', items: g.items }))
     .sort((a, b) => a.label.localeCompare(b.label))
   if (general.length) list.push({ id: 'general', label: t('admin.folders.general'), icon: 'fileCheck', items: general })
   if (company.length) list.push({ id: 'company', label: t('admin.folders.company'), icon: 'briefcase', items: company })

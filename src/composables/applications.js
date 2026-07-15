@@ -12,6 +12,7 @@ function normalize(r) {
     email: r.email,
     phone: r.phone,
     position: r.position,
+    vacancyId: r.vacancy_id ?? null,
     sector: r.sector,
     message: r.message,
     cvFile: r.cv_path ? r.cv_path.split('/').pop() : r.cvFile || '',
@@ -33,6 +34,10 @@ export async function addApplication(app, file) {
   if ('contactName' in payload) {
     payload.contact_name = payload.contactName
     delete payload.contactName
+  }
+  if ('vacancyId' in payload) {
+    if (payload.vacancyId != null) payload.vacancy_id = payload.vacancyId
+    delete payload.vacancyId
   }
   delete payload.cvFile // filename string — the actual file goes as `cv`
 
