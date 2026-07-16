@@ -96,6 +96,7 @@ button:not(:disabled) { cursor: pointer; }
 button:disabled { cursor: not-allowed; }
 
 /* Rendered rich-text (WYSIWYG) content on the public site */
+.rich h1 { font-size: 1.85rem; font-weight: 800; margin: 1.2em 0 0.5em; color: #111827; line-height: 1.2; }
 .rich h2 { font-size: 1.5rem; font-weight: 800; margin: 1.2em 0 0.5em; color: #111827; }
 .rich h3 { font-size: 1.2rem; font-weight: 700; margin: 1em 0 0.4em; color: #111827; }
 .rich p { margin: 0.7em 0; }
@@ -105,6 +106,13 @@ button:disabled { cursor: not-allowed; }
 .rich a { color: var(--color-brand); text-decoration: underline; }
 .rich strong { font-weight: 700; }
 .rich em { font-style: italic; }
+.rich u { text-decoration: underline; }
+.rich s { text-decoration: line-through; }
+.rich blockquote { border-left: 3px solid var(--color-brand); padding-left: 1em; margin: 1em 0; color: #6b7280; font-style: italic; }
+.rich pre { background: #0f172a; color: #e2e8f0; border-radius: 10px; padding: 14px 16px; margin: 1em 0; overflow-x: auto; font-size: 0.9em; }
+.rich pre code { background: none; color: inherit; padding: 0; }
+.rich code { background: #f1f5f9; border-radius: 4px; padding: 0.12em 0.4em; font-size: 0.9em; }
+.rich hr { border: none; border-top: 1px solid #e5e7eb; margin: 1.4em 0; }
 
 /* route transition */
 .page-enter-active,

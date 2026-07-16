@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\ApplicationController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\ContentController;
+use App\Http\Controllers\Api\InboxController;
 use App\Http\Controllers\Api\VacancyCategoryController;
 use App\Http\Controllers\Api\VacancyController;
 use Illuminate\Support\Facades\Route;
@@ -37,4 +38,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('admin/content', [ContentController::class, 'all']);
     Route::put('content', [ContentController::class, 'bulkUpdate']);
     Route::post('content/image', [ContentController::class, 'uploadImage']);
+
+    // Received email (Mailgun -> laravel-mailbox webhook)
+    Route::get('inbox', [InboxController::class, 'index']);
+    Route::get('inbox/{inbox}', [InboxController::class, 'show']);
+    Route::get('inbox/{inbox}/attachments/{index}', [InboxController::class, 'attachment']);
+    Route::post('inbox/{inbox}/reply', [InboxController::class, 'reply']);
+    Route::delete('inbox/{inbox}', [InboxController::class, 'destroy']);
 });

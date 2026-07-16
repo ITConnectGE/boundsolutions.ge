@@ -19,6 +19,13 @@ import {
 } from '@/composables/jobs.js'
 import { hasApi } from '@/composables/api.js'
 import {
+  getInbox,
+  getEmail,
+  replyEmail,
+  deleteEmail,
+  downloadAttachment,
+} from '@/composables/inbox.js'
+import {
   loadAllContent,
   saveTexts,
   uploadContentImage,
@@ -64,8 +71,119 @@ const ready = ref(false)
 const search = ref('')
 const statusFilter = ref('all') // all | new | reviewed
 const user = ref('')
-const view = ref('inbox') // inbox | jobs | content
+const view = ref('inbox') // inbox | email | jobs | content
 const connError = ref(false)
+
+// ---- Received email (laravel-mailbox) ----
+const emails = ref([])
+const emailUnread = ref(0)
+const emailLoading = ref(false)
+const emailLoaded = ref(false)
+const emailSearch = ref('')
+const selectedEmail = ref(null) // full detail of the open email
+const emailOpening = ref(false)
+const replyBody = ref('')
+const replySending = ref(false)
+
+async function loadInbox() {
+  if (!apiOn) return
+  emailLoading.value = true
+  try {
+    const res = await getInbox({ q: emailSearch.value })
+    emails.value = res.data || []
+    emailUnread.value = res.unread || 0
+    emailLoaded.value = true
+  } catch (e) {
+    adminError(e)
+  } finally {
+    emailLoading.value = false
+  }
+}
+
+function selectView(v) {
+  view.value = v
+  if (v === 'email' && !emailLoaded.value) loadInbox()
+}
+
+async function openEmail(row) {
+  emailOpening.value = true
+  replyBody.value = ''
+  try {
+    selectedEmail.value = await getEmail(row.id)
+    // reflect the now-read state in the list
+    const inList = emails.value.find((e) => e.id === row.id)
+    if (inList && !inList.read_at) {
+      inList.read_at = new Date().toISOString()
+      emailUnread.value = Math.max(0, emailUnread.value - 1)
+    }
+  } catch (e) {
+    adminError(e)
+  } finally {
+    emailOpening.value = false
+  }
+}
+
+function closeEmail() {
+  selectedEmail.value = null
+  replyBody.value = ''
+}
+
+async function sendReply() {
+  if (!selectedEmail.value || !replyBody.value.trim() || replySending.value) return
+  replySending.value = true
+  try {
+    await replyEmail(selectedEmail.value.id, replyBody.value.trim())
+    toast.success(t('admin.email.replySent'))
+    replyBody.value = ''
+  } catch (e) {
+    toast.error(e?.data?.message || e.message || t('admin.email.replyFailed'))
+  } finally {
+    replySending.value = false
+  }
+}
+
+function removeEmail(row) {
+  const target = row || selectedEmail.value
+  if (!target) return
+  askConfirm(t('admin.email.deleteMsg'), async () => {
+    try {
+      await deleteEmail(target.id)
+      emails.value = emails.value.filter((e) => e.id !== target.id)
+      if (selectedEmail.value && selectedEmail.value.id === target.id) closeEmail()
+    } catch (e) {
+      adminError(e)
+    }
+  })
+}
+
+async function saveAttachment(att) {
+  if (!selectedEmail.value) return
+  try {
+    await downloadAttachment(selectedEmail.value.id, att.index, att.filename)
+  } catch (e) {
+    toast.error(e.message || 'Download failed')
+  }
+}
+
+function fmtBytes(n) {
+  if (!n && n !== 0) return ''
+  if (n < 1024) return `${n} B`
+  if (n < 1024 * 1024) return `${(n / 1024).toFixed(0)} KB`
+  return `${(n / 1024 / 1024).toFixed(1)} MB`
+}
+
+// srcdoc for the sandboxed iframe that renders (untrusted) email HTML safely.
+const emailFrameDoc = computed(() => {
+  const e = selectedEmail.value
+  if (!e) return ''
+  const inner = e.html
+    ? e.html
+    : `<pre style="white-space:pre-wrap;font:14px/1.5 -apple-system,sans-serif;color:#111">${(e.text || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')}</pre>`
+  return `<!doctype html><meta charset="utf-8"><base target="_blank"><style>body{margin:0;padding:12px;font:14px/1.6 -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:#1f2937;word-wrap:break-word}img{max-width:100%;height:auto}a{color:#f05553}</style>${inner}`
+})
 
 // Per-application expand/collapse for the details block.
 const expanded = ref({})
@@ -935,6 +1053,7 @@ onMounted(() => {
   reloadJobs()
   reloadCategories()
   loadContentEditor()
+  loadInbox() // populate the unread-email badge
   ready.value = true
 })
 
@@ -1078,13 +1197,17 @@ const statCards = computed(() => [
       <!-- View tabs -->
       <div class="inline-flex bg-white border border-gray-100 rounded-xl p-1 mb-6">
         <button
-          v-for="v in ['inbox', 'jobs', 'content']"
+          v-for="v in ['inbox', 'email', 'jobs', 'content']"
           :key="v"
-          class="px-4 py-2 rounded-lg text-xs font-semibold transition-colors"
+          class="px-4 py-2 rounded-lg text-xs font-semibold transition-colors inline-flex items-center gap-1.5"
           :class="view === v ? 'bg-navy text-white' : 'text-gray-500 hover:text-gray-900'"
-          @click="view = v"
+          @click="selectView(v)"
         >
           {{ t(`admin.tabs.${v}`) }}
+          <span
+            v-if="v === 'email' && emailUnread > 0"
+            class="min-w-[18px] h-[18px] px-1 rounded-full bg-brand text-white text-[10px] font-bold inline-flex items-center justify-center"
+          >{{ emailUnread }}</span>
         </button>
       </div>
 
@@ -1274,6 +1397,81 @@ const statCards = computed(() => [
       <div v-else class="bg-white rounded-2xl border border-gray-100 py-20 text-center text-gray-400">
         {{ t('admin.empty') }}
       </div>
+      </template>
+
+      <!-- ================= EMAIL (received) ================= -->
+      <template v-else-if="view === 'email'">
+        <div class="flex items-center justify-between gap-4 mb-6 flex-wrap">
+          <div>
+            <h1 class="text-2xl font-extrabold text-gray-900">{{ t('admin.email.title') }}</h1>
+            <p class="text-gray-400 text-sm mt-1">{{ t('admin.email.subtitle') }}</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <div class="relative">
+              <input
+                v-model="emailSearch"
+                type="search"
+                :placeholder="t('admin.email.searchPlaceholder')"
+                class="w-52 pl-9 pr-3 py-2 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand/20"
+                @keyup.enter="loadInbox"
+              />
+              <BaseIcon name="search" class="w-4 h-4 text-gray-300 absolute left-3 top-1/2 -translate-y-1/2" />
+            </div>
+            <button
+              class="px-3 py-2 bg-white border border-gray-200 rounded-xl text-sm text-gray-600 hover:bg-gray-50 inline-flex items-center gap-1.5"
+              :disabled="emailLoading"
+              @click="loadInbox"
+            >
+              <BaseIcon name="refresh" class="w-4 h-4" :class="emailLoading ? 'animate-spin' : ''" />
+              {{ t('admin.email.refresh') }}
+            </button>
+          </div>
+        </div>
+
+        <div v-if="!apiOn" class="bg-amber-50 text-amber-700 text-sm rounded-xl px-4 py-3 mb-6">
+          {{ t('admin.email.needBackend') }}
+        </div>
+        <div
+          v-else-if="emailLoading && !emailLoaded"
+          class="bg-white rounded-2xl border border-gray-100 py-20 text-center text-gray-400"
+        >
+          {{ t('admin.email.loading') }}
+        </div>
+        <div
+          v-else-if="emails.length === 0"
+          class="bg-white rounded-2xl border border-gray-100 py-20 text-center text-gray-400"
+        >
+          <BaseIcon name="mail" class="w-10 h-10 mx-auto mb-3 text-gray-200" />
+          {{ t('admin.email.empty') }}
+        </div>
+        <div v-else class="bg-white rounded-2xl border border-gray-100 divide-y divide-gray-50 overflow-hidden">
+          <button
+            v-for="e in emails"
+            :key="e.id"
+            class="w-full text-left px-4 py-3.5 hover:bg-gray-50 transition-colors flex items-start gap-3"
+            :class="!e.read_at ? 'bg-brand/[0.03]' : ''"
+            @click="openEmail(e)"
+          >
+            <span
+              class="mt-1.5 w-2 h-2 rounded-full flex-shrink-0"
+              :class="!e.read_at ? 'bg-brand' : 'bg-transparent'"
+            ></span>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center justify-between gap-3">
+                <span
+                  class="text-sm text-gray-900 truncate"
+                  :class="!e.read_at ? 'font-bold' : 'font-medium'"
+                >{{ e.from_name || e.from_email }}</span>
+                <span class="text-xs text-gray-400 flex-shrink-0">{{ fmt(e.received_at) }}</span>
+              </div>
+              <div class="text-sm text-gray-700 truncate flex items-center gap-1.5" :class="!e.read_at ? 'font-semibold' : ''">
+                <span class="truncate">{{ e.subject || t('admin.email.noSubject') }}</span>
+                <BaseIcon v-if="e.has_attachments" name="paperclip" class="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
+              </div>
+              <div class="text-xs text-gray-400 truncate mt-0.5">{{ e.preview }}</div>
+            </div>
+          </button>
+        </div>
       </template>
 
       <!-- ================= VACANCIES ================= -->
@@ -2205,6 +2403,94 @@ const statCards = computed(() => [
       </template>
     </main>
 
+    <!-- EMAIL READER + REPLY -->
+    <Transition name="page">
+      <div v-if="selectedEmail" class="fixed inset-0 z-[60]">
+        <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" @click="closeEmail"></div>
+        <div class="absolute inset-0 flex items-center justify-center p-4" @click.self="closeEmail">
+          <div class="relative bg-white rounded-2xl w-full max-w-2xl max-h-[92vh] flex flex-col shadow-2xl overflow-hidden">
+            <!-- header -->
+            <div class="flex items-start justify-between gap-3 p-5 border-b border-gray-100">
+              <div class="min-w-0">
+                <h3 class="text-lg font-extrabold text-gray-900 break-words">
+                  {{ selectedEmail.subject || t('admin.email.noSubject') }}
+                </h3>
+                <p class="text-sm text-gray-500 mt-1 truncate">
+                  <span class="font-medium text-gray-700">{{ selectedEmail.from_name || selectedEmail.from_email }}</span>
+                  <span v-if="selectedEmail.from_name" class="text-gray-400"> &lt;{{ selectedEmail.from_email }}&gt;</span>
+                </p>
+                <p class="text-xs text-gray-400 mt-0.5 truncate">
+                  {{ t('admin.email.to') }}: {{ selectedEmail.to_email }} · {{ fmt(selectedEmail.received_at) }}
+                </p>
+              </div>
+              <button class="text-gray-300 hover:text-gray-600 flex-shrink-0" aria-label="Close" @click="closeEmail">
+                <BaseIcon name="close" class="w-6 h-6" />
+              </button>
+            </div>
+
+            <!-- body + attachments -->
+            <div class="flex-1 overflow-y-auto min-h-0">
+              <iframe
+                :srcdoc="emailFrameDoc"
+                sandbox=""
+                class="w-full border-0 block"
+                style="height: 42vh"
+                :title="selectedEmail.subject || 'Email'"
+              ></iframe>
+
+              <div
+                v-if="selectedEmail.attachments && selectedEmail.attachments.length"
+                class="px-5 py-3 border-t border-gray-100"
+              >
+                <p class="text-xs font-semibold text-gray-500 mb-2">{{ t('admin.email.attachments') }}</p>
+                <div class="flex flex-wrap gap-2">
+                  <button
+                    v-for="att in selectedEmail.attachments"
+                    :key="att.index"
+                    class="inline-flex items-center gap-2 px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs text-gray-700 hover:bg-gray-100 transition-colors"
+                    @click="saveAttachment(att)"
+                  >
+                    <BaseIcon name="download" class="w-3.5 h-3.5 text-gray-400" />
+                    <span class="max-w-[180px] truncate">{{ att.filename }}</span>
+                    <span class="text-gray-400">{{ fmtBytes(att.size) }}</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- reply -->
+            <div class="border-t border-gray-100 p-4 bg-gray-50/60 flex-shrink-0">
+              <label class="block text-xs font-medium text-gray-500 mb-1.5">
+                {{ t('admin.email.replyTo') }} {{ selectedEmail.from_email }}
+              </label>
+              <textarea
+                v-model="replyBody"
+                rows="3"
+                :placeholder="t('admin.email.replyPlaceholder')"
+                class="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm resize-y focus:outline-none focus:ring-2 focus:ring-brand/20"
+              ></textarea>
+              <div class="flex items-center justify-between gap-3 mt-3">
+                <button
+                  class="text-xs text-red-500 hover:text-red-600 font-medium inline-flex items-center gap-1.5"
+                  @click="removeEmail()"
+                >
+                  <BaseIcon name="trash" class="w-4 h-4" /> {{ t('admin.actions.delete') }}
+                </button>
+                <button
+                  class="gradient-bg text-white px-6 py-2.5 rounded-xl font-semibold text-sm transition-opacity"
+                  :class="replyBody.trim() && !replySending ? 'hover:opacity-90' : 'opacity-40 cursor-not-allowed'"
+                  :disabled="!replyBody.trim() || replySending"
+                  @click="sendReply"
+                >
+                  {{ replySending ? t('admin.email.sending') : t('admin.email.send') }}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Transition>
+
     <!-- CONFIRMATION MODAL (delete) -->
     <Transition name="page">
       <div v-if="confirmDialog" class="fixed inset-0 z-[70]">
@@ -2245,7 +2531,7 @@ const statCards = computed(() => [
       <div v-if="jobModalOpen && jobForm" class="fixed inset-0 z-[60]">
         <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" @click="jobModalOpen = false"></div>
         <div class="absolute inset-0 flex items-center justify-center p-4" @click.self="jobModalOpen = false">
-          <div class="relative bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto p-6 sm:p-8 shadow-2xl">
+          <div class="relative bg-white rounded-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto p-6 sm:p-8 shadow-2xl">
             <button
               class="absolute top-4 right-4 text-gray-300 hover:text-gray-600 transition-colors"
               :aria-label="t('admin.jobs.cancel')"
@@ -2297,11 +2583,11 @@ const statCards = computed(() => [
               <div class="grid sm:grid-cols-2 gap-4">
                 <div>
                   <label class="block text-xs font-medium text-gray-500 mb-1.5">{{ t('admin.jobs.form.descriptionKa') }}</label>
-                  <textarea v-model="jobForm.descriptionKa" rows="4" class="w-full px-4 py-3 bg-gray-50 rounded-xl text-sm resize-y focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white"></textarea>
+                  <RichTextEditor v-model="jobForm.descriptionKa" min-height="160px" />
                 </div>
                 <div>
                   <label class="block text-xs font-medium text-gray-500 mb-1.5">{{ t('admin.jobs.form.descriptionEn') }}</label>
-                  <textarea v-model="jobForm.descriptionEn" rows="4" class="w-full px-4 py-3 bg-gray-50 rounded-xl text-sm resize-y focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white"></textarea>
+                  <RichTextEditor v-model="jobForm.descriptionEn" min-height="160px" />
                 </div>
               </div>
               <div class="flex gap-3 pt-2">

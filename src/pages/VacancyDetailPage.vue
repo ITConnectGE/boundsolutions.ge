@@ -30,6 +30,17 @@ const job = computed(() =>
 )
 const vacancyId = computed(() => (job.value ? String(job.value.id).replace(/^v/, '') : null))
 
+// Description is rich HTML from the CMS editor. Strip tags for emptiness checks
+// and for the (plaintext) JobPosting schema.
+const stripHtml = (html) =>
+  String(html || '')
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+const descHtml = computed(() => (job.value ? loc(job.value.description) : ''))
+const hasDesc = computed(() => stripHtml(descHtml.value).length > 0)
+
 usePageMeta({
   title: () => (job.value ? loc(job.value.title) : t('vacancies.notFound')),
   description: () => (job.value ? loc(job.value.sector) : ''),
@@ -43,7 +54,7 @@ const schema = computed(() => {
     '@context': 'https://schema.org',
     '@type': 'JobPosting',
     title: loc(j.title),
-    description: loc(j.description) || loc(j.sector) || loc(j.title),
+    description: stripHtml(loc(j.description)) || loc(j.sector) || loc(j.title),
     datePosted: new Date().toISOString().slice(0, 10),
     employmentType: 'FULL_TIME',
     industry: j.category || undefined,
@@ -116,12 +127,11 @@ const modalOpen = ref(false)
       <div class="max-w-4xl mx-auto px-6 grid lg:grid-cols-3 gap-10">
         <div class="lg:col-span-2">
           <h2 class="text-lg font-bold text-gray-900 mb-4">{{ t('vacancies.descriptionHeading') }}</h2>
-          <p
-            v-if="loc(job.description)"
-            class="text-gray-600 text-[15px] leading-relaxed whitespace-pre-line"
-          >
-            {{ loc(job.description) }}
-          </p>
+          <div
+            v-if="hasDesc"
+            class="rich text-gray-600 text-[15px] leading-relaxed"
+            v-html="descHtml"
+          ></div>
           <p v-else class="text-gray-400 text-sm">{{ loc(job.sector) }}</p>
         </div>
 
