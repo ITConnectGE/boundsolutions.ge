@@ -69,8 +69,8 @@ const services = computed(() => collection('services', defaultServices))
               <BaseIcon name="pin" class="w-4 h-4 opacity-70" /> {{ t('contact.address') }}
             </p>
           </div>
-          <p class="text-white/60 text-xs mb-2">{{ t('footer.newsletterText') }}</p>
-          <NewsletterForm dark input-id="nl-email-footer" />
+          <!-- <p class="text-white/60 text-xs mb-2">{{ t('footer.newsletterText') }}</p>
+          <NewsletterForm dark input-id="nl-email-footer" /> -->
         </div>
       </div>
 
