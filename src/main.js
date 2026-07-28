@@ -17,7 +17,7 @@ export const createApp = ViteSSG(
       return { top: 0 }
     },
   },
-  ({ app, isClient }) => {
+  ({ app, isClient, router }) => {
     const i18n = createI18nInstance()
     app.use(i18n)
     if (isClient) {
@@ -25,6 +25,16 @@ export const createApp = ViteSSG(
       ;['bs-applications', 'bs-jobs', 'bs-admin-auth'].forEach((k) => localStorage.removeItem(k))
       // Fetch admin-edited content and merge it over the defaults.
       initContent(i18n)
+      // Meta Pixel: the inline snippet fires the first PageView; report subsequent
+      // client-side route changes too. (GA4 enhanced measurement tracks these itself.)
+      let first = true
+      router.afterEach(() => {
+        if (first) {
+          first = false
+          return
+        }
+        if (window.fbq) window.fbq('track', 'PageView')
+      })
     }
   },
 )
