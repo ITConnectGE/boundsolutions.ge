@@ -466,10 +466,28 @@ function textItemsPayload(groupName) {
   return items
 }
 
+// Sub-sections lifted out of the auto-generated list into their own collection
+// block (group -> sub-keys to hide), so they aren't editable in two places.
+const MOVED_SUBSECTIONS = { home: new Set(['testimonials']) }
+function withoutMovedSubs(g) {
+  const hidden = MOVED_SUBSECTIONS[g.group]
+  if (!hidden) return g
+  return {
+    ...g,
+    items: g.items.filter((it) => {
+      const parts = it.key.split('.')
+      const sub = parts.length > 2 ? parts[1] : '_'
+      return !hidden.has(sub)
+    }),
+  }
+}
+
 // Filter content groups/items by key or by the current ka/en value.
 const visibleContentGroups = computed(() => {
   const q = contentSearch.value.trim().toLowerCase()
-  const base = contentGroups.filter((g) => !MERGED_GROUPS.has(g.group))
+  const base = contentGroups
+    .filter((g) => !MERGED_GROUPS.has(g.group))
+    .map(withoutMovedSubs)
   if (!q) return base
   return base
     .map((g) => ({
@@ -494,6 +512,9 @@ function imgFor(item) {
 // ---- Collections (structured content: testimonials) ----
 const testimonialsDraft = ref([])
 const testimonialsSaving = ref(false)
+// Section headings live in i18n (home.testimonials.*); edited here next to the
+// cards and hidden from the generic Home list (see MOVED_SUBSECTIONS).
+const testimonialHeadingKeys = ['home.testimonials.eyebrow', 'home.testimonials.title']
 function addTestimonial() {
   testimonialsDraft.value.push({ quote: { ka: '', en: '' }, author: { ka: '', en: '' }, role: { ka: '', en: '' } })
 }
@@ -504,6 +525,16 @@ async function saveTestimonials() {
   testimonialsSaving.value = true
   try {
     await saveCollection('testimonials', testimonialsDraft.value)
+    const headings = testimonialHeadingKeys.flatMap((key) =>
+      ['ka', 'en'].map((loc) => ({
+        key,
+        locale: loc,
+        value: draft.value[`${key}|${loc}`] ?? '',
+        type: 'text',
+        group: 'home',
+      })),
+    )
+    await saveTexts(headings)
     contentSaved.value = true
     toast.success(t('admin.content.saved'))
     setTimeout(() => (contentSaved.value = false), 2000)
@@ -1690,6 +1721,20 @@ const statCards = computed(() => [
               <span class="text-gray-300 font-sans font-normal normal-case tracking-normal">({{ testimonialsDraft.length }})</span>
             </summary>
             <div class="space-y-4 mt-5">
+              <!-- Section headings (home.testimonials.*) -->
+              <div class="border border-dashed border-gray-200 rounded-xl p-4 space-y-3 bg-gray-50/60">
+                <p class="text-[10px] uppercase tracking-wide text-gray-400 font-semibold">სექციის სათაურები / Section headings</p>
+                <div v-for="key in testimonialHeadingKeys" :key="key">
+                  <label class="block text-xs font-semibold text-gray-600 mb-1.5">
+                    {{ key.endsWith('eyebrow') ? 'ზედა წარწერა / Eyebrow' : 'სათაური / Title' }}
+                  </label>
+                  <div class="grid sm:grid-cols-2 gap-3">
+                    <textarea v-model="draft[`${key}|ka`]" rows="1" placeholder="ქარ" class="w-full px-3 py-2 bg-white rounded-lg text-sm resize-y focus:outline-none focus:ring-2 focus:ring-brand/20"></textarea>
+                    <textarea v-model="draft[`${key}|en`]" rows="1" placeholder="EN" class="w-full px-3 py-2 bg-white rounded-lg text-sm resize-y focus:outline-none focus:ring-2 focus:ring-brand/20"></textarea>
+                  </div>
+                </div>
+              </div>
+
               <div v-for="(tm, i) in testimonialsDraft" :key="i" class="border border-gray-100 rounded-xl p-4 space-y-3">
                 <div class="flex items-center justify-between">
                   <span class="text-xs font-semibold text-gray-500">#{{ i + 1 }}</span>
