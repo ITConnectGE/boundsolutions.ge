@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, onBeforeUnmount } from 'vue'
+import { ref, watch, onMounted, onBeforeUnmount } from 'vue'
 
 // Animates a stat value (e.g. "500+", "20+", "1,200", "95%") from 0 up to its
 // number the first time it scrolls into view. Any prefix/suffix ("+", "%", "$")
@@ -11,6 +11,7 @@ const props = defineProps({
 
 const el = ref(null)
 const display = ref('')
+let seen = false // has it scrolled into view (or is IO unavailable)?
 
 function parse(v) {
   const s = String(v ?? '')
@@ -38,12 +39,13 @@ function format(n, p) {
 }
 
 // Render the final value up front (correct for SSR / no-JS / first paint).
-const parsed = parse(props.value)
+let parsed = parse(props.value)
 display.value = parsed.valid ? format(parsed.target, parsed) : parsed.raw
 
 let raf
 function animate() {
   if (!parsed.valid) return
+  if (raf) cancelAnimationFrame(raf)
   const start = performance.now()
   const tick = (now) => {
     const t = Math.min(1, (now - start) / props.duration)
@@ -55,15 +57,34 @@ function animate() {
   raf = requestAnimationFrame(tick)
 }
 
+// The value can change after first paint — CMS content loads on the client and
+// replaces the prerendered default (e.g. 6+ -> 10+). Re-parse and re-render.
+watch(
+  () => props.value,
+  (v) => {
+    parsed = parse(v)
+    if (!parsed.valid) {
+      display.value = parsed.raw
+      return
+    }
+    if (seen) animate() // already visible -> count up to the new number
+    else display.value = format(0, parsed) // still waiting to scroll in
+  },
+)
+
 let io
 onMounted(() => {
   if (!parsed.valid) return
-  if (typeof IntersectionObserver === 'undefined') return // keep final value
+  if (typeof IntersectionObserver === 'undefined') {
+    seen = true // no observer -> keep showing the final value
+    return
+  }
   display.value = format(0, parsed) // reset to 0, then count up when visible
   io = new IntersectionObserver(
     (entries) => {
       entries.forEach((e) => {
         if (e.isIntersecting) {
+          seen = true
           animate()
           io.disconnect()
         }
