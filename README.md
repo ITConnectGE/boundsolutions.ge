@@ -65,5 +65,5 @@ A client-side demo admin dashboard for incoming job applications / messages.
 2. **Partner logos** (`data/social.js`) — add files under `public/images/partners/` and set `logo`.
 3. A couple of service card images use Unsplash placeholders — swap for real photos.
 
-_Done: real team + founder photos live in `public/images/team/` (`nina.jpg`, `katerina.jpg`,
+_Done: real team + founder photos live in `public/images/team/` (`nina.jpeg`, `katerina.jpg`,
 `elene.jpg`, `nata.jpg`); real partner testimonials; company positioning updated._

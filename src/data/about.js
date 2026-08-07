@@ -20,7 +20,7 @@ export const company = {
 export const founder = {
   name: { ka: 'ნინო ბართაია', en: 'Nino Bartaia' },
   role: { ka: 'Founder & CEO, Bound Solutions', en: 'Founder & CEO, Bound Solutions' },
-  photo: '/images/team/nina.jpg',
+  photo: '/images/team/nina.jpeg',
   linkedin: 'https://www.linkedin.com/in/nino-bartaia-ba619b88/',
   bio: {
     ka: [
