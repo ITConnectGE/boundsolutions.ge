@@ -47,16 +47,6 @@ usePageMeta({ description: () => t('hero.subtitle') })
     </div>
   </section>
 
-  <!-- CLIENT LOGOS (social proof, up front) -->
-  <section class="py-10 lg:py-14 bg-white border-b border-gray-100">
-    <div class="max-w-6xl mx-auto px-6">
-      <p class="text-center text-gray-400 text-xs uppercase tracking-widest mb-7">
-        {{ t('home.partners.title') }}
-      </p>
-      <PartnerMarquee :partners="partners" />
-    </div>
-  </section>
-
   <!-- SERVICES -->
   <section id="services" class="py-20 lg:py-28 bg-gray-50/80">
     <div class="max-w-6xl mx-auto px-6">
@@ -126,4 +116,14 @@ usePageMeta({ description: () => t('hero.subtitle') })
 
   <!-- CONTACT CTA -->
   <ContactCta />
+
+  <!-- CLIENT LOGOS (partner trust strip) — sits just before the newsletter band -->
+  <section class="py-12 lg:py-16 bg-white border-t border-gray-100">
+    <div class="max-w-6xl mx-auto px-6">
+      <p class="text-center text-gray-400 text-xs uppercase tracking-widest mb-7">
+        {{ t('home.partners.title') }}
+      </p>
+      <PartnerMarquee :partners="partners" />
+    </div>
+  </section>
 </template>

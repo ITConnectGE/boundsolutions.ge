@@ -16,8 +16,8 @@ const route = useRoute()
 // Admin area uses its own chrome (no public nav/footer/social rail).
 const isAdmin = computed(() => route.path.startsWith('/admin'))
 
-// The newsletter band sits above the footer on the home and services pages only.
-const showNewsletter = computed(() => ['home', 'services'].includes(route.name))
+// The newsletter band sits above the footer on the homepage only.
+const showNewsletter = computed(() => route.name === 'home')
 
 useHead({
   htmlAttrs: { lang: computed(() => locale.value) },
