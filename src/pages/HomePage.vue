@@ -48,9 +48,6 @@ usePageMeta({ description: () => t('hero.subtitle') })
     </div>
   </section>
 
-  <!-- NEWSLETTER (moved up, right after the stats) -->
-  <NewsletterSection />
-
   <!-- CLIENT LOGOS (partner trust strip) -->
   <section class="py-12 lg:py-16 bg-white border-b border-gray-100">
     <div class="max-w-6xl mx-auto px-6">
@@ -60,6 +57,9 @@ usePageMeta({ description: () => t('hero.subtitle') })
       <PartnerMarquee :partners="partners" />
     </div>
   </section>
+
+  <!-- NEWSLETTER (right after the partner logos) -->
+  <NewsletterSection />
 
   <!-- SERVICES -->
   <section id="services" class="py-20 lg:py-28 bg-gray-50/80">
