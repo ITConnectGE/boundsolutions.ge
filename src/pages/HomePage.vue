@@ -10,6 +10,7 @@ import { defaultStats } from '@/data/lists.js'
 import { partners as defaultPartners } from '@/data/social.js'
 import HeroSlider from '@/components/HeroSlider.vue'
 import PartnerMarquee from '@/components/PartnerMarquee.vue'
+import NewsletterSection from '@/components/NewsletterSection.vue'
 import CountUp from '@/components/CountUp.vue'
 import EditableText from '@/components/EditableText.vue'
 import SectionHeading from '@/components/SectionHeading.vue'
@@ -44,6 +45,19 @@ usePageMeta({ description: () => t('hero.subtitle') })
         </div>
         <p class="text-gray-400 text-xs sm:text-sm mt-1">{{ loc(s.l) }}</p>
       </div>
+    </div>
+  </section>
+
+  <!-- NEWSLETTER (moved up, right after the stats) -->
+  <NewsletterSection />
+
+  <!-- CLIENT LOGOS (partner trust strip) -->
+  <section class="py-12 lg:py-16 bg-white border-b border-gray-100">
+    <div class="max-w-6xl mx-auto px-6">
+      <p class="text-center text-gray-400 text-xs uppercase tracking-widest mb-7">
+        {{ t('home.partners.title') }}
+      </p>
+      <PartnerMarquee :partners="partners" />
     </div>
   </section>
 
@@ -116,14 +130,4 @@ usePageMeta({ description: () => t('hero.subtitle') })
 
   <!-- CONTACT CTA -->
   <ContactCta />
-
-  <!-- CLIENT LOGOS (partner trust strip) — sits just before the newsletter band -->
-  <section class="py-12 lg:py-16 bg-white border-t border-gray-100">
-    <div class="max-w-6xl mx-auto px-6">
-      <p class="text-center text-gray-400 text-xs uppercase tracking-widest mb-7">
-        {{ t('home.partners.title') }}
-      </p>
-      <PartnerMarquee :partners="partners" />
-    </div>
-  </section>
 </template>

@@ -5,7 +5,6 @@ import { useRoute } from 'vue-router'
 import { useHead } from '@unhead/vue'
 import SiteNav from '@/components/SiteNav.vue'
 import SiteFooter from '@/components/SiteFooter.vue'
-import NewsletterSection from '@/components/NewsletterSection.vue'
 import SocialRail from '@/components/SocialRail.vue'
 import ToastHost from '@/components/ToastHost.vue'
 import { editMode, canEdit, toggleEdit } from '@/composables/editMode'
@@ -15,9 +14,6 @@ const route = useRoute()
 
 // Admin area uses its own chrome (no public nav/footer/social rail).
 const isAdmin = computed(() => route.path.startsWith('/admin'))
-
-// The newsletter band sits above the footer on the homepage only.
-const showNewsletter = computed(() => route.name === 'home')
 
 useHead({
   htmlAttrs: { lang: computed(() => locale.value) },
@@ -72,7 +68,6 @@ onBeforeUnmount(() => {
   <main :class="{ 'min-h-screen': !isAdmin }">
     <router-view />
   </main>
-  <NewsletterSection v-if="showNewsletter" />
   <SiteFooter v-if="!isAdmin" />
 
   <!-- WhatsApp (public pages) -->
