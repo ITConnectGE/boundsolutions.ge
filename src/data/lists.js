@@ -1,6 +1,6 @@
 // Bilingual defaults for editable list content (process steps, hero stats, the
 // company-request form). Derived from the built-in i18n arrays so there is no
-// duplicated copy — each item becomes { field: { ka, en } } and can be
+// duplicated copy - each item becomes { field: { ka, en } } and can be
 // overridden (add / remove / edit) from the admin CMS as a collection.
 import ka from '@/i18n/ka.js'
 import en from '@/i18n/en.js'
@@ -49,6 +49,11 @@ export const companyFormFields = [
   { key: 'email', section: 'contact', type: 'email', required: true, map: 'email' },
   { key: 'phone', section: 'contact', type: 'tel', required: true, map: 'phone' },
 ]
+
+// Contact fields that must always be collected: every employer request has to
+// arrive with a reachable email AND phone, so these two can't be disabled from
+// the CMS and are validated for format on both the frontend and the API.
+export const lockedCompanyFields = ['email', 'phone']
 
 // Fields shown by default (the trimmed form): company info + position & salary +
 // contact with required email/phone. The rest are hidden until re-enabled.

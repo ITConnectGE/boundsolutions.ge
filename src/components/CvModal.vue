@@ -5,7 +5,7 @@
 import { ref, computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { addApplication } from '@/composables/applications.js'
-import { isValidEmail } from '@/utils/validation.js'
+import { fieldError, normalizePhone } from '@/utils/validation.js'
 import BaseIcon from './BaseIcon.vue'
 
 const props = defineProps({
@@ -25,10 +25,16 @@ const form = ref({ name: '', email: '', phone: '', message: '' })
 const agreed = ref(false)
 const consentOpen = ref(false)
 const sending = ref(false)
-const emailTouched = ref(false)
-const emailError = computed(
-  () => emailTouched.value && form.value.email.length > 0 && !isValidEmail(form.value.email),
+// Name, email and phone are all mandatory; email/phone must also be well formed.
+const FIELDS = { name: 'text', email: 'email', phone: 'phone' }
+const touched = ref({ name: false, email: false, phone: false })
+const errors = computed(() =>
+  Object.fromEntries(Object.entries(FIELDS).map(([k, kind]) => [k, fieldError(kind, form.value[k])])),
 )
+const hasErrors = computed(() => Object.values(errors.value).some(Boolean))
+// Only show a message once the field has been touched or submit was pressed.
+const showError = (k) => (touched.value[k] ? errors.value[k] : '')
+const touchAll = () => (touched.value = { name: true, email: true, phone: true })
 
 // Reset each time it opens.
 watch(
@@ -39,12 +45,15 @@ watch(
     fileName.value = ''
     cvFileObj.value = null
     agreed.value = false
-    emailTouched.value = false
+    touched.value = { name: false, email: false, phone: false }
     form.value = { name: '', email: '', phone: '', message: '' }
   },
 )
 
 const headerTitle = computed(() => props.title || t('vacancies.modal.generalTitle'))
+
+const okCls = 'bg-gray-50 focus:ring-2 focus:ring-brand/20 focus:bg-white'
+const errCls = 'bg-red-50 ring-2 ring-red-300 focus:ring-red-400'
 
 function close() {
   emit('update:modelValue', false)
@@ -57,8 +66,8 @@ function onFile(e) {
   }
 }
 async function submit() {
-  emailTouched.value = true
-  if (!isValidEmail(form.value.email)) return
+  touchAll()
+  if (hasErrors.value) return
   if (!agreed.value || sending.value) return
   sending.value = true
   try {
@@ -67,7 +76,7 @@ async function submit() {
         type: 'cv',
         name: form.value.name,
         email: form.value.email,
-        phone: form.value.phone,
+        phone: normalizePhone(form.value.phone),
         message: form.value.message,
         position: props.title,
         sector: props.sector,
@@ -102,13 +111,24 @@ async function submit() {
           <template v-if="!submitted">
             <h3 class="text-xl font-extrabold text-gray-900 mb-1">{{ t('vacancies.modal.title') }}</h3>
             <p class="text-sm text-gray-400 mb-5">
-              {{ headerTitle }}<span v-if="sector"> — {{ sector }}</span>
+              {{ headerTitle }}<span v-if="sector"> - {{ sector }}</span>
             </p>
 
             <form method="post" class="space-y-4" @submit.prevent="submit">
               <div>
                 <label for="cv-name" class="block text-xs font-medium text-gray-500 mb-1.5">{{ t('vacancies.modal.name') }}</label>
-                <input id="cv-name" v-model="form.name" name="name" type="text" required autocomplete="name" class="w-full px-4 py-3 bg-gray-50 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white transition-all" />
+                <input
+                  id="cv-name"
+                  v-model="form.name"
+                  name="name"
+                  type="text"
+                  required
+                  autocomplete="name"
+                  class="w-full px-4 py-3 rounded-xl text-sm focus:outline-none transition-all"
+                  :class="showError('name') ? errCls : okCls"
+                  @blur="touched.name = true"
+                />
+                <p v-if="showError('name')" class="text-red-500 text-xs mt-1.5">{{ t(showError('name')) }}</p>
               </div>
               <div>
                 <label for="cv-email" class="block text-xs font-medium text-gray-500 mb-1.5">{{ t('vacancies.modal.email') }}</label>
@@ -119,16 +139,29 @@ async function submit() {
                   type="email"
                   required
                   autocomplete="email"
-                  placeholder="name@example.com"
+                  :placeholder="t('common.emailPlaceholder')"
                   class="w-full px-4 py-3 rounded-xl text-sm focus:outline-none transition-all"
-                  :class="emailError ? 'bg-red-50 ring-2 ring-red-300 focus:ring-red-400' : 'bg-gray-50 focus:ring-2 focus:ring-brand/20 focus:bg-white'"
-                  @blur="emailTouched = true"
+                  :class="showError('email') ? errCls : okCls"
+                  @blur="touched.email = true"
                 />
-                <p v-if="emailError" class="text-red-500 text-xs mt-1.5">{{ t('common.invalidEmail') }}</p>
+                <p v-if="showError('email')" class="text-red-500 text-xs mt-1.5">{{ t(showError('email')) }}</p>
               </div>
               <div>
                 <label for="cv-phone" class="block text-xs font-medium text-gray-500 mb-1.5">{{ t('vacancies.modal.phone') }}</label>
-                <input id="cv-phone" v-model="form.phone" name="phone" type="tel" required autocomplete="tel" class="w-full px-4 py-3 bg-gray-50 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white transition-all" />
+                <input
+                  id="cv-phone"
+                  v-model="form.phone"
+                  name="phone"
+                  type="tel"
+                  required
+                  autocomplete="tel"
+                  inputmode="tel"
+                  :placeholder="t('common.phonePlaceholder')"
+                  class="w-full px-4 py-3 rounded-xl text-sm focus:outline-none transition-all"
+                  :class="showError('phone') ? errCls : okCls"
+                  @blur="touched.phone = true"
+                />
+                <p v-if="showError('phone')" class="text-red-500 text-xs mt-1.5">{{ t(showError('phone')) }}</p>
               </div>
               <div>
                 <label for="cv-message" class="block text-xs font-medium text-gray-500 mb-1.5">{{ t('vacancies.modal.message') }}</label>

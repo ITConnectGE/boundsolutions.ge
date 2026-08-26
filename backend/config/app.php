@@ -123,4 +123,17 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Admin Login URL
+    |--------------------------------------------------------------------------
+    |
+    | Where invited admins are pointed to sign in. The panel lives on its own
+    | hostname in production (see deploy/nginx-boundsolutions.conf), so this is
+    | set separately from APP_URL.
+    |
+    */
+
+    'admin_url' => env('ADMIN_LOGIN_URL', rtrim((string) env('APP_URL', 'http://localhost'), '/').'/admin/login'),
+
 ];

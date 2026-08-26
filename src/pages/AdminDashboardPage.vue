@@ -5,6 +5,13 @@ import { useI18n } from 'vue-i18n'
 import { useHead } from '@unhead/vue'
 import { useAdminAuth } from '@/composables/useAdminAuth'
 import {
+  getAdminUsers,
+  inviteAdminUser,
+  resendAdminInvite,
+  deleteAdminUser,
+} from '@/composables/adminUsers.js'
+import { fieldError } from '@/utils/validation.js'
+import {
   getApplications,
   setApplicationStatus,
   deleteApplication,
@@ -47,6 +54,7 @@ import {
   defaultCompanyForm,
   companyFormFields,
   defaultCompanyFormEnabled,
+  lockedCompanyFields,
 } from '@/data/lists.js'
 import { defaultVacancyCategories } from '@/data/jobs.js'
 import { privacyDefault, termsDefault } from '@/data/legal.js'
@@ -59,7 +67,7 @@ import RichTextEditor from '@/components/RichTextEditor.vue'
 
 const { t, locale } = useI18n()
 const router = useRouter()
-const { isAuthed, currentUser, logout } = useAdminAuth()
+const { isAuthed, needsPasswordReset, currentUser, logout } = useAdminAuth()
 
 useHead({
   title: () => t('admin.dash.title'),
@@ -71,7 +79,7 @@ const ready = ref(false)
 const search = ref('')
 const statusFilter = ref('all') // all | new | reviewed
 const user = ref('')
-const view = ref('inbox') // inbox | email | jobs | content
+const view = ref('inbox') // inbox | email | jobs | users | content
 const connError = ref(false)
 
 // ---- Received email (laravel-mailbox) ----
@@ -103,6 +111,7 @@ async function loadInbox() {
 function selectView(v) {
   view.value = v
   if (v === 'email' && !emailLoaded.value) loadInbox()
+  if (v === 'users' && !usersLoaded.value) loadAdminUsers()
 }
 
 async function openEmail(row) {
@@ -365,7 +374,7 @@ async function saveJobModal() {
   }
 }
 
-// ---- Legal pages (Privacy & Terms — WYSIWYG) ----
+// ---- Legal pages (Privacy & Terms - WYSIWYG) ----
 const privacyDraft = ref(null)
 const termsDraft = ref(null)
 const legalSaving = ref(false)
@@ -410,11 +419,11 @@ const MERGED_GROUPS = new Set(['services', 'blog', 'about', 'nav', 'companyForm'
 // Friendly labels for the second-level key segment (a sub-section heading).
 const SUBSECTION_LABELS = {
   _: 'ზოგადი / General',
-  aboutTeaser: 'ჩვენ შესახებ — მოკლე ბლოკი / About teaser',
-  services: 'სერვისები — სათაური / Services heading',
-  testimonials: 'შეფასებები — სათაური / Testimonials heading',
-  partners: 'პარტნიორები — სათაური / Partners heading',
-  process: 'პროცესი — სათაური / Process heading',
+  aboutTeaser: 'ჩვენ შესახებ - მოკლე ბლოკი / About teaser',
+  services: 'სერვისები - სათაური / Services heading',
+  testimonials: 'შეფასებები - სათაური / Testimonials heading',
+  partners: 'პარტნიორები - სათაური / Partners heading',
+  process: 'პროცესი - სათაური / Process heading',
   contactCta: 'კონტაქტის ბლოკი / Contact CTA',
   filters: 'ფილტრები / Filters',
   noPosition: 'ვაკანსია ვერ იპოვეთ / No position',
@@ -881,7 +890,7 @@ async function loadContentEditor() {
       if (r.type !== 'image') saved[`${r.key}|${r.locale}`] = r.value
     }
   } catch {
-    // ignore — fall back to defaults
+    // ignore - fall back to defaults
   }
   const d = {}
   for (const g of contentGroups) {
@@ -1034,7 +1043,9 @@ function normalizeCompanyForm(cf) {
   return cf
 }
 // Toggle a form field on/off (removes it from the public employer form).
+// Email and phone are locked - every request must arrive with both.
 function toggleCompanyField(key) {
+  if (lockedCompanyFields.includes(key)) return
   const arr = companyFormDraft.value.enabled
   const i = arr.indexOf(key)
   if (i === -1) arr.push(key)
@@ -1075,7 +1086,9 @@ async function onContentImage(item, e) {
 }
 
 onMounted(() => {
-  if (!isAuthed()) {
+  // Not signed in, or signed in but still on the temporary password from an
+  // invite: the login page handles both (the second by asking for a new one).
+  if (!isAuthed() || needsPasswordReset()) {
     router.replace('/admin/login')
     return
   }
@@ -1186,6 +1199,78 @@ function remove(a) {
     }
   })
 }
+// ---- Admin accounts (Users tab) ----
+const adminUsers = ref([])
+const usersLoaded = ref(false)
+const usersLoading = ref(false)
+const usersSaving = ref(false)
+const newAdmin = ref({ name: '', email: '' })
+const newAdminError = ref('')
+// Only set when the invite email could not be sent, so the temporary password
+// can still be handed over by hand. The API never returns it a second time.
+const lastInvite = ref(null)
+
+async function loadAdminUsers() {
+  usersLoading.value = true
+  try {
+    adminUsers.value = await getAdminUsers()
+    usersLoaded.value = true
+  } catch (e) {
+    adminError(e)
+  } finally {
+    usersLoading.value = false
+  }
+}
+
+async function addAdminUser() {
+  newAdminError.value = ''
+  const name = newAdmin.value.name.trim()
+  const email = newAdmin.value.email.trim()
+  const nameErr = fieldError('text', name)
+  const emailErr = fieldError('email', email)
+  if (nameErr || emailErr) {
+    newAdminError.value = t(nameErr || emailErr)
+    return
+  }
+
+  usersSaving.value = true
+  try {
+    const res = await inviteAdminUser(name, email)
+    newAdmin.value = { name: '', email: '' }
+    lastInvite.value = res
+    if (res.emailSent) toast.success(t('admin.users.emailSent'))
+    await loadAdminUsers()
+  } catch (e) {
+    newAdminError.value = e.message || t('admin.err.network')
+  } finally {
+    usersSaving.value = false
+  }
+}
+
+function confirmResendInvite(row) {
+  askConfirm(t('admin.users.confirmResend'), async () => {
+    try {
+      const res = await resendAdminInvite(row.id)
+      lastInvite.value = res
+      if (res.emailSent) toast.success(t('admin.users.emailSent'))
+      await loadAdminUsers()
+    } catch (e) {
+      adminError(e)
+    }
+  })
+}
+
+function confirmDeleteAdmin(row) {
+  askConfirm(t('admin.users.confirmDelete'), async () => {
+    try {
+      await deleteAdminUser(row.id)
+      await loadAdminUsers()
+    } catch (e) {
+      adminError(e)
+    }
+  })
+}
+
 async function doLogout() {
   await logout()
   router.replace('/admin/login')
@@ -1228,7 +1313,7 @@ const statCards = computed(() => [
       <!-- View tabs -->
       <div class="inline-flex bg-white border border-gray-100 rounded-xl p-1 mb-6">
         <button
-          v-for="v in ['inbox', 'email', 'jobs', 'content']"
+          v-for="v in ['inbox', 'email', 'jobs', 'users', 'content']"
           :key="v"
           class="px-4 py-2 rounded-lg text-xs font-semibold transition-colors inline-flex items-center gap-1.5"
           :class="view === v ? 'bg-navy text-white' : 'text-gray-500 hover:text-gray-900'"
@@ -1259,7 +1344,7 @@ const statCards = computed(() => [
         </div>
       </div>
 
-      <!-- Demo note — only when no backend/DB is connected -->
+      <!-- Demo note - only when no backend/DB is connected -->
       <div
         v-if="!apiOn"
         class="bg-brand/5 text-brand/80 text-xs rounded-xl px-4 py-2.5 mb-6 flex items-center gap-2"
@@ -1520,7 +1605,7 @@ const statCards = computed(() => [
           </button>
         </div>
 
-        <!-- Managed categories: add / remove — these feed the vacancy dropdown and the site filters -->
+        <!-- Managed categories: add / remove - these feed the vacancy dropdown and the site filters -->
         <div class="bg-white rounded-2xl border border-gray-100 p-4 mb-6">
           <p class="text-xs font-semibold text-gray-600 mb-3">{{ t('admin.jobs.categories') }}</p>
           <div class="flex flex-wrap items-center gap-2 mb-3">
@@ -1618,6 +1703,125 @@ const statCards = computed(() => [
         </div>
         <div v-else class="bg-white rounded-2xl border border-gray-100 py-20 text-center text-gray-400">
           {{ t('admin.jobs.empty') }}
+        </div>
+      </template>
+
+      <!-- ================= ADMIN USERS ================= -->
+      <template v-else-if="view === 'users'">
+        <div class="mb-6">
+          <h1 class="text-2xl font-extrabold text-gray-900">{{ t('admin.users.title') }}</h1>
+          <p class="text-gray-400 text-sm mt-1">{{ t('admin.users.subtitle') }}</p>
+        </div>
+
+        <!-- Invite form -->
+        <form
+          class="bg-white rounded-2xl border border-gray-100 p-5 lg:p-6 mb-6 grid gap-4 sm:grid-cols-[1fr_1fr_auto] sm:items-end"
+          @submit.prevent="addAdminUser"
+        >
+          <div>
+            <label for="admin-new-name" class="block text-xs font-medium text-gray-500 mb-1.5">
+              {{ t('admin.users.name') }} *
+            </label>
+            <input
+              id="admin-new-name"
+              v-model="newAdmin.name"
+              type="text"
+              required
+              autocomplete="off"
+              class="w-full px-4 py-3 bg-gray-50 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white transition-all"
+            />
+          </div>
+          <div>
+            <label for="admin-new-email" class="block text-xs font-medium text-gray-500 mb-1.5">
+              {{ t('admin.users.email') }} *
+            </label>
+            <input
+              id="admin-new-email"
+              v-model="newAdmin.email"
+              type="email"
+              required
+              autocomplete="off"
+              :placeholder="t('common.emailPlaceholder')"
+              class="w-full px-4 py-3 bg-gray-50 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white transition-all"
+            />
+          </div>
+          <button
+            type="submit"
+            :disabled="usersSaving"
+            class="inline-flex items-center justify-center gap-1.5 gradient-bg text-white text-xs font-semibold px-5 py-3.5 rounded-xl hover:opacity-90 transition-opacity"
+            :class="{ 'opacity-60': usersSaving }"
+          >
+            <span v-if="usersSaving" class="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin"></span>
+            <BaseIcon v-else name="plus" class="w-4 h-4" />
+            {{ usersSaving ? t('admin.users.adding') : t('admin.users.add') }}
+          </button>
+          <p v-if="newAdminError" class="text-red-500 text-xs sm:col-span-3">{{ newAdminError }}</p>
+        </form>
+
+        <!-- Fallback when the invite email could not be sent -->
+        <div
+          v-if="lastInvite && !lastInvite.emailSent && lastInvite.tempPassword"
+          class="bg-amber-50 border border-amber-200 rounded-2xl px-5 py-4 mb-6 flex items-start gap-3"
+        >
+          <BaseIcon name="badge" class="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
+          <div class="text-sm text-amber-800">
+            <p>{{ t('admin.users.emailFailed') }}</p>
+            <p class="mt-1">
+              <strong>{{ lastInvite.user.email }}</strong>
+              <span class="text-amber-600"> - {{ t('admin.users.tempPassword') }}: </span>
+              <code class="bg-white px-2 py-0.5 rounded font-mono tracking-wide">{{ lastInvite.tempPassword }}</code>
+            </p>
+          </div>
+          <button type="button" class="ml-auto text-amber-400 hover:text-amber-700" @click="lastInvite = null">
+            <BaseIcon name="close" class="w-4 h-4" />
+          </button>
+        </div>
+
+        <!-- List -->
+        <div v-if="usersLoading" class="bg-white rounded-2xl border border-gray-100 py-20 text-center text-gray-400">
+          {{ t('admin.users.loading') }}
+        </div>
+        <div v-else-if="adminUsers.length" class="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+          <div
+            v-for="u in adminUsers"
+            :key="u.id"
+            class="flex flex-wrap items-center gap-3 px-5 lg:px-6 py-4 border-b border-gray-50 last:border-0"
+          >
+            <div class="min-w-0 flex-1">
+              <p class="font-semibold text-gray-800 text-sm truncate">
+                {{ u.name }}
+                <span v-if="u.email === user" class="text-gray-300 font-normal">({{ t('admin.users.you') }})</span>
+              </p>
+              <p class="text-gray-400 text-xs truncate">{{ u.email }}</p>
+            </div>
+            <span
+              class="text-[11px] font-semibold px-2.5 py-1 rounded-full flex-shrink-0"
+              :class="u.mustResetPassword ? 'bg-amber-50 text-amber-600' : 'bg-green-50 text-green-600'"
+            >
+              {{ u.mustResetPassword ? t('admin.users.pending') : t('admin.users.active') }}
+            </span>
+            <div class="flex items-center gap-2 flex-shrink-0">
+              <button
+                type="button"
+                class="text-xs font-semibold text-gray-500 hover:text-brand px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors"
+                @click="confirmResendInvite(u)"
+              >
+                {{ t('admin.users.resend') }}
+              </button>
+              <button
+                v-if="u.email !== user"
+                type="button"
+                class="text-gray-300 hover:text-red-500 p-2 transition-colors"
+                :aria-label="t('admin.users.remove')"
+                @click="confirmDeleteAdmin(u)"
+              >
+                <BaseIcon name="trash" class="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        </div>
+        <div v-else class="bg-white rounded-2xl border border-gray-100 py-20 text-center text-gray-400">
+          {{ t('admin.users.empty') }}
         </div>
       </template>
 
@@ -1836,8 +2040,8 @@ const statCards = computed(() => [
                   </div>
                 </div>
                 <div class="grid sm:grid-cols-2 gap-3">
-                  <textarea :value="(svc.bullets && svc.bullets.ka ? svc.bullets.ka : []).join('\n')" rows="3" placeholder="ბულეთები — თითო ხაზზე (ქარ)" class="w-full px-3 py-2 bg-gray-50 rounded-lg text-sm resize-y focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white" @input="setBullets(svc, 'ka', $event.target.value)"></textarea>
-                  <textarea :value="(svc.bullets && svc.bullets.en ? svc.bullets.en : []).join('\n')" rows="3" placeholder="Bullets — one per line (EN)" class="w-full px-3 py-2 bg-gray-50 rounded-lg text-sm resize-y focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white" @input="setBullets(svc, 'en', $event.target.value)"></textarea>
+                  <textarea :value="(svc.bullets && svc.bullets.ka ? svc.bullets.ka : []).join('\n')" rows="3" placeholder="ბულეთები - თითო ხაზზე (ქარ)" class="w-full px-3 py-2 bg-gray-50 rounded-lg text-sm resize-y focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white" @input="setBullets(svc, 'ka', $event.target.value)"></textarea>
+                  <textarea :value="(svc.bullets && svc.bullets.en ? svc.bullets.en : []).join('\n')" rows="3" placeholder="Bullets - one per line (EN)" class="w-full px-3 py-2 bg-gray-50 rounded-lg text-sm resize-y focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white" @input="setBullets(svc, 'en', $event.target.value)"></textarea>
                 </div>
               </div>
               <div class="flex items-center justify-between pt-1">
@@ -1927,7 +2131,7 @@ const statCards = computed(() => [
                   </div>
                 </div>
                 <div>
-                  <label class="block text-[10px] uppercase tracking-wide text-gray-300 mb-1">თეგები — მძიმით / Tags — comma-separated</label>
+                  <label class="block text-[10px] uppercase tracking-wide text-gray-300 mb-1">თეგები - მძიმით / Tags - comma-separated</label>
                   <input :value="(post.tags || []).join(', ')" placeholder="Adjara Group, Keynote" class="w-full px-3 py-2 bg-gray-50 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white" @input="setTags(post, $event.target.value)" />
                 </div>
                 <div class="grid sm:grid-cols-3 gap-3">
@@ -2250,17 +2454,27 @@ const statCards = computed(() => [
               <!-- Fields: show / hide (each field removable from the public form) -->
               <div class="border border-gray-100 rounded-xl p-4 space-y-2">
                 <p class="text-xs font-semibold text-gray-600">ველები / Form fields</p>
-                <p class="text-[11px] text-gray-400">მოხსენით მონიშვნა, რომ ველი ფორმიდან წაიშალოს.</p>
+                <p class="text-[11px] text-gray-400">
+                  მოხსენით მონიშვნა, რომ ველი ფორმიდან წაიშალოს. ელ-ფოსტა და ტელეფონი სავალდებულოა და ვერ გამოირთვება.
+                </p>
                 <div class="grid sm:grid-cols-2 gap-x-4">
                   <label
                     v-for="f in companyFormFields"
                     :key="f.key"
-                    class="flex items-center gap-2 text-sm text-gray-700 cursor-pointer py-1.5"
+                    class="flex items-center gap-2 text-sm py-1.5"
+                    :class="
+                      lockedCompanyFields.includes(f.key)
+                        ? 'text-gray-400 cursor-not-allowed'
+                        : 'text-gray-700 cursor-pointer'
+                    "
                   >
                     <input
                       type="checkbox"
-                      :checked="companyFormDraft.enabled.includes(f.key)"
-                      class="w-4 h-4 accent-brand flex-shrink-0"
+                      :checked="
+                        companyFormDraft.enabled.includes(f.key) || lockedCompanyFields.includes(f.key)
+                      "
+                      :disabled="lockedCompanyFields.includes(f.key)"
+                      class="w-4 h-4 accent-brand flex-shrink-0 disabled:opacity-60"
                       @change="toggleCompanyField(f.key)"
                     />
                     <span>{{ t('companyForm.' + f.key) }}<span v-if="f.required" class="text-brand"> *</span></span>
@@ -2315,7 +2529,7 @@ const statCards = computed(() => [
           <!-- Collection: Legal pages (Privacy & Terms, WYSIWYG) -->
           <details v-if="!contentSearch && privacyDraft && termsDraft" class="bg-white rounded-2xl border border-gray-100 px-5 lg:px-6 py-4">
             <summary class="font-brand text-sm text-gray-900 cursor-pointer select-none">
-              იურიდიული — Privacy &amp; Terms
+              იურიდიული - Privacy &amp; Terms
             </summary>
             <div class="space-y-5 mt-5">
               <!-- Page labels (legal.*) -->

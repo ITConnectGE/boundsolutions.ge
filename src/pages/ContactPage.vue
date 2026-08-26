@@ -3,7 +3,7 @@ import { ref, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { usePageMeta } from '@/composables/usePageMeta'
 import { addApplication } from '@/composables/applications.js'
-import { isValidEmail } from '@/utils/validation.js'
+import { fieldError, normalizePhone } from '@/utils/validation.js'
 import PageHero from '@/components/PageHero.vue'
 import SocialLinks from '@/components/SocialLinks.vue'
 import BaseIcon from '@/components/BaseIcon.vue'
@@ -15,23 +15,32 @@ usePageMeta({ title: () => t('contact.title'), description: () => t('contact.sub
 const submitted = ref(false)
 const sending = ref(false)
 const form = ref({ name: '', email: '', phone: '', interest: '', message: '' })
-const emailTouched = ref(false)
-const emailError = computed(
-  () => emailTouched.value && form.value.email.length > 0 && !isValidEmail(form.value.email),
+// Name, email, phone and message are all mandatory; email and phone must also
+// be well formed (same rules the API enforces).
+const FIELDS = { name: 'text', email: 'email', phone: 'phone', message: 'text' }
+const touched = ref({ name: false, email: false, phone: false, message: false })
+const errors = computed(() =>
+  Object.fromEntries(Object.entries(FIELDS).map(([k, kind]) => [k, fieldError(kind, form.value[k])])),
 )
+const hasErrors = computed(() => Object.values(errors.value).some(Boolean))
+const showError = (k) => (touched.value[k] ? errors.value[k] : '')
+
+const okCls = 'bg-gray-50 focus:ring-2 focus:ring-brand/20 focus:bg-white'
+const errCls = 'bg-red-50 ring-2 ring-red-300 focus:ring-red-400'
+const inputCls = 'w-full px-4 py-3 rounded-xl text-sm focus:outline-none transition-all'
 
 async function submit() {
-  emailTouched.value = true
-  if (!isValidEmail(form.value.email)) return // block fake / malformed emails
+  touched.value = { name: true, email: true, phone: true, message: true }
+  if (hasErrors.value) return // block empty / malformed email + phone
   if (sending.value) return
   sending.value = true
   try {
-    // Persist to the backend (DB) — appears in the admin inbox.
+    // Persist to the backend (DB) - appears in the admin inbox.
     await addApplication({
       type: 'contact',
       name: form.value.name,
       email: form.value.email,
-      phone: form.value.phone,
+      phone: normalizePhone(form.value.phone),
       message: form.value.message,
       position: form.value.interest || '',
       sector: '',
@@ -99,8 +108,10 @@ const cards = [
               type="text"
               required
               autocomplete="name"
-              class="w-full px-4 py-3 bg-gray-50 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white transition-all"
+              :class="[inputCls, showError('name') ? errCls : okCls]"
+              @blur="touched.name = true"
             />
+            <p v-if="showError('name')" class="text-red-500 text-xs mt-1.5">{{ t(showError('name')) }}</p>
           </div>
           <div>
             <label for="contact-email" class="block text-xs font-medium text-gray-500 mb-1.5"
@@ -113,27 +124,29 @@ const cards = [
               type="email"
               required
               autocomplete="email"
-              placeholder="name@example.com"
-              class="w-full px-4 py-3 rounded-xl text-sm focus:outline-none transition-all"
-              :class="emailError
-                ? 'bg-red-50 ring-2 ring-red-300 focus:ring-red-400'
-                : 'bg-gray-50 focus:ring-2 focus:ring-brand/20 focus:bg-white'"
-              @blur="emailTouched = true"
+              :placeholder="t('common.emailPlaceholder')"
+              :class="[inputCls, showError('email') ? errCls : okCls]"
+              @blur="touched.email = true"
             />
-            <p v-if="emailError" class="text-red-500 text-xs mt-1.5">{{ t('common.invalidEmail') }}</p>
+            <p v-if="showError('email')" class="text-red-500 text-xs mt-1.5">{{ t(showError('email')) }}</p>
           </div>
           <div>
-            <label for="contact-phone" class="block text-xs font-medium text-gray-500 mb-1.5">{{
-              t('contact.form.phone')
-            }}</label>
+            <label for="contact-phone" class="block text-xs font-medium text-gray-500 mb-1.5"
+              >{{ t('contact.form.phone') }} *</label
+            >
             <input
               id="contact-phone"
               v-model="form.phone"
               name="phone"
               type="tel"
+              required
               autocomplete="tel"
-              class="w-full px-4 py-3 bg-gray-50 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white transition-all"
+              inputmode="tel"
+              :placeholder="t('common.phonePlaceholder')"
+              :class="[inputCls, showError('phone') ? errCls : okCls]"
+              @blur="touched.phone = true"
             />
+            <p v-if="showError('phone')" class="text-red-500 text-xs mt-1.5">{{ t(showError('phone')) }}</p>
           </div>
           <div>
             <label for="contact-interest" class="block text-xs font-medium text-gray-500 mb-1.5">{{
@@ -161,8 +174,10 @@ const cards = [
               name="message"
               required
               rows="4"
-              class="w-full px-4 py-3 bg-gray-50 rounded-xl text-sm resize-none focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white transition-all"
+              :class="[inputCls, 'resize-none', showError('message') ? errCls : okCls]"
+              @blur="touched.message = true"
             ></textarea>
+            <p v-if="showError('message')" class="text-red-500 text-xs mt-1.5">{{ t(showError('message')) }}</p>
           </div>
           <button
             type="submit"

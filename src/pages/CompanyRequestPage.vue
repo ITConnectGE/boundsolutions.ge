@@ -4,9 +4,14 @@ import { useI18n } from 'vue-i18n'
 import { usePageMeta } from '@/composables/usePageMeta'
 import { addApplication } from '@/composables/applications.js'
 import { collection } from '@/composables/content.js'
-import { defaultCompanyForm, companyFormFields, defaultCompanyFormEnabled } from '@/data/lists.js'
+import {
+  defaultCompanyForm,
+  companyFormFields,
+  defaultCompanyFormEnabled,
+  lockedCompanyFields,
+} from '@/data/lists.js'
 import { useLoc } from '@/composables/useLocale'
-import { isValidEmail } from '@/utils/validation.js'
+import { fieldError, normalizePhone } from '@/utils/validation.js'
 import PageHero from '@/components/PageHero.vue'
 import BaseIcon from '@/components/BaseIcon.vue'
 
@@ -16,7 +21,10 @@ const { loc } = useLoc()
 // Editable from the admin CMS: intro, which fields show (enabled), and the
 // dropdown options for select fields.
 const cf = computed(() => collection('companyForm', defaultCompanyForm))
-const enabledKeys = computed(() => cf.value.enabled || defaultCompanyFormEnabled)
+// Email + phone are forced back in even if the CMS list drops them.
+const enabledKeys = computed(() => [
+  ...new Set([...(cf.value.enabled || defaultCompanyFormEnabled), ...lockedCompanyFields]),
+])
 const visibleFields = computed(() => companyFormFields.filter((f) => enabledKeys.value.includes(f.key)))
 
 // Group visible fields under their section legend, in a fixed order.
@@ -40,11 +48,23 @@ const sending = ref(false)
 // A value slot for every possible field (unused ones stay empty).
 const values = reactive(Object.fromEntries(companyFormFields.map((f) => [f.key, ''])))
 
-const emailShown = computed(() => enabledKeys.value.includes('email'))
-const emailTouched = ref(false)
-const emailError = computed(
-  () => emailTouched.value && values.email.length > 0 && !isValidEmail(values.email),
+// Per-field validation. Required fields must be filled; email and phone must
+// also match the format the API enforces.
+const isRequired = (f) => Boolean(f.required) || lockedCompanyFields.includes(f.key)
+const kindOf = (f) => (f.key === 'email' ? 'email' : f.key === 'phone' ? 'phone' : 'text')
+const touched = reactive({})
+const errors = computed(() =>
+  Object.fromEntries(
+    visibleFields.value.map((f) => [f.key, fieldError(kindOf(f), values[f.key], isRequired(f))]),
+  ),
 )
+const hasErrors = computed(() => Object.values(errors.value).some(Boolean))
+const showError = (key) => (touched[key] ? errors.value[key] || '' : '')
+const placeholderFor = (f) => {
+  if (f.type === 'email') return t('common.emailPlaceholder')
+  if (f.type === 'tel') return t('common.phonePlaceholder')
+  return ''
+}
 
 function summary() {
   const rows = []
@@ -57,10 +77,8 @@ function summary() {
 }
 
 async function submit() {
-  if (emailShown.value) {
-    emailTouched.value = true
-    if (!isValidEmail(values.email)) return // block fake / malformed emails
-  }
+  for (const f of visibleFields.value) touched[f.key] = true
+  if (hasErrors.value) return // block empty / malformed required fields
   if (sending.value) return
   sending.value = true
   try {
@@ -68,7 +86,7 @@ async function submit() {
       type: 'company',
       name: values.companyName,
       email: values.email,
-      phone: values.phone,
+      phone: normalizePhone(values.phone),
       position: values.positionTitle,
       sector: values.industry,
       message: summary(),
@@ -83,8 +101,9 @@ async function submit() {
   }
 }
 
-const inputCls =
-  'w-full px-4 py-3 bg-gray-50 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white transition-all'
+const inputCls = 'w-full px-4 py-3 rounded-xl text-sm focus:outline-none transition-all'
+const okCls = 'bg-gray-50 focus:ring-2 focus:ring-brand/20 focus:bg-white'
+const errCls = 'bg-red-50 ring-2 ring-red-300 focus:ring-red-400'
 </script>
 
 <template>
@@ -115,7 +134,7 @@ const inputCls =
             <legend class="font-brand text-sm text-gray-900 mb-3">{{ t('companyForm.' + sec.legend) }}</legend>
             <div v-for="f in sec.fields" :key="f.key">
               <label :for="'cf-' + f.key" class="block text-xs font-medium text-gray-500 mb-1.5">
-                {{ t('companyForm.' + f.key) }}<span v-if="f.required"> *</span>
+                {{ t('companyForm.' + f.key) }}<span v-if="isRequired(f)"> *</span>
               </label>
 
               <!-- text / email / tel -->
@@ -125,25 +144,28 @@ const inputCls =
                   v-model="values[f.key]"
                   :name="f.key"
                   :type="f.type"
-                  :required="f.required"
-                  :placeholder="f.type === 'email' ? 'name@example.com' : ''"
-                  :class="f.key === 'email' && emailError ? inputCls + ' ring-2 ring-red-300 bg-red-50' : inputCls"
-                  @blur="f.key === 'email' && (emailTouched = true)"
+                  :required="isRequired(f)"
+                  :inputmode="f.type === 'tel' ? 'tel' : undefined"
+                  :placeholder="placeholderFor(f)"
+                  :class="[inputCls, showError(f.key) ? errCls : okCls]"
+                  @blur="touched[f.key] = true"
                 />
-                <p v-if="f.key === 'email' && emailError" class="text-red-500 text-xs mt-1">
-                  {{ t('common.invalidEmail') }}
-                </p>
+                <p v-if="showError(f.key)" class="text-red-500 text-xs mt-1">{{ t(showError(f.key)) }}</p>
               </template>
 
               <!-- textarea -->
-              <textarea
-                v-else-if="f.type === 'textarea'"
-                :id="'cf-' + f.key"
-                v-model="values[f.key]"
-                :name="f.key"
-                rows="3"
-                :class="inputCls + ' resize-none'"
-              ></textarea>
+              <template v-else-if="f.type === 'textarea'">
+                <textarea
+                  :id="'cf-' + f.key"
+                  v-model="values[f.key]"
+                  :name="f.key"
+                  rows="3"
+                  :required="isRequired(f)"
+                  :class="[inputCls, 'resize-none', showError(f.key) ? errCls : okCls]"
+                  @blur="touched[f.key] = true"
+                ></textarea>
+                <p v-if="showError(f.key)" class="text-red-500 text-xs mt-1">{{ t(showError(f.key)) }}</p>
+              </template>
 
               <!-- select -->
               <select
@@ -151,7 +173,8 @@ const inputCls =
                 :id="'cf-' + f.key"
                 v-model="values[f.key]"
                 :name="f.key"
-                :class="inputCls"
+                :required="isRequired(f)"
+                :class="[inputCls, okCls]"
               >
                 <option value="">{{ t('companyForm.choose') }}</option>
                 <option v-for="(o, i) in optionsFor(f)" :key="i" :value="loc(o)">{{ loc(o) }}</option>
