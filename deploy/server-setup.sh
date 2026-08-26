@@ -48,7 +48,7 @@ QUEUE_CONNECTION=sync
 ENVEOF
 fi
 sed -i 's|^APP_URL=.*|APP_URL=https://boundsolutions.ge|' .env
-sed -i 's|^DB_PREFIX=.*|DB_PREFIX=|' .env   # dedicated DB — no table prefix
+sed -i 's|^DB_PREFIX=.*|DB_PREFIX=|' .env   # dedicated DB - no table prefix
 grep -q '^APP_KEY=base64' .env || php artisan key:generate --force
 php artisan migrate --seed --force
 php artisan storage:link 2>/dev/null || true
@@ -68,7 +68,7 @@ echo "VITE_API_BASE=/api" > .env.production
 rm -rf node_modules/.vite-temp node_modules/.vite
 npm ci
 npm run build
-test -f dist/index.html && echo "    dist/index.html OK — served directly from /srv/bound/dist"
+test -f dist/index.html && echo "    dist/index.html OK - served directly from /srv/bound/dist"
 # Remove SPA files a previous version copied into backend/public (now unused).
 rm -rf "$BE/public/assets" "$BE/public/images" "$BE/public/index.html" \
        "$BE/public/404.html" "$BE/public/sitemap.xml"
@@ -83,7 +83,7 @@ echo "==> [6/6] Re-apply SSL (if a certificate already exists)"
 if [ -d /etc/letsencrypt/live/boundsolutions.ge ]; then
   certbot --nginx -d boundsolutions.ge -d www.boundsolutions.ge \
     --reinstall --redirect --non-interactive 2>/dev/null || \
-    echo "    (could not auto-reinstall SSL — run: certbot --nginx -d boundsolutions.ge -d www.boundsolutions.ge)"
+    echo "    (could not auto-reinstall SSL - run: certbot --nginx -d boundsolutions.ge -d www.boundsolutions.ge)"
   systemctl reload nginx
 fi
 

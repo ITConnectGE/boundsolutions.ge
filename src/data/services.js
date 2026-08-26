@@ -7,12 +7,12 @@ export const services = [
     image: '/images/3/boundsolutions 2.jpg',
     title: { ka: 'რეკრუტინგი', en: 'Recruitment' },
     summary: {
-      ka: 'სრული ციკლის რეკრუტინგი — ვაკანსიის ანალიზიდან წარმატებულ დასაქმებამდე.',
-      en: 'Full-cycle recruitment — from role analysis to a successful hire.',
+      ka: 'სრული ციკლის რეკრუტინგი - ვაკანსიის ანალიზიდან წარმატებულ დასაქმებამდე.',
+      en: 'Full-cycle recruitment - from role analysis to a successful hire.',
     },
     body: {
-      ka: 'ვპოულობთ ადამიანებს, რომლებიც პროფესიონალიზმთან ერთად იზიარებენ თქვენი კომპანიის ღირებულებებს. ვმუშაობთ ვაკანსიის ღრმა ანალიზიდან, კანდიდატების მოძიება-შეფასებიდან, ინტერვიუებიდან საბოლოო შერჩევამდე — და ვაგრძელებთ მხარდაჭერას ადაპტაციის პერიოდშიც.',
-      en: 'We find people who match your culture and your standards. We work from a deep role analysis through sourcing, screening and interviews to the final selection — and stay involved through onboarding.',
+      ka: 'ვპოულობთ ადამიანებს, რომლებიც პროფესიონალიზმთან ერთად იზიარებენ თქვენი კომპანიის ღირებულებებს. ვმუშაობთ ვაკანსიის ღრმა ანალიზიდან, კანდიდატების მოძიება-შეფასებიდან, ინტერვიუებიდან საბოლოო შერჩევამდე - და ვაგრძელებთ მხარდაჭერას ადაპტაციის პერიოდშიც.',
+      en: 'We find people who match your culture and your standards. We work from a deep role analysis through sourcing, screening and interviews to the final selection - and stay involved through onboarding.',
     },
     bullets: {
       ka: ['ვაკანსიის პროფილის შედგენა', 'კანდიდატების მოძიება და სკრინინგი', 'სტრუქტურირებული ინტერვიუები', 'ადაპტაციის მხარდაჭერა'],
@@ -29,8 +29,8 @@ export const services = [
       en: 'Process audits, policy design and organisational optimisation.',
     },
     body: {
-      ka: 'ვაფასებთ თქვენი HR პროცესების მდგომარეობას და ვქმნით სისტემას, რომელიც რეალურად მუშაობს. პოლიტიკები, სტრუქტურა, შეფასების სისტემები და კულტურა — ყველაფერი მორგებული თქვენს ბიზნესზე.',
-      en: "We assess the state of your HR processes and build a system that actually works — policies, structure, performance frameworks and culture, all tailored to your business.",
+      ka: 'ვაფასებთ თქვენი HR პროცესების მდგომარეობას და ვქმნით სისტემას, რომელიც რეალურად მუშაობს. პოლიტიკები, სტრუქტურა, შეფასების სისტემები და კულტურა - ყველაფერი მორგებული თქვენს ბიზნესზე.',
+      en: "We assess the state of your HR processes and build a system that actually works - policies, structure, performance frameworks and culture, all tailored to your business.",
     },
     bullets: {
       ka: ['HR პროცესების აუდიტი', 'პოლიტიკებისა და პროცედურების შემუშავება', 'ორგანიზაციული სტრუქტურა', 'შეფასების სისტემები (KPI)'],
@@ -48,7 +48,7 @@ export const services = [
     },
     body: {
       ka: 'ვეხმარებით ადამიანებს გაიაზრონ საკუთარი ძლიერი მხარეები და სწორად წარმოაჩინონ ისინი. ინდივიდუალური კონსულტაცია, CV-ისა და LinkedIn პროფილის გაუმჯობესება, ინტერვიუსთვის მზადება.',
-      en: 'We help people understand their strengths and present them well — individual coaching, CV and LinkedIn improvement, and interview preparation.',
+      en: 'We help people understand their strengths and present them well - individual coaching, CV and LinkedIn improvement, and interview preparation.',
     },
     bullets: {
       ka: ['კარიერული კონსულტაცია', 'CV და LinkedIn', 'ინტერვიუს სიმულაცია', 'განვითარების გეგმა'],
@@ -66,7 +66,7 @@ export const services = [
     },
     body: {
       ka: 'ვეხმარებით კომპანიებს გახდნენ ის ადგილი, სადაც ნიჭიერ ადამიანებს უნდათ მუშაობა. ვამუშავებთ ღირებულებით შეთავაზებას (EVP) და კომუნიკაციის სტრატეგიას.',
-      en: 'We help companies become the place talented people want to work — building your Employee Value Proposition (EVP) and communication strategy.',
+      en: 'We help companies become the place talented people want to work - building your Employee Value Proposition (EVP) and communication strategy.',
     },
     bullets: {
       ka: ['EVP შემუშავება', 'დამსაქმებლის ბრენდის სტრატეგია', 'შიდა კომუნიკაცია', 'სოციალური მედია'],
@@ -83,8 +83,8 @@ export const services = [
       en: 'Running the full HR function for growing companies.',
     },
     body: {
-      ka: 'მზარდი კომპანიებისთვის ვიღებთ HR ფუნქციის სრულ ან ნაწილობრივ მართვას — დაქირავებიდან დოკუმენტბრუნვამდე, ისე რომ თქვენ ბიზნესზე იყოთ ფოკუსირებული.',
-      en: "For growing companies we take on full or partial management of the HR function — from hiring to documentation — so you can stay focused on the business.",
+      ka: 'მზარდი კომპანიებისთვის ვიღებთ HR ფუნქციის სრულ ან ნაწილობრივ მართვას - დაქირავებიდან დოკუმენტბრუნვამდე, ისე რომ თქვენ ბიზნესზე იყოთ ფოკუსირებული.',
+      en: "For growing companies we take on full or partial management of the HR function, from hiring to documentation, so you can stay focused on the business.",
     },
     bullets: {
       ka: ['HR ადმინისტრირება', 'დოკუმენტბრუნვა', 'პერსონალის მართვა', 'რეპორტინგი'],

@@ -10,7 +10,7 @@ use Illuminate\Support\Str;
 
 class InboxController extends Controller
 {
-    /** Paginated list for the admin inbox (cheap — reads denormalized columns). */
+    /** Paginated list for the admin inbox (cheap - reads denormalized columns). */
     public function index(Request $request)
     {
         $query = InboundEmail::query()

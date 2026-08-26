@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Lightweight redeploy — pulls latest main and rebuilds app code.
+# Lightweight redeploy - pulls latest main and rebuilds app code.
 # Called by CI (.github/workflows/deploy.yml) on every push to main.
 # For first-time provisioning (PHP/Node/nginx/SSL) use server-setup.sh instead.
 set -euo pipefail

@@ -5,8 +5,8 @@
 export const testimonials = [
   {
     quote: {
-      ka: 'ჩვენ გვჯერა, რომ თანამშრომლებზე ზრუნვა მხოლოდ სამუშაო სივრცით არ შემოიფარგლება. ბუნება, თამაშები და ცოცხალი კომუნიკაცია ქმნის იმ მოტივაციას, რომელიც გუნდს უფრო ძლიერს და ბედნიერს ხდის. როცა თანამშრომლები თავს კარგად გრძნობენ — ბიზნესი იზრდება.',
-      en: 'We believe that caring for employees goes beyond the workplace. Nature, games, and face-to-face communication create the motivation that makes the team stronger and happier. When employees feel good — the business grows.',
+      ka: 'ჩვენ გვჯერა, რომ თანამშრომლებზე ზრუნვა მხოლოდ სამუშაო სივრცით არ შემოიფარგლება. ბუნება, თამაშები და ცოცხალი კომუნიკაცია ქმნის იმ მოტივაციას, რომელიც გუნდს უფრო ძლიერს და ბედნიერს ხდის. როცა თანამშრომლები თავს კარგად გრძნობენ - ბიზნესი იზრდება.',
+      en: 'We believe that caring for employees goes beyond the workplace. Nature, games, and face-to-face communication create the motivation that makes the team stronger and happier. When employees feel good - the business grows.',
     },
     author: { ka: 'Maizen / მაიზენი', en: 'Maizen' },
     role: { ka: 'პარტნიორი კომპანია', en: 'Partner company' },
@@ -21,7 +21,7 @@ export const testimonials = [
   },
 ]
 
-// Real partners. Logos live in /public/images/partners/ — each badge shows the logo
+// Real partners. Logos live in /public/images/partners/ - each badge shows the logo
 // if its file exists, otherwise falls back to the company name as text.
 export const partners = [
   { name: 'ITConnect', logo: '/images/partners/itconnect.png' },

@@ -37,7 +37,7 @@ export function getNested(obj, dottedKey) {
 
 // Apply a flat { key: value } map for one locale. Image keys ("img.*") go to
 // imageOverrides. Text overrides are set onto a deep clone of the DEFAULT messages
-// at their exact paths, then the whole locale is replaced — so overridden leaves
+// at their exact paths, then the whole locale is replaced - so overridden leaves
 // win while everything else keeps its default (arrays stay arrays).
 function applyMap(locale, map) {
   if (!i18nRef) return
@@ -71,7 +71,7 @@ export async function initContent(i18n) {
     applyMap('ka', ka)
     applyMap('en', en)
   } catch {
-    // backend unreachable — keep built-in defaults
+    // backend unreachable - keep built-in defaults
   }
 }
 

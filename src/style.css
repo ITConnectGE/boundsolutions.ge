@@ -1,13 +1,13 @@
 @import "tailwindcss";
 
-/* ---- Brand design tokens — official brandbook (2026) ----
+/* ---- Brand design tokens - official brandbook (2026) ----
    Brandbook palette: Brilliant Blue 5007 #8CCDE9 · Black Grey 7021 #2F3238 ·
    Cream 9001 #FFF4EA · Salmon Orange 2012 #F05553 (coral, de-emphasized per the
    client's "blue + gray instead of the coral"). The signature blue #8CCDE9 is the
    light accent (--color-brand-300); interactive UI uses deeper blues from the same
    family so white text stays legible. */
 @theme {
-  /* Salmon Orange 2012 — primary brand (buttons, links, accents) */
+  /* Salmon Orange 2012 - primary brand (buttons, links, accents) */
   --color-brand: #F05553;
   --color-brand-50: #FEEDEC;
   --color-brand-100: #FBD7D6;
@@ -17,19 +17,19 @@
   --color-brand-500: #F05553;
   --color-brand-600: #DB4240; /* hover */
   --color-brand-700: #B5302E;
-  --color-brand-800: #8A2523; /* deep coral — hero overlay */
+  --color-brand-800: #8A2523; /* deep coral - hero overlay */
 
-  /* Brilliant Blue 5007 — secondary accent (bg-accent / text-accent) */
+  /* Brilliant Blue 5007 - secondary accent (bg-accent / text-accent) */
   --color-accent: #8CCDE9;
   --color-accent-light: #C0E6F5;
   --color-accent-deep: #1E7FA8;
 
-  /* Cream 9001 — warm light surfaces (bg-cream / -light / -dark) */
+  /* Cream 9001 - warm light surfaces (bg-cream / -light / -dark) */
   --color-cream: #FFF4EA;
   --color-cream-light: #FFFBF7;
   --color-cream-dark: #F7E9DE;
 
-  /* Black Grey 7021 — dark sections (bg-navy / text-navy) */
+  /* Black Grey 7021 - dark sections (bg-navy / text-navy) */
   --color-navy: #2F3238;
   --color-coral: #F05553;
 
@@ -49,7 +49,7 @@
   letter-spacing: 0.05em;
 }
 
-/* No gradients per brandbook — solid azure. Class names kept so existing
+/* No gradients per brandbook - solid azure. Class names kept so existing
    markup (gradient-text / gradient-bg) needs no churn. */
 .gradient-text {
   color: var(--color-brand);

@@ -10,7 +10,7 @@ const dist = resolve('dist')
 copyFileSync(resolve(dist, 'index.html'), resolve(dist, '404.html'))
 
 // Content-less SPA shell (same <head>/assets, empty #app) for client-only routes
-// like the admin portal — so they don't flash the prerendered homepage before the
+// like the admin portal - so they don't flash the prerendered homepage before the
 // router mounts. nginx serves this instead of index.html for portal.boundsolutions.ge.
 const indexHtml = readFileSync(resolve(dist, 'index.html'), 'utf8')
 const shell = indexHtml.replace(/<div id="app"[^>]*>[\s\S]*<\/div><\/body>/, '<div id="app"></div></body>')

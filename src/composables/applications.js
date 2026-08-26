@@ -1,4 +1,4 @@
-// Applications store — always talks to the Laravel API (data lives in the DB).
+// Applications store - always talks to the Laravel API (data lives in the DB).
 // The backend also emails the team (with the CV attached) on each submission.
 import { api, storageUrl } from './api'
 
@@ -39,7 +39,7 @@ export async function addApplication(app, file) {
     if (payload.vacancyId != null) payload.vacancy_id = payload.vacancyId
     delete payload.vacancyId
   }
-  delete payload.cvFile // filename string — the actual file goes as `cv`
+  delete payload.cvFile // filename string - the actual file goes as `cv`
 
   if (file) {
     const fd = new FormData()

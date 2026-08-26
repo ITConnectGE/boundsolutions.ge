@@ -10,22 +10,22 @@ export const posts = [
     category: { ka: 'Keynote', en: 'Keynote' },
     tags: ['Adjara Group', 'HR HUB Georgia', 'PSP Insurance', 'Keynote Speaker'],
     title: {
-      ka: 'კორპორატიული კულტურა — ჩემი ხელით დაკრეფილი იები',
-      en: 'Corporate Culture — Flowers Picked by My Own Hand',
+      ka: 'კორპორატიული კულტურა - ჩემი ხელით დაკრეფილი იები',
+      en: 'Corporate Culture - Flowers Picked by My Own Hand',
     },
-    author: { ka: 'ნინო ბართაია — Keynote Speaker', en: 'Nino Bartaia — Keynote Speaker' },
+    author: { ka: 'ნინო ბართაია - Keynote Speaker', en: 'Nino Bartaia - Keynote Speaker' },
     excerpt: {
-      ka: 'ნინო ბართაიას გამოსვლა საქართველოს მთავარ HR ღონისძიებაზე — HR ბიზნეს სამიტი 2019. როგორ იქმნება კორპორატიული კულტურა რეალურად.',
-      en: "Nino Bartaia's talk at Georgia's main HR event — HR Business Summit 2019. How corporate culture is really built.",
+      ka: 'ნინო ბართაიას გამოსვლა საქართველოს მთავარ HR ღონისძიებაზე - HR ბიზნეს სამიტი 2019. როგორ იქმნება კორპორატიული კულტურა რეალურად.',
+      en: "Nino Bartaia's talk at Georgia's main HR event - HR Business Summit 2019. How corporate culture is really built.",
     },
     body: {
       ka: [
-        'ნინო ბართაიას გამოსვლა საქართველოს მთავარ HR ღონისძიებაზე — HR ბიზნეს სამიტი 2019. თემა: როგორ იქმნება კორპორატიული კულტურა რეალურად, ყოველდღიური ზრუნვით და ადამიანებზე ფოკუსით.',
-        'კულტურა არ იქმნება დოკუმენტით — ის იქმნება ყოველდღიური ქცევებით, გადაწყვეტილებებითა და იმით, თუ როგორ ვექცევით ერთმანეთს მაშინ, როცა არავინ გვიყურებს.',
+        'ნინო ბართაიას გამოსვლა საქართველოს მთავარ HR ღონისძიებაზე - HR ბიზნეს სამიტი 2019. თემა: როგორ იქმნება კორპორატიული კულტურა რეალურად, ყოველდღიური ზრუნვით და ადამიანებზე ფოკუსით.',
+        'კულტურა არ იქმნება დოკუმენტით - ის იქმნება ყოველდღიური ქცევებით, გადაწყვეტილებებითა და იმით, თუ როგორ ვექცევით ერთმანეთს მაშინ, როცა არავინ გვიყურებს.',
       ],
       en: [
-        "Nino Bartaia's talk at Georgia's main HR event — HR Business Summit 2019. The theme: how corporate culture is really built, through everyday care and a focus on people.",
-        "Culture is not created by a document — it is created by everyday behaviour, decisions, and how we treat each other when no one is watching.",
+        "Nino Bartaia's talk at Georgia's main HR event - HR Business Summit 2019. The theme: how corporate culture is really built, through everyday care and a focus on people.",
+        "Culture is not created by a document - it is created by everyday behaviour, decisions, and how we treat each other when no one is watching.",
       ],
     },
   },
@@ -42,16 +42,16 @@ export const posts = [
     },
     author: { ka: 'Bound Solutions', en: 'Bound Solutions' },
     excerpt: {
-      ka: 'ბუნებასთან სიახლოვე, მოძრაობა და ჯანსაღი ცხოვრების წახალისება — Team Building-ის დაგეგმვისას ეს ჩვენი მთავარი მიზანია.',
-      en: 'Closeness to nature, movement and a healthy lifestyle — our core goal when designing team building.',
+      ka: 'ბუნებასთან სიახლოვე, მოძრაობა და ჯანსაღი ცხოვრების წახალისება - Team Building-ის დაგეგმვისას ეს ჩვენი მთავარი მიზანია.',
+      en: 'Closeness to nature, movement and a healthy lifestyle - our core goal when designing team building.',
     },
     body: {
       ka: [
-        'ბუნებასთან სიახლოვე, მოძრაობა და ჯანსაღი ცხოვრების წახალისება — სწორედ ეს არის Bound Solutions-ის მთავარი მიზანი Team Building-ის დაგეგმვისას.',
+        'ბუნებასთან სიახლოვე, მოძრაობა და ჯანსაღი ცხოვრების წახალისება - სწორედ ეს არის Bound Solutions-ის მთავარი მიზანი Team Building-ის დაგეგმვისას.',
         'ჩვენ ვქმნით გარემოს, სადაც გუნდი ენერგიით იმუხტება. ენერგიული თანამშრომელი კი ბიზნესის წარმატების უპირობო ნაწილია.',
       ],
       en: [
-        'Closeness to nature, movement and encouraging a healthy lifestyle — this is exactly what Bound Solutions aims for when planning team building.',
+        'Closeness to nature, movement and encouraging a healthy lifestyle - this is exactly what Bound Solutions aims for when planning team building.',
         'We create an environment that energises the team. And an energised employee is a key driver of business success.',
       ],
     },

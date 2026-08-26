@@ -5,9 +5,9 @@ import { useHead } from '@unhead/vue'
 const SITE = 'Bound Solutions'
 const BASE_URL = 'https://boundsolutions.ge'
 const DEFAULT_DESC =
-  'Bound Solutions — HR კონსალტინგი, რეკრუტინგი და გუნდური ივენთები თბილისში. 20+ წლის გამოცდილება.'
+  'Bound Solutions - HR კონსალტინგი, რეკრუტინგი და გუნდური ივენთები თბილისში. 20+ წლის გამოცდილება.'
 
-// One call per page → title (App adds the " — Bound Solutions" suffix), description,
+// One call per page → title (App adds the " | Bound Solutions" suffix), description,
 // canonical, and OpenGraph/Twitter tags. Accepts strings or getter functions so it
 // stays reactive when the locale toggles.
 export function usePageMeta({ title, description } = {}) {
@@ -16,7 +16,7 @@ export function usePageMeta({ title, description } = {}) {
 
   const fullTitle = computed(() => {
     const tt = resolve(title)
-    return tt ? `${tt} — ${SITE}` : `${SITE} — HR Consulting & Recruitment`
+    return tt ? `${tt} | ${SITE}` : `${SITE} | HR Consulting & Recruitment`
   })
   const desc = computed(() => resolve(description) || DEFAULT_DESC)
   const url = computed(() => BASE_URL + (route.path === '/' ? '/' : route.path))

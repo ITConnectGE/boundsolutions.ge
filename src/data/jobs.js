@@ -1,8 +1,8 @@
-// Default vacancy categories — SSR/offline fallback only. The live set is stored
+// Default vacancy categories - SSR/offline fallback only. The live set is stored
 // in the vacancy_categories table and managed from the admin (CRM).
 export const defaultVacancyCategories = ['HR', 'Sales', 'HORECA', 'Finance', 'Events']
 
-// Active vacancies (SSR seed / offline fallback). `category` is free text — the
+// Active vacancies (SSR seed / offline fallback). `category` is free text - the
 // public filter bar derives itself from the distinct categories in use.
 export const jobs = [
   {

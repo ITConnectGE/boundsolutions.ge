@@ -25,16 +25,16 @@ export const privacy = {
       },
       bullets: {
         ka: [
-          'საკონტაქტო მონაცემები — სახელი, გვარი, ელ-ფოსტა, ტელეფონის ნომერი',
-          'პროფესიული ინფორმაცია — CV, სამუშაო გამოცდილება, განათლება, უნარები',
-          'საკომუნიკაციო მონაცემები — თქვენი შეტყობინებები საკონტაქტო ფორმის ან ელ-ფოსტის მეშვეობით',
-          'ტექნიკური მონაცემები — IP მისამართი, ბრაუზერის ტიპი, მოწყობილობის ინფორმაცია',
+          'საკონტაქტო მონაცემები - სახელი, გვარი, ელ-ფოსტა, ტელეფონის ნომერი',
+          'პროფესიული ინფორმაცია - CV, სამუშაო გამოცდილება, განათლება, უნარები',
+          'საკომუნიკაციო მონაცემები - თქვენი შეტყობინებები საკონტაქტო ფორმის ან ელ-ფოსტის მეშვეობით',
+          'ტექნიკური მონაცემები - IP მისამართი, ბრაუზერის ტიპი, მოწყობილობის ინფორმაცია',
         ],
         en: [
-          'Contact data — first name, last name, email, phone number',
-          'Professional information — CV, work experience, education, skills',
-          'Communication data — your messages via the contact form or email',
-          'Technical data — IP address, browser type, device information',
+          'Contact data - first name, last name, email, phone number',
+          'Professional information - CV, work experience, education, skills',
+          'Communication data - your messages via the contact form or email',
+          'Technical data - IP address, browser type, device information',
         ],
       },
     },
@@ -169,10 +169,10 @@ export const terms = {
       title: { ka: '4. ინტელექტუალური საკუთრება', en: '4. Intellectual property' },
       paras: {
         ka: [
-          'ვებგვერდის მთელი კონტენტი — ლოგო, ტექსტები, გრაფიკა და ვიდეო — წარმოადგენს Bound Solutions-ის საკუთრებას და დაცულია კანონმდებლობით. მათი გამოყენება წინასწარი თანხმობის გარეშე აკრძალულია.',
+          'ვებგვერდის მთელი კონტენტი (ლოგო, ტექსტები, გრაფიკა და ვიდეო) წარმოადგენს Bound Solutions-ის საკუთრებას და დაცულია კანონმდებლობით. მათი გამოყენება წინასწარი თანხმობის გარეშე აკრძალულია.',
         ],
         en: [
-          'All website content — logo, texts, graphics and video — is the property of Bound Solutions and is protected by law. Use without prior consent is prohibited.',
+          'All website content (logo, texts, graphics and video) is the property of Bound Solutions and is protected by law. Use without prior consent is prohibited.',
         ],
       },
     },

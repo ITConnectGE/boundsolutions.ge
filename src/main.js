@@ -21,7 +21,7 @@ export const createApp = ViteSSG(
     const i18n = createI18nInstance()
     app.use(i18n)
     if (isClient) {
-      // Drop legacy localStorage demo stores — all data now lives in the DB.
+      // Drop legacy localStorage demo stores - all data now lives in the DB.
       ;['bs-applications', 'bs-jobs', 'bs-admin-auth'].forEach((k) => localStorage.removeItem(k))
       // Fetch admin-edited content and merge it over the defaults.
       initContent(i18n)

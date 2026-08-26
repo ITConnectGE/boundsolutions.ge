@@ -57,7 +57,7 @@ function animate() {
   raf = requestAnimationFrame(tick)
 }
 
-// The value can change after first paint — CMS content loads on the client and
+// The value can change after first paint - CMS content loads on the client and
 // replaces the prerendered default (e.g. 6+ -> 10+). Re-parse and re-render.
 watch(
   () => props.value,

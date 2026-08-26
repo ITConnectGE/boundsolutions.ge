@@ -25,7 +25,7 @@ class NewApplicationMail extends Mailable
             default => 'Contact message',
         };
         $who = $a->name ?: $a->contact_name ?: $a->email ?: '';
-        $subject = "New {$kind}" . ($who ? " — {$who}" : '');
+        $subject = "New {$kind}" . ($who ? " - {$who}" : '');
 
         // Reply-To the applicant so a reply goes straight to them.
         $replyTo = $a->email ? [new Address($a->email, $who ?: $a->email)] : [];

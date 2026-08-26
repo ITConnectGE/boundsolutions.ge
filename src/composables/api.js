@@ -55,7 +55,7 @@ export async function api(path, { method = 'GET', body, auth = false, form = fal
 
   let payload
   if (form) {
-    payload = body // FormData — let the browser set the boundary
+    payload = body // FormData - let the browser set the boundary
   } else if (body !== undefined) {
     headers['Content-Type'] = 'application/json'
     payload = JSON.stringify(body)

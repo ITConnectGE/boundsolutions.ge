@@ -8,7 +8,7 @@ import ka from '@/i18n/ka.js'
 const SKIP = new Set(['admin', 'langName'])
 
 // Individual keys now managed by structured collections (col.*), so they must
-// NOT also appear as flat text fields — that would be a dead duplicate control.
+// NOT also appear as flat text fields - that would be a dead duplicate control.
 const SKIP_KEY_PATTERNS = [
   /^hero\.stats\./, //                     -> col.stats
   /^home\.process\.steps\./, //            -> col.process
@@ -59,7 +59,7 @@ function flattenKeys(node, prefix) {
   return out
 }
 
-// The hero slide images — merged into the Hero group (they belong to the hero
+// The hero slide images - merged into the Hero group (they belong to the hero
 // slider), so there is no separate "Images" section.
 const HERO_SLIDES = [
   { key: 'img.hero.slide1', type: 'image', label: 'ჰირო სლაიდი 1', default: '/images/3/boundsolutions 1.jpg' },

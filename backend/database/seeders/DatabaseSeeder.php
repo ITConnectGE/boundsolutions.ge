@@ -11,7 +11,7 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        // Admin accounts. All share the password below — change in production.
+        // Admin accounts. All share the password below - change in production.
         $admins = [
             'nino@gmail.com' => 'Nino',
             'tamar@gmail.com' => 'TamarI',
@@ -25,7 +25,7 @@ class DatabaseSeeder extends Seeder
             );
         }
 
-        // Vacancies — same starter set as the frontend seed.
+        // Vacancies - same starter set as the frontend seed.
         $vacancies = [
             ['category' => 'sales', 'title_ka' => 'გაყიდვების მენეჯერი', 'title_en' => 'Sales Manager', 'sector_ka' => 'ღვინის ინდუსტრია', 'sector_en' => 'Wine industry', 'salary' => '2,500–4,000 ₾'],
             ['category' => 'horeca', 'title_ka' => 'სერვის მენეჯერი', 'title_en' => 'Service Manager', 'sector_ka' => 'რესტორანი / სასტუმრო', 'sector_en' => 'Restaurant / Hotel', 'salary' => '2,000–3,500 ₾'],

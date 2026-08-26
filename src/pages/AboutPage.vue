@@ -22,7 +22,7 @@ const about = computed(() => collection('about', aboutDefault))
 const partners = computed(() => collection('partners', defaultPartners))
 
 // A {ka,en} field whose value may be an HTML string (WYSIWYG) or a legacy
-// array of paragraphs — normalise to HTML for rendering.
+// array of paragraphs - normalise to HTML for rendering.
 function htmlOf(field) {
   const v = loc(field)
   if (Array.isArray(v)) return v.map((p) => `<p>${p}</p>`).join('')
@@ -35,7 +35,7 @@ usePageMeta({ title: () => t('about.title'), description: () => loc(about.value.
 <template>
   <PageHero eyebrow-key="about.eyebrow" title-key="about.title" subtitle-key="about.subtitle" />
 
-  <!-- COMPANY INTRO — lead with the company, not the founder -->
+  <!-- COMPANY INTRO - lead with the company, not the founder -->
   <section class="py-20 lg:py-28">
     <div class="max-w-3xl mx-auto px-6 text-center fade-in">
       <p class="text-brand font-semibold text-sm mb-4 tracking-wide">{{ t('about.companyEyebrow') }}</p>
@@ -49,7 +49,7 @@ usePageMeta({ title: () => t('about.title'), description: () => loc(about.value.
     </div>
   </section>
 
-  <!-- MISSION / VISION / VALUES — company first (PPT-style band) -->
+  <!-- MISSION / VISION / VALUES - company first (PPT-style band) -->
   <section class="bg-navy text-white py-20 lg:py-28">
     <div class="max-w-4xl mx-auto px-6 text-center">
       <div class="fade-in">
@@ -72,7 +72,7 @@ usePageMeta({ title: () => t('about.title'), description: () => loc(about.value.
           <li v-for="(v, i) in about.values" :key="i" class="flex gap-3">
             <BaseIcon name="check" class="w-4 h-4 text-accent mt-1 flex-shrink-0" />
             <span class="text-white/90 leading-relaxed">
-              <strong class="text-white">{{ loc(v.title) }}</strong> — {{ loc(v.text) }}
+              <strong class="text-white">{{ loc(v.title) }}</strong> - {{ loc(v.text) }}
             </span>
           </li>
         </ul>
@@ -80,7 +80,7 @@ usePageMeta({ title: () => t('about.title'), description: () => loc(about.value.
     </div>
   </section>
 
-  <!-- FOUNDER (Nino) — secondary, after the company story -->
+  <!-- FOUNDER (Nino) - secondary, after the company story -->
   <section class="py-20 lg:py-28">
     <div class="max-w-5xl mx-auto px-6">
       <div class="grid lg:grid-cols-5 gap-12 lg:gap-16 items-start fade-in">

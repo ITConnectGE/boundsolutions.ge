@@ -5,7 +5,7 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
-// Vacancy categories — the filter set shown on the public Vacancies page,
+// Vacancy categories - the filter set shown on the public Vacancies page,
 // managed (added / removed / reordered) from the admin panel.
 return new class extends Migration
 {

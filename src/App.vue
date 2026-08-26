@@ -18,7 +18,7 @@ const isAdmin = computed(() => route.path.startsWith('/admin'))
 useHead({
   htmlAttrs: { lang: computed(() => locale.value) },
   titleTemplate: (title) =>
-    title ? `${title} — Bound Solutions` : 'Bound Solutions — HR Consulting & Recruitment',
+    title ? `${title} | Bound Solutions` : 'Bound Solutions | HR Consulting & Recruitment',
 })
 
 // Scroll-reveal. `reveal()` observes any not-yet-revealed .fade-in elements.
@@ -84,7 +84,7 @@ onBeforeUnmount(() => {
     </svg>
   </a>
 
-  <!-- Inline-edit toggle (admins only) — sits above the WhatsApp button -->
+  <!-- Inline-edit toggle (admins only) - sits above the WhatsApp button -->
   <button
     v-if="canEdit && !isAdmin"
     class="fixed bottom-24 right-5 z-[100] inline-flex items-center gap-2 px-4 py-2.5 rounded-full text-xs font-semibold shadow-lg transition-colors"

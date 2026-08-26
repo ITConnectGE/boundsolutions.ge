@@ -84,7 +84,7 @@ usePageMeta({ description: () => t('hero.subtitle') })
     </div>
   </section>
 
-  <!-- ABOUT teaser (Nino) — after services -->
+  <!-- ABOUT teaser (Nino) - after services -->
   <section class="py-20 lg:py-28">
     <div class="max-w-5xl mx-auto px-6">
       <div class="grid lg:grid-cols-5 gap-12 lg:gap-16 items-center fade-in">

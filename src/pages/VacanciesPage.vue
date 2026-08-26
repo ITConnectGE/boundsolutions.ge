@@ -83,7 +83,7 @@ const jobsSchema = computed(() => {
 })
 useHead({ script: [{ type: 'application/ld+json', innerHTML: jobsSchema }] })
 
-// CV modal (the form lives in CvModal) — set the vacancy context and open it.
+// CV modal (the form lives in CvModal) - set the vacancy context and open it.
 const modalOpen = ref(false)
 const currentTitle = ref('')
 const currentSector = ref('')

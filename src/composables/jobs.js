@@ -1,4 +1,4 @@
-// Vacancies store — always talks to the Laravel API (data lives in the DB).
+// Vacancies store - always talks to the Laravel API (data lives in the DB).
 // The static seed is only used for the very first server-side render (SSR); the
 // client refreshes from the API on mount.
 import { api } from './api'

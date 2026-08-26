@@ -1,4 +1,4 @@
-# Bound Solutions — Backend (Laravel API)
+# Bound Solutions - Backend (Laravel API)
 
 REST API for the Bound Solutions site: candidate CVs, contact messages, the B2B
 vacancy-request questionnaire, admin-managed vacancies, and editable site content
@@ -24,7 +24,7 @@ php artisan serve            # http://127.0.0.1:8000
 ```
 
 ### Local dev DB
-Defaults to **SQLite** (no credentials needed) — `database/database.sqlite`.
+Defaults to **SQLite** (no credentials needed) - `database/database.sqlite`.
 
 ### Production / shared MySQL
 In `.env` set:
@@ -40,7 +40,7 @@ DB_PREFIX=bs_
 then `php artisan migrate --seed`.
 
 ## Admin login (seeded)
-`nino.bartaia@gmail.com` / `12345678` — change this in production
+`nino.bartaia@gmail.com` / `12345678` - change this in production
 (`php artisan tinker` → update the user, or reseed).
 
 ## API
