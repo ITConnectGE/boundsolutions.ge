@@ -139,27 +139,37 @@ function openModal(job) {
             :alt="loc(job.title)"
             class="w-full lg:w-28 h-32 lg:h-20 object-cover rounded-xl flex-shrink-0"
           />
+          <!-- Title, sector and the meta badges share one flexible column. Kept
+               apart they compete for width, and a long title (or a wordy salary)
+               ends up squeezed into a one-word strip. -->
           <div class="flex-1 min-w-0">
-            <RouterLink :to="jobUrl(job)" class="font-bold text-gray-800 hover:text-brand transition-colors">
+            <RouterLink
+              :to="jobUrl(job)"
+              class="block font-bold text-gray-800 hover:text-brand transition-colors break-words"
+            >
               {{ loc(job.title) }}
             </RouterLink>
-            <p class="text-gray-400 text-sm mt-0.5">{{ loc(job.sector) }}</p>
+            <p class="text-gray-400 text-sm mt-0.5 break-words">{{ loc(job.sector) }}</p>
+            <div class="flex flex-wrap items-center gap-2 mt-3">
+              <span
+                v-if="job.category"
+                class="max-w-full px-3 py-1 bg-brand/10 text-brand text-xs font-semibold rounded-lg break-words"
+                >{{ catLabel(job.category) }}</span
+              >
+              <span class="px-3 py-1 bg-gray-100 text-gray-500 text-xs rounded-lg whitespace-nowrap">{{
+                t('vacancies.location')
+              }}</span>
+              <span class="px-3 py-1 bg-gray-100 text-gray-500 text-xs rounded-lg whitespace-nowrap">{{
+                t('vacancies.fullTime')
+              }}</span>
+              <span
+                v-if="job.salary"
+                class="max-w-full px-3 py-1 bg-gray-100 text-gray-600 text-xs font-semibold rounded-lg break-words"
+                >{{ job.salary }}</span
+              >
+            </div>
           </div>
-          <div class="flex flex-wrap items-center gap-2">
-            <span v-if="job.category" class="px-3 py-1 bg-brand/10 text-brand text-xs font-semibold rounded-lg">{{
-              catLabel(job.category)
-            }}</span>
-            <span class="px-3 py-1 bg-gray-100 text-gray-500 text-xs rounded-lg">{{
-              t('vacancies.location')
-            }}</span>
-            <span class="px-3 py-1 bg-gray-100 text-gray-500 text-xs rounded-lg">{{
-              t('vacancies.fullTime')
-            }}</span>
-            <span class="px-3 py-1 bg-gray-100 text-gray-600 text-xs font-semibold rounded-lg">{{
-              job.salary
-            }}</span>
-          </div>
-          <div class="flex items-center gap-2 flex-shrink-0">
+          <div class="flex flex-wrap items-center gap-2 flex-shrink-0">
             <RouterLink
               :to="jobUrl(job)"
               class="border border-gray-200 text-gray-600 px-4 py-2.5 rounded-xl text-xs font-semibold hover:border-brand/30 hover:text-brand transition-colors whitespace-nowrap"

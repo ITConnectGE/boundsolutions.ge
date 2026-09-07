@@ -101,12 +101,12 @@ const modalOpen = ref(false)
             :alt="loc(job.title)"
             class="w-full lg:w-40 h-40 lg:h-28 object-cover rounded-2xl flex-shrink-0"
           />
-          <div class="flex-1">
+          <div class="flex-1 min-w-0">
             <div v-if="job.category" class="mb-2">
-              <span class="px-3 py-1 bg-brand/10 text-brand text-xs font-semibold rounded-lg">{{ job.category }}</span>
+              <span class="max-w-full px-3 py-1 bg-brand/10 text-brand text-xs font-semibold rounded-lg break-words">{{ job.category }}</span>
             </div>
-            <h1 class="text-2xl lg:text-4xl font-extrabold text-gray-900 leading-tight">{{ loc(job.title) }}</h1>
-            <p class="text-gray-500 mt-1">{{ loc(job.sector) }}</p>
+            <h1 class="text-2xl lg:text-4xl font-extrabold text-gray-900 leading-tight break-words">{{ loc(job.title) }}</h1>
+            <p class="text-gray-500 mt-1 break-words">{{ loc(job.sector) }}</p>
           </div>
         </div>
 
@@ -115,7 +115,7 @@ const modalOpen = ref(false)
             <BaseIcon name="pin" class="w-3.5 h-3.5" /> {{ t('vacancies.location') }}
           </span>
           <span class="px-3 py-1.5 bg-white border border-gray-100 text-gray-500 text-xs rounded-lg">{{ t('vacancies.fullTime') }}</span>
-          <span v-if="job.salary" class="px-3 py-1.5 bg-white border border-gray-100 text-gray-700 text-xs font-semibold rounded-lg">{{ job.salary }}</span>
+          <span v-if="job.salary" class="max-w-full px-3 py-1.5 bg-white border border-gray-100 text-gray-700 text-xs font-semibold rounded-lg break-words">{{ job.salary }}</span>
         </div>
       </template>
     </div>
@@ -137,8 +137,8 @@ const modalOpen = ref(false)
 
         <aside class="lg:col-span-1">
           <div class="bg-cream rounded-2xl p-6 lg:sticky lg:top-24 text-center">
-            <p class="text-navy font-semibold mb-1">{{ loc(job.title) }}</p>
-            <p v-if="job.salary" class="text-brand font-extrabold text-xl mb-4">{{ job.salary }}</p>
+            <p class="text-navy font-semibold mb-1 break-words">{{ loc(job.title) }}</p>
+            <p v-if="job.salary" class="text-brand font-extrabold text-xl mb-4 break-words">{{ job.salary }}</p>
             <button
               class="w-full gradient-bg text-white py-3 rounded-xl font-semibold text-sm hover:opacity-90 transition-opacity"
               @click="modalOpen = true"
