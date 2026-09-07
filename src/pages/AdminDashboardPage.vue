@@ -18,7 +18,7 @@ import {
 } from '@/composables/applications.js'
 import { downloadApplicationsCsv } from '@/composables/exportCsv.js'
 import {
-  getJobs,
+  getAdminJobs,
   saveJob,
   deleteJob,
   getVacancyCategories,
@@ -262,6 +262,8 @@ function toJobDraft(job) {
     descriptionEn: job?.description?.en || '',
     salary: job?.salary || '',
     image: job?.image || '',
+    // New vacancies are published; existing ones keep whatever the API says.
+    isActive: job?.is_active !== false,
     imageFile: null,
     saving: false,
   }
@@ -269,7 +271,8 @@ function toJobDraft(job) {
 
 async function reloadJobs() {
   try {
-    const list = await getJobs()
+    // The admin endpoint, so hidden vacancies show up here as well.
+    const list = await getAdminJobs()
     jobsDraft.value = list.map(toJobDraft)
     connError.value = false
   } catch (e) {
@@ -346,6 +349,34 @@ function openJobModal(row) {
   jobForm.value = row ? { ...row, imageFile: null, saving: false } : toJobDraft(null)
   jobModalOpen.value = true
 }
+// Flip one vacancy between published and hidden straight from the list.
+async function toggleJobActive(row) {
+  const next = !row.isActive
+  row.saving = true
+  try {
+    await saveJob({ ...jobPayload(row), isActive: next })
+    row.isActive = next
+    toast.success(next ? t('admin.jobs.published') : t('admin.jobs.hiddenToast'))
+  } catch (e) {
+    adminError(e)
+  } finally {
+    row.saving = false
+  }
+}
+
+// The shape saveJob() expects, built from a list/modal draft row.
+function jobPayload(row) {
+  return {
+    id: row.id || undefined,
+    category: (row.category || '').trim(),
+    title: { ka: row.titleKa, en: row.titleEn || row.titleKa },
+    sector: { ka: row.sectorKa, en: row.sectorEn || row.sectorKa },
+    description: { ka: row.descriptionKa, en: row.descriptionEn },
+    salary: row.salary,
+    isActive: row.isActive !== false,
+  }
+}
+
 async function saveJobModal() {
   const row = jobForm.value
   if (!row.titleKa.trim() || !row.category.trim()) {
@@ -354,17 +385,7 @@ async function saveJobModal() {
   }
   row.saving = true
   try {
-    await saveJob(
-      {
-        id: row.id || undefined,
-        category: row.category.trim(),
-        title: { ka: row.titleKa, en: row.titleEn || row.titleKa },
-        sector: { ka: row.sectorKa, en: row.sectorEn || row.sectorKa },
-        description: { ka: row.descriptionKa, en: row.descriptionEn },
-        salary: row.salary,
-      },
-      row.imageFile || null,
-    )
+    await saveJob(jobPayload(row), row.imageFile || null)
     jobModalOpen.value = false
     toast.success(t('admin.content.saved'))
     await reloadJobs()
@@ -1657,7 +1678,8 @@ const statCards = computed(() => [
           <div
             v-for="row in jobsDraft"
             :key="row.id"
-            class="bg-white border border-gray-100 rounded-2xl p-5 lg:p-6 flex flex-col lg:flex-row lg:items-center gap-4"
+            class="border rounded-2xl p-5 lg:p-6 flex flex-col lg:flex-row lg:items-center gap-4 transition-colors"
+            :class="row.isActive ? 'bg-white border-gray-100' : 'bg-gray-50 border-dashed border-gray-200'"
           >
             <img
               v-if="row.image"
@@ -1672,16 +1694,37 @@ const statCards = computed(() => [
               <BaseIcon name="briefcase" class="w-6 h-6 text-gray-300" />
             </div>
             <div class="flex-1 min-w-0">
-              <h3 class="font-bold text-gray-800 truncate">{{ row.titleKa || row.titleEn }}</h3>
-              <p class="text-gray-400 text-sm mt-0.5 truncate">{{ row.sectorKa || row.sectorEn }}</p>
+              <h3 class="font-bold break-words" :class="row.isActive ? 'text-gray-800' : 'text-gray-400'">
+                {{ row.titleKa || row.titleEn }}
+              </h3>
+              <p class="text-gray-400 text-sm mt-0.5 break-words">{{ row.sectorKa || row.sectorEn }}</p>
+              <div class="flex flex-wrap items-center gap-2 mt-3">
+                <span
+                  v-if="!row.isActive"
+                  class="px-3 py-1 bg-amber-50 text-amber-600 text-xs font-semibold rounded-lg whitespace-nowrap"
+                  >{{ t('admin.jobs.hidden') }}</span
+                >
+                <span v-if="row.category" class="max-w-full px-3 py-1 bg-brand/10 text-brand text-xs font-semibold rounded-lg break-words">{{ catLabel(row.category) }}</span>
+                <span class="px-3 py-1 bg-gray-100 text-gray-500 text-xs rounded-lg whitespace-nowrap">{{ t('vacancies.location') }}</span>
+                <span class="px-3 py-1 bg-gray-100 text-gray-500 text-xs rounded-lg whitespace-nowrap">{{ t('vacancies.fullTime') }}</span>
+                <span v-if="row.salary" class="max-w-full px-3 py-1 bg-gray-100 text-gray-600 text-xs font-semibold rounded-lg break-words">{{ row.salary }}</span>
+              </div>
             </div>
-            <div class="flex flex-wrap items-center gap-2">
-              <span v-if="row.category" class="px-3 py-1 bg-brand/10 text-brand text-xs font-semibold rounded-lg">{{ catLabel(row.category) }}</span>
-              <span class="px-3 py-1 bg-gray-100 text-gray-500 text-xs rounded-lg">{{ t('vacancies.location') }}</span>
-              <span class="px-3 py-1 bg-gray-100 text-gray-500 text-xs rounded-lg">{{ t('vacancies.fullTime') }}</span>
-              <span v-if="row.salary" class="px-3 py-1 bg-gray-100 text-gray-600 text-xs font-semibold rounded-lg">{{ row.salary }}</span>
-            </div>
-            <div class="flex items-center gap-2 flex-shrink-0">
+            <div class="flex flex-wrap items-center gap-2 flex-shrink-0">
+              <button
+                type="button"
+                :disabled="row.saving"
+                class="px-3 h-9 rounded-lg border text-xs font-semibold transition-colors whitespace-nowrap disabled:opacity-50"
+                :class="
+                  row.isActive
+                    ? 'border-gray-200 text-gray-500 hover:text-amber-600 hover:border-amber-200'
+                    : 'border-green-200 text-green-600 hover:bg-green-50'
+                "
+                :title="t('admin.jobs.visibilityHint')"
+                @click="toggleJobActive(row)"
+              >
+                {{ row.isActive ? t('admin.jobs.unpublish') : t('admin.jobs.publish') }}
+              </button>
               <button
                 type="button"
                 class="w-9 h-9 rounded-lg border border-gray-200 text-gray-500 hover:text-brand hover:border-brand/30 flex items-center justify-center transition-colors"
@@ -2849,6 +2892,13 @@ const statCards = computed(() => [
                   <RichTextEditor v-model="jobForm.descriptionEn" min-height="160px" />
                 </div>
               </div>
+              <label class="flex items-start gap-2.5 cursor-pointer select-none border border-gray-100 rounded-xl px-4 py-3">
+                <input v-model="jobForm.isActive" type="checkbox" class="mt-0.5 w-4 h-4 flex-shrink-0 accent-brand cursor-pointer" />
+                <span class="text-sm text-gray-700">
+                  {{ t('admin.jobs.showOnSite') }}
+                  <span class="block text-xs text-gray-400 mt-0.5">{{ t('admin.jobs.visibilityHint') }}</span>
+                </span>
+              </label>
               <div class="flex gap-3 pt-2">
                 <button type="button" class="flex-1 bg-gray-100 text-gray-700 py-3 rounded-xl font-semibold text-sm hover:bg-gray-200 transition-colors" @click="jobModalOpen = false">
                   {{ t('admin.jobs.cancel') }}

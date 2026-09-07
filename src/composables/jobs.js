@@ -8,12 +8,18 @@ export function getJobsSeed() {
   return seedJobs.map((j) => ({ ...j }))
 }
 
-// Public + admin both use the {ka,en} shape returned by the API.
+// Public list: active vacancies only (the API filters them).
 export async function getJobs() {
   return api('/vacancies')
 }
 
-// job: { id?, category, title:{ka,en}, sector:{ka,en}, salary, image? }
+// Admin list: same shape, but hidden vacancies are included too (each row
+// carries is_active) so the panel can switch them back on.
+export async function getAdminJobs() {
+  return api('/admin/vacancies', { auth: true })
+}
+
+// job: { id?, category, title:{ka,en}, sector:{ka,en}, salary, isActive, image? }
 // file: optional File for the vacancy image.
 export async function saveJob(job, file) {
   const fd = new FormData()
@@ -25,7 +31,9 @@ export async function saveJob(job, file) {
   fd.append('description_ka', job.description?.ka || '')
   fd.append('description_en', job.description?.en || '')
   fd.append('salary', job.salary || '')
-  fd.append('is_active', '1')
+  // Hidden vacancies stay in the database and in the panel, they just drop out
+  // of the public list.
+  fd.append('is_active', job.isActive === false ? '0' : '1')
   if (file) fd.append('image', file)
   const numericId = job.id ? String(job.id).replace(/^v/, '') : ''
   const path = numericId ? `/vacancies/${numericId}` : '/vacancies'

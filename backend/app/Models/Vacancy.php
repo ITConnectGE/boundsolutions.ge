@@ -29,4 +29,15 @@ class Vacancy extends Model
             'image' => $this->image_path ? asset('storage/' . $this->image_path) : null,
         ];
     }
+
+    // Same shape plus the fields only the admin panel needs. Hidden vacancies
+    // (is_active = false) are kept out of toPublicArray()'s listing but still
+    // have to reach the panel, otherwise they could never be switched back on.
+    public function toAdminArray(): array
+    {
+        return $this->toPublicArray() + [
+            'is_active' => (bool) $this->is_active,
+            'sort_order' => (int) $this->sort_order,
+        ];
+    }
 }

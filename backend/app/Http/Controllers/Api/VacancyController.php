@@ -18,10 +18,14 @@ class VacancyController extends Controller
             ->map(fn (Vacancy $v) => $v->toPublicArray());
     }
 
-    // Admin: full list (raw columns) for the management UI.
+    // Admin: every vacancy, hidden ones included, in the same shape as the
+    // public list so the panel can render and toggle them.
     public function adminIndex()
     {
-        return Vacancy::orderBy('sort_order')->latest('id')->get();
+        return Vacancy::orderBy('sort_order')
+            ->latest('id')
+            ->get()
+            ->map(fn (Vacancy $v) => $v->toAdminArray());
     }
 
     public function store(Request $request)
@@ -51,7 +55,7 @@ class VacancyController extends Controller
 
     private function validateData(Request $request): array
     {
-        return $request->validate([
+        $data = $request->validate([
             'category' => 'required|string|max:50',
             'title_ka' => 'required|string|max:255',
             'title_en' => 'nullable|string|max:255',
@@ -64,6 +68,13 @@ class VacancyController extends Controller
             'sort_order' => 'nullable|integer',
             'image' => 'nullable|file|image|max:5120',
         ]);
+
+        // Multipart uploads send "0"/"1" as strings; store a real boolean.
+        if (array_key_exists('is_active', $data)) {
+            $data['is_active'] = filter_var($data['is_active'], FILTER_VALIDATE_BOOLEAN);
+        }
+
+        return $data;
     }
 
     private function handleImage(Request $request, array &$data): void
