@@ -46,6 +46,13 @@ usePageMeta({
   description: () => (job.value ? loc(job.value.sector) : ''),
 })
 
+// An unknown or hidden vacancy still answers 200 (this is a client-side route)
+// and shows "not found". Mark it noindex so a vacancy taken off the site - and
+// out of /sitemap-vacancies.xml - also drops out of search results.
+useHead({
+  meta: computed(() => (loaded.value && !job.value ? [{ name: 'robots', content: 'noindex, follow' }] : [])),
+})
+
 // Per-vacancy JobPosting structured data (Google job results).
 const schema = computed(() => {
   const j = job.value

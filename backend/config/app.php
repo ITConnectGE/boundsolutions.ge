@@ -136,4 +136,17 @@ return [
 
     'admin_url' => env('ADMIN_LOGIN_URL', rtrim((string) env('APP_URL', 'http://localhost'), '/').'/admin/login'),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Public Site URL
+    |--------------------------------------------------------------------------
+    |
+    | The canonical origin of the public website, used for absolute URLs in the
+    | sitemaps. Kept separate from APP_URL: it must be exactly the canonical form
+    | (https, no www) that the pages declare in their canonical tags.
+    |
+    */
+
+    'site_url' => env('SITE_URL', 'https://boundsolutions.ge'),
+
 ];

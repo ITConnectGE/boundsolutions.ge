@@ -96,6 +96,7 @@ check "https www /about        [301 https://boundsolutions.ge/about/]" -k --reso
 check "http www /blog/x        [301 https://boundsolutions.ge/blog/x/]" -H 'Host: www.boundsolutions.ge' http://127.0.0.1/blog/x
 check "https /index.html       [301 https://boundsolutions.ge/]" -k --resolve boundsolutions.ge:443:127.0.0.1 https://boundsolutions.ge/index.html
 check "https /sitemap.xml      [200]"                      -k --resolve boundsolutions.ge:443:127.0.0.1 https://boundsolutions.ge/sitemap.xml
+check "https /sitemap-vacancies.xml [200]"                 -k --resolve boundsolutions.ge:443:127.0.0.1 https://boundsolutions.ge/sitemap-vacancies.xml
 check "https /api/vacancies    [200]"                      -k --resolve boundsolutions.ge:443:127.0.0.1 https://boundsolutions.ge/api/vacancies
 check "portal https /          [302 .../admin/login]"      -k --resolve portal.boundsolutions.ge:443:127.0.0.1 https://portal.boundsolutions.ge/
 check "portal http /admin/login [301 https://portal...]"    -H 'Host: portal.boundsolutions.ge' http://127.0.0.1/admin/login

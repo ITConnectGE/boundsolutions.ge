@@ -20,9 +20,13 @@ const shell = indexHtml
   .replace(/<meta[^>]*property="og:url"[^>]*>/g, '')
 writeFileSync(resolve(dist, 'app-shell.html'), shell)
 
-// ---- Sitemap: every prerendered page, as its final canonical URL ----
-// Built from the files actually in dist, so a new page can't be forgotten, and
-// every <loc> is the trailing-slash URL that answers 200 (never a redirect).
+// ---- Sitemaps ----
+// /sitemap.xml is an index of two sitemaps:
+//   /sitemap-pages.xml      every prerendered page (written here)
+//   /sitemap-vacancies.xml  every visible vacancy, generated live by Laravel
+//                           (SitemapController) so it never goes stale
+// Pages are taken from the files actually in dist, so a new page can't be
+// forgotten, and every <loc> is the trailing-slash URL that answers 200.
 function htmlFiles(dir) {
   return readdirSync(dir).flatMap((name) => {
     const p = join(dir, name)
@@ -39,16 +43,26 @@ const pages = htmlFiles(dist)
   })
   .sort((a, b) => (a.path === '/' ? -1 : b.path === '/' ? 1 : a.path.localeCompare(b.path)))
 
-const sitemap =
+const pagesSitemap =
   `<?xml version="1.0" encoding="UTF-8"?>\n` +
   `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n` +
   pages.map((p) => `  <url><loc>${SITE_URL}${p.path}</loc></url>`).join('\n') +
   `\n</urlset>\n`
-writeFileSync(resolve(dist, 'sitemap.xml'), sitemap)
+writeFileSync(resolve(dist, 'sitemap-pages.xml'), pagesSitemap)
+
+const sitemapIndex =
+  `<?xml version="1.0" encoding="UTF-8"?>\n` +
+  `<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n` +
+  `  <sitemap><loc>${SITE_URL}/sitemap-pages.xml</loc></sitemap>\n` +
+  `  <sitemap><loc>${SITE_URL}/sitemap-vacancies.xml</loc></sitemap>\n` +
+  `</sitemapindex>\n`
+writeFileSync(resolve(dist, 'sitemap.xml'), sitemapIndex)
 
 writeFileSync(resolve(dist, 'robots.txt'), `User-agent: *\nAllow: /\nSitemap: ${SITE_URL}/sitemap.xml\n`)
 
-console.log(`postbuild: wrote 404.html, app-shell.html, sitemap.xml (${pages.length} URLs), robots.txt`)
+console.log(
+  `postbuild: wrote 404.html, app-shell.html, sitemap.xml (index), sitemap-pages.xml (${pages.length} URLs), robots.txt`,
+)
 
 // ---- Guard: fail the build if the URL standard is broken anywhere ----
 // Sitemap URL == the page's canonical tag, and no internal page link lacks its
