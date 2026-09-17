@@ -3,6 +3,23 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <!-- Google Tag Manager: placed as high in the head as possible, per Google.
+         Same guard as the analytics further down, so localhost and the admin
+         portal stay out of the data. GA4 + Meta Pixel below are untouched. -->
+    <script>
+      (function () {
+        var h = location.hostname;
+        if (h === 'localhost' || h === '127.0.0.1' || h.indexOf('portal.') === 0) return;
+        (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+        new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+        j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+        'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+        })(window,document,'script','dataLayer','GTM-PQQVVZVJ');
+      })();
+    </script>
+    <!-- End Google Tag Manager -->
+
     <title>Bound Solutions | HR Consulting & Recruitment</title>
     <meta name="description" content="Bound Solutions - HR კონსალტინგი, რეკრუტინგი და გუნდური ივენთები თბილისში. 20+ წლის გამოცდილება. ნინო ბართაია - Founder & CEO." />
     <meta name="author" content="Bound Solutions" />
@@ -75,6 +92,10 @@
     </script>
 </head>
 <body class="bg-white text-gray-600 antialiased overflow-x-hidden">
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-PQQVVZVJ"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
     <!-- Meta Pixel fallback for visitors with JavaScript disabled -->
     <noscript><img height="1" width="1" style="display:none" alt=""
       src="https://www.facebook.com/tr?id=1725901878748031&ev=PageView&noscript=1" /></noscript>
