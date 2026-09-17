@@ -75,7 +75,7 @@ usePageMeta({ description: () => t('hero.subtitle') })
       </div>
       <div class="mt-10">
         <RouterLink
-          to="/services"
+          to="/services/"
           class="inline-flex items-center gap-2 text-brand font-semibold text-sm hover:gap-3 transition-all"
         >
           {{ t('common.viewAll') }} <BaseIcon name="arrowRight" class="w-4 h-4" />
@@ -115,7 +115,7 @@ usePageMeta({ description: () => t('hero.subtitle') })
             <EditableText tkey="home.aboutTeaser.text" />
           </p>
           <RouterLink
-            to="/about"
+            to="/about/"
             class="inline-flex items-center gap-2 bg-navy text-white px-7 py-3 rounded-2xl font-semibold text-sm hover:bg-navy/90 transition-all"
           >
             {{ t('home.aboutTeaser.cta') }} <BaseIcon name="arrowRight" class="w-4 h-4" />

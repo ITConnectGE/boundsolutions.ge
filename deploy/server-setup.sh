@@ -73,19 +73,11 @@ test -f dist/index.html && echo "    dist/index.html OK - served directly from /
 rm -rf "$BE/public/assets" "$BE/public/images" "$BE/public/index.html" \
        "$BE/public/404.html" "$BE/public/sitemap.xml"
 
-echo "==> [5/6] nginx vhost"
-cp deploy/nginx-boundsolutions.conf /etc/nginx/sites-available/boundsolutions
-ln -sf /etc/nginx/sites-available/boundsolutions /etc/nginx/sites-enabled/boundsolutions
-nginx -t
-systemctl reload nginx
-
-echo "==> [6/6] Re-apply SSL (if a certificate already exists)"
-if [ -d /etc/letsencrypt/live/boundsolutions.ge ]; then
-  certbot --nginx -d boundsolutions.ge -d www.boundsolutions.ge \
-    --reinstall --redirect --non-interactive 2>/dev/null || \
-    echo "    (could not auto-reinstall SSL - run: certbot --nginx -d boundsolutions.ge -d www.boundsolutions.ge)"
-  systemctl reload nginx
-fi
+echo "==> [5/6] nginx vhost + [6/6] SSL"
+# Backs up the live vhost, installs the repo config, re-installs the existing
+# certificates WITHOUT certbot's redirect (the config does a single-hop canonical
+# redirect itself), reloads, and restores the backup if anything fails.
+bash "$ROOT/deploy/apply-nginx.sh"
 
 echo ""
 echo "=================================================="

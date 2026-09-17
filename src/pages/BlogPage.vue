@@ -26,7 +26,7 @@ usePageMeta({ title: () => t('blog.title'), description: () => t('blog.subtitle'
       <RouterLink
         v-for="p in posts"
         :key="p.slug"
-        :to="`/blog/${p.slug}`"
+        :to="`/blog/${p.slug}/`"
         class="card-hover fade-in block bg-white rounded-2xl overflow-hidden border border-gray-100 group"
       >
         <div class="aspect-video overflow-hidden">

@@ -25,7 +25,7 @@ defineProps({
           </h2>
           <p class="text-gray-500 max-w-md mx-auto mb-8"><EditableText :tkey="textKey" /></p>
           <RouterLink
-            to="/contact"
+            to="/contact/"
             class="inline-flex items-center gap-2 gradient-bg text-white px-8 py-3.5 rounded-2xl font-semibold text-sm hover:shadow-xl hover:shadow-brand/20 transition-all duration-300 hover:-translate-y-0.5"
           >
             <EditableText :tkey="buttonKey" /> <BaseIcon name="arrowRight" class="w-4 h-4" />

@@ -43,7 +43,7 @@ usePageMeta({
       <div class="absolute top-6 right-0 w-[420px] h-[420px] bg-brand/5 rounded-full blur-[120px]"></div>
       <div class="max-w-3xl mx-auto px-6 relative">
         <RouterLink
-          to="/blog"
+          to="/blog/"
           class="inline-flex items-center gap-1.5 text-gray-400 hover:text-brand text-sm mb-6 transition-colors"
         >
           <BaseIcon name="arrowRight" class="w-4 h-4 rotate-180" /> {{ t('common.backToBlog') }}
@@ -110,7 +110,7 @@ usePageMeta({
           <RouterLink
             v-for="p in others"
             :key="p.slug"
-            :to="`/blog/${p.slug}`"
+            :to="`/blog/${p.slug}/`"
             class="card-hover fade-in block bg-white rounded-2xl overflow-hidden border border-gray-100 group"
           >
             <div class="aspect-video overflow-hidden">
@@ -138,7 +138,7 @@ usePageMeta({
   <section v-else class="min-h-[60vh] flex items-center justify-center px-6 pt-28 pb-20 text-center">
     <div>
       <h1 class="text-2xl font-extrabold text-gray-900 mb-3">{{ t('notFound.title') }}</h1>
-      <RouterLink to="/blog" class="text-brand font-semibold">{{ t('common.backToBlog') }}</RouterLink>
+      <RouterLink to="/blog/" class="text-brand font-semibold">{{ t('common.backToBlog') }}</RouterLink>
     </div>
   </section>
 </template>

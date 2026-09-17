@@ -6,6 +6,7 @@ import { useLoc } from '@/composables/useLocale'
 import { collection } from '@/composables/content.js'
 import { defaultNav } from '@/data/nav.js'
 import { services as defaultServices } from '@/data/services.js'
+import { withSlash } from '@/utils/url.js'
 import BaseIcon from './BaseIcon.vue'
 import SocialLinks from './SocialLinks.vue'
 import LangSwitcher from './LangSwitcher.vue'
@@ -14,8 +15,12 @@ const { t } = useI18n()
 const { loc } = useLoc()
 const route = useRoute()
 
-// Editable from the admin CMS (add / remove / re-title pages).
-const links = computed(() => collection('nav', defaultNav))
+// Editable from the admin CMS (add / remove / re-title pages). Paths are put in
+// canonical trailing-slash form here, so whatever gets typed into the CMS the
+// rendered links never point at a URL that redirects.
+const links = computed(() =>
+  collection('nav', defaultNav).map((l) => ({ ...l, to: withSlash(l.to) })),
+)
 // Services list for the "Services" nav dropdown.
 const services = computed(() => collection('services', defaultServices))
 
@@ -23,8 +28,9 @@ const open = ref(false)
 const svcOpen = ref(false) // mobile: services sub-list expanded
 const scrolled = ref(false)
 
+// Compare in slash form: the prerender sees /services, the browser /services/.
 function isActive(to) {
-  return to === '/' ? route.path === '/' : route.path.startsWith(to)
+  return to === '/' ? route.path === '/' : withSlash(route.path).startsWith(withSlash(to))
 }
 function onScroll() {
   scrolled.value = window.scrollY > 10
@@ -80,7 +86,7 @@ watch(() => route.fullPath, () => {
                 <RouterLink
                   v-for="s in services"
                   :key="s.slug"
-                  :to="`/services/${s.slug}`"
+                  :to="`/services/${s.slug}/`"
                   class="block px-4 py-3 text-[13px] text-gray-700 hover:text-brand hover:bg-brand/5 border-b border-gray-50 last:border-b-0 transition-colors"
                 >
                   {{ loc(s.title) }}
@@ -108,7 +114,7 @@ watch(() => route.fullPath, () => {
         <LangSwitcher />
 
         <RouterLink
-          to="/contact"
+          to="/contact/"
           class="gradient-bg text-white px-5 py-2.5 rounded-xl font-semibold hover:shadow-lg hover:shadow-brand/25 transition-all duration-300 hover:-translate-y-0.5"
         >
           {{ t('nav.contact') }}
@@ -150,7 +156,7 @@ watch(() => route.fullPath, () => {
             <RouterLink
               v-for="s in services"
               :key="s.slug"
-              :to="`/services/${s.slug}`"
+              :to="`/services/${s.slug}/`"
               class="block py-2.5 pl-4 text-[13px] text-gray-500 hover:text-brand"
             >
               {{ loc(s.title) }}
@@ -173,7 +179,7 @@ watch(() => route.fullPath, () => {
           >
         </RouterLink>
       </template>
-      <RouterLink to="/contact" class="block py-3.5 text-brand font-semibold text-sm">{{
+      <RouterLink to="/contact/" class="block py-3.5 text-brand font-semibold text-sm">{{
         t('nav.contact')
       }}</RouterLink>
 

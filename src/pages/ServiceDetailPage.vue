@@ -34,7 +34,7 @@ usePageMeta({
       <div class="absolute top-6 right-0 w-[420px] h-[420px] bg-brand/5 rounded-full blur-[120px]"></div>
       <div class="max-w-5xl mx-auto px-6 relative">
         <RouterLink
-          to="/services"
+          to="/services/"
           class="inline-flex items-center gap-1.5 text-gray-400 hover:text-brand text-sm mb-6 transition-colors"
         >
           <BaseIcon name="arrowRight" class="w-4 h-4 rotate-180" /> {{ t('common.backToServices') }}
@@ -103,7 +103,7 @@ usePageMeta({
   <section v-else class="min-h-[60vh] flex items-center justify-center px-6 pt-28 pb-20 text-center">
     <div>
       <h1 class="text-2xl font-extrabold text-gray-900 mb-3">{{ t('notFound.title') }}</h1>
-      <RouterLink to="/services" class="text-brand font-semibold">{{
+      <RouterLink to="/services/" class="text-brand font-semibold">{{
         t('common.backToServices')
       }}</RouterLink>
     </div>

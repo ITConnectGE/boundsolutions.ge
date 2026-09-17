@@ -1,9 +1,9 @@
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { useHead } from '@unhead/vue'
+import { canonicalUrl } from '@/utils/url.js'
 
 const SITE = 'Bound Solutions'
-const BASE_URL = 'https://boundsolutions.ge'
 const DEFAULT_DESC =
   'Bound Solutions - HR კონსალტინგი, რეკრუტინგი და გუნდური ივენთები თბილისში. 20+ წლის გამოცდილება.'
 
@@ -19,7 +19,8 @@ export function usePageMeta({ title, description } = {}) {
     return tt ? `${tt} | ${SITE}` : `${SITE} | HR Consulting & Recruitment`
   })
   const desc = computed(() => resolve(description) || DEFAULT_DESC)
-  const url = computed(() => BASE_URL + (route.path === '/' ? '/' : route.path))
+  // Always the final trailing-slash URL, whether this render saw /x or /x/.
+  const url = computed(() => canonicalUrl(route.path))
 
   useHead({
     title: () => resolve(title) || '',

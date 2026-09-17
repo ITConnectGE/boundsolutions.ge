@@ -87,7 +87,7 @@ const modalOpen = ref(false)
   <section class="pt-28 pb-8 lg:pt-32 bg-cream-light">
     <div class="max-w-4xl mx-auto px-6">
       <RouterLink
-        to="/vacancies"
+        to="/vacancies/"
         class="inline-flex items-center gap-1.5 text-gray-400 hover:text-brand text-sm mb-6 transition-colors"
       >
         <BaseIcon name="arrowRight" class="w-4 h-4 rotate-180" /> {{ t('vacancies.backToList') }}
@@ -155,7 +155,7 @@ const modalOpen = ref(false)
   <section v-else-if="loaded" class="min-h-[50vh] flex items-center justify-center px-6 pt-28 pb-20 text-center">
     <div>
       <h1 class="text-2xl font-extrabold text-gray-900 mb-3">{{ t('vacancies.notFound') }}</h1>
-      <RouterLink to="/vacancies" class="text-brand font-semibold">{{ t('vacancies.backToList') }}</RouterLink>
+      <RouterLink to="/vacancies/" class="text-brand font-semibold">{{ t('vacancies.backToList') }}</RouterLink>
     </div>
   </section>
 

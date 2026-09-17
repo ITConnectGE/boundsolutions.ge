@@ -88,7 +88,7 @@ const modalOpen = ref(false)
 const currentTitle = ref('')
 const currentSector = ref('')
 const currentVacancyId = ref(null)
-const jobUrl = (job) => `/vacancies/${String(job.id).replace(/^v/, '')}`
+const jobUrl = (job) => `/vacancies/${String(job.id).replace(/^v/, '')}/`
 function openModal(job) {
   currentTitle.value = job ? loc(job.title) : ''
   currentSector.value = job ? loc(job.sector) : ''

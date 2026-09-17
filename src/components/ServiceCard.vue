@@ -8,7 +8,7 @@ const { loc } = useLoc()
 
 <template>
   <RouterLink
-    :to="`/services/${service.slug}`"
+    :to="`/services/${service.slug}/`"
     class="card-hover fade-in block rounded-2xl p-6 group"
     style="background: #FFF4EA"
   >

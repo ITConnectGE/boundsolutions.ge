@@ -1,7 +1,6 @@
-import { copyFileSync, readFileSync, writeFileSync } from 'node:fs'
-import { resolve } from 'node:path'
-import { services } from '../src/data/services.js'
-import { posts } from '../src/data/blog.js'
+import { copyFileSync, readFileSync, writeFileSync, readdirSync, statSync, existsSync } from 'node:fs'
+import { resolve, join, relative, sep } from 'node:path'
+import { SITE_URL, FILE_PATH, withSlash } from '../src/utils/url.js'
 
 const dist = resolve('dist')
 
@@ -10,37 +9,73 @@ const dist = resolve('dist')
 copyFileSync(resolve(dist, 'index.html'), resolve(dist, '404.html'))
 
 // Content-less SPA shell (same <head>/assets, empty #app) for client-only routes
-// like the admin portal - so they don't flash the prerendered homepage before the
-// router mounts. nginx serves this instead of index.html for portal.boundsolutions.ge.
+// like the admin portal and /vacancies/:id - so they don't flash the prerendered
+// homepage before the router mounts. nginx serves this instead of index.html.
+// The homepage's canonical + og:url are stripped: left in, every vacancy page
+// would first declare the homepage as its canonical. The router sets the real one.
 const indexHtml = readFileSync(resolve(dist, 'index.html'), 'utf8')
-const shell = indexHtml.replace(/<div id="app"[^>]*>[\s\S]*<\/div><\/body>/, '<div id="app"></div></body>')
+const shell = indexHtml
+  .replace(/<div id="app"[^>]*>[\s\S]*<\/div><\/body>/, '<div id="app"></div></body>')
+  .replace(/<link[^>]*rel="canonical"[^>]*>/g, '')
+  .replace(/<meta[^>]*property="og:url"[^>]*>/g, '')
 writeFileSync(resolve(dist, 'app-shell.html'), shell)
 
-const base = 'https://boundsolutions.ge'
-const staticRoutes = [
-  '/',
-  '/about',
-  '/services',
-  '/blog',
-  '/vacancies',
-  '/for-companies',
-  '/contact',
-  '/privacy',
-  '/terms',
-]
-const dynamic = [
-  ...services.map((s) => `/services/${s.slug}`),
-  ...posts.map((p) => `/blog/${p.slug}`),
-]
-const urls = [...staticRoutes, ...dynamic]
+// ---- Sitemap: every prerendered page, as its final canonical URL ----
+// Built from the files actually in dist, so a new page can't be forgotten, and
+// every <loc> is the trailing-slash URL that answers 200 (never a redirect).
+function htmlFiles(dir) {
+  return readdirSync(dir).flatMap((name) => {
+    const p = join(dir, name)
+    return statSync(p).isDirectory() ? htmlFiles(p) : name.endsWith('.html') ? [p] : []
+  })
+}
+const NOT_PAGES = new Set(['404.html', 'app-shell.html'])
+const pages = htmlFiles(dist)
+  .filter((f) => f.endsWith(`${sep}index.html`) || relative(dist, f) === 'index.html')
+  .filter((f) => !NOT_PAGES.has(relative(dist, f)))
+  .map((f) => {
+    const dir = relative(dist, f).replace(/index\.html$/, '').split(sep).join('/')
+    return { file: f, path: withSlash('/' + dir) }
+  })
+  .sort((a, b) => (a.path === '/' ? -1 : b.path === '/' ? 1 : a.path.localeCompare(b.path)))
 
 const sitemap =
   `<?xml version="1.0" encoding="UTF-8"?>\n` +
   `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n` +
-  urls.map((u) => `  <url><loc>${base}${u}</loc></url>`).join('\n') +
+  pages.map((p) => `  <url><loc>${SITE_URL}${p.path}</loc></url>`).join('\n') +
   `\n</urlset>\n`
 writeFileSync(resolve(dist, 'sitemap.xml'), sitemap)
 
-writeFileSync(resolve(dist, 'robots.txt'), `User-agent: *\nAllow: /\nSitemap: ${base}/sitemap.xml\n`)
+writeFileSync(resolve(dist, 'robots.txt'), `User-agent: *\nAllow: /\nSitemap: ${SITE_URL}/sitemap.xml\n`)
 
-console.log('postbuild: wrote 404.html, app-shell.html, sitemap.xml, robots.txt')
+console.log(`postbuild: wrote 404.html, app-shell.html, sitemap.xml (${pages.length} URLs), robots.txt`)
+
+// ---- Guard: fail the build if the URL standard is broken anywhere ----
+// Sitemap URL == the page's canonical tag, and no internal page link lacks its
+// trailing slash. Runs after every file is written, so dist is always complete.
+const problems = []
+const NON_PAGE_PREFIX = /^\/(api|admin|storage|laravel-mailbox|assets|images|video)(\/|$)/
+
+for (const { file, path } of pages) {
+  const html = readFileSync(file, 'utf8')
+  const where = relative(dist, file)
+  const canonicals = [...html.matchAll(/<link[^>]*rel="canonical"[^>]*href="([^"]*)"/g)].map((m) => m[1])
+  const expected = SITE_URL + path
+  if (canonicals.length !== 1 || canonicals[0] !== expected) {
+    problems.push(`${where}: canonical ${JSON.stringify(canonicals)} should be exactly ["${expected}"]`)
+  }
+  for (const [, href] of html.matchAll(/<a\b[^>]*\bhref="(\/[^"]*)"/g)) {
+    const hrefPath = href.split(/[?#]/)[0]
+    if (href.startsWith('//') || FILE_PATH.test(hrefPath) || NON_PAGE_PREFIX.test(hrefPath)) continue
+    if (!hrefPath.endsWith('/')) problems.push(`${where}: internal link href="${href}" has no trailing slash`)
+  }
+}
+if (/rel="canonical"/.test(shell)) problems.push('app-shell.html: still carries a canonical tag')
+if (!existsSync(resolve(dist, 'app-shell.html'))) problems.push('app-shell.html was not written')
+
+if (problems.length) {
+  console.error(`\npostbuild: URL standard violated (${problems.length}):\n  - ` + problems.join('\n  - '))
+  console.error('Pages must link to and declare https://boundsolutions.ge/<path>/ - see src/utils/url.js\n')
+  process.exit(1)
+}
+console.log('postbuild: URL check passed (canonicals match the sitemap, internal links end with /)')

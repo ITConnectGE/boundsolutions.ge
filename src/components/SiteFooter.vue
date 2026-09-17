@@ -33,11 +33,11 @@ const services = computed(() => collection('services', defaultServices))
         <div>
           <h4 class="footer-h">{{ t('footer.companyHeading') }}</h4>
           <div class="space-y-2.5 text-sm">
-            <RouterLink to="/about" class="footer-link">{{ t('nav.about') }}</RouterLink>
-            <RouterLink to="/vacancies" class="footer-link">{{ t('nav.vacancies') }}</RouterLink>
-            <RouterLink to="/blog" class="footer-link">{{ t('nav.blog') }}</RouterLink>
-            <RouterLink to="/privacy" class="footer-link">{{ t('footer.privacy') }}</RouterLink>
-            <RouterLink to="/terms" class="footer-link">{{ t('footer.terms') }}</RouterLink>
+            <RouterLink to="/about/" class="footer-link">{{ t('nav.about') }}</RouterLink>
+            <RouterLink to="/vacancies/" class="footer-link">{{ t('nav.vacancies') }}</RouterLink>
+            <RouterLink to="/blog/" class="footer-link">{{ t('nav.blog') }}</RouterLink>
+            <RouterLink to="/privacy/" class="footer-link">{{ t('footer.privacy') }}</RouterLink>
+            <RouterLink to="/terms/" class="footer-link">{{ t('footer.terms') }}</RouterLink>
           </div>
         </div>
 
@@ -48,7 +48,7 @@ const services = computed(() => collection('services', defaultServices))
             <RouterLink
               v-for="s in services"
               :key="s.slug"
-              :to="`/services/${s.slug}`"
+              :to="`/services/${s.slug}/`"
               class="footer-link"
               >{{ loc(s.title) }}</RouterLink
             >

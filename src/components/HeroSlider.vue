@@ -62,13 +62,13 @@ onBeforeUnmount(() => clearInterval(timer))
           </p>
           <div class="flex flex-wrap gap-4 justify-center">
             <RouterLink
-              to="/contact"
+              to="/contact/"
               class="gradient-bg text-white px-8 py-3.5 rounded-2xl font-semibold text-sm hover:shadow-xl hover:shadow-brand/30 transition-all duration-300 hover:-translate-y-0.5"
             >
               {{ t('hero.ctaPrimary') }}
             </RouterLink>
             <RouterLink
-              to="/services"
+              to="/services/"
               class="bg-white/10 backdrop-blur border border-white/30 text-white px-8 py-3.5 rounded-2xl font-semibold text-sm hover:bg-white/20 transition-all duration-300 hover:-translate-y-0.5"
             >
               {{ t('hero.ctaSecondary') }}
