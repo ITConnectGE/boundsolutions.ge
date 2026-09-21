@@ -70,14 +70,17 @@
         var h = location.hostname;
         if (h === 'localhost' || h === '127.0.0.1' || h.indexOf('portal.') === 0) return;
 
-        // Google Analytics (GA4)
-        window.dataLayer = window.dataLayer || [];
-        window.gtag = function () { dataLayer.push(arguments); };
+        // Google Analytics (GA4). It runs on its OWN data layer (&l=ga4DataLayer):
+        // gtag.js pushes a "gtm.js" event of its own, so sharing window.dataLayer
+        // with Tag Manager makes GTM see two "Container Loaded" events and fire
+        // every All Pages trigger twice. window.dataLayer stays GTM-only.
+        window.ga4DataLayer = window.ga4DataLayer || [];
+        window.gtag = function () { ga4DataLayer.push(arguments); };
         gtag('js', new Date());
         gtag('config', 'G-DZL8FR6G8K');
         var ga = document.createElement('script');
         ga.async = true;
-        ga.src = 'https://www.googletagmanager.com/gtag/js?id=G-DZL8FR6G8K';
+        ga.src = 'https://www.googletagmanager.com/gtag/js?id=G-DZL8FR6G8K&l=ga4DataLayer';
         document.head.appendChild(ga);
 
         // Meta Pixel
