@@ -52,8 +52,8 @@ watch(
 
 const headerTitle = computed(() => props.title || t('vacancies.modal.generalTitle'))
 
-const okCls = 'bg-gray-50 focus:ring-2 focus:ring-brand/20 focus:bg-white'
-const errCls = 'bg-red-50 ring-2 ring-red-300 focus:ring-red-400'
+const okCls = 'bg-gray-50 border border-gray-300 focus:border-brand focus:ring-2 focus:ring-brand/20 focus:bg-white'
+const errCls = 'bg-red-50 border border-red-400 focus:border-red-500 focus:ring-2 focus:ring-red-200'
 
 function close() {
   emit('update:modelValue', false)
@@ -165,11 +165,11 @@ async function submit() {
               </div>
               <div>
                 <label for="cv-message" class="block text-xs font-medium text-gray-500 mb-1.5">{{ t('vacancies.modal.message') }}</label>
-                <textarea id="cv-message" v-model="form.message" name="message" rows="3" class="w-full px-4 py-3 bg-gray-50 rounded-xl text-sm resize-none focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white transition-all"></textarea>
+                <textarea id="cv-message" v-model="form.message" name="message" rows="3" :class="['w-full px-4 py-3 rounded-xl text-sm resize-none focus:outline-none transition-all', okCls]"></textarea>
               </div>
               <div>
                 <label class="block text-xs font-medium text-gray-500 mb-1.5">{{ t('vacancies.modal.cvLabel') }}</label>
-                <div class="relative border-2 border-dashed border-gray-200 rounded-xl p-6 text-center cursor-pointer hover:border-brand/40 transition-colors">
+                <div class="relative border-2 border-dashed border-gray-300 rounded-xl p-6 text-center cursor-pointer hover:border-brand/40 transition-colors">
                   <input type="file" accept=".pdf,.doc,.docx" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" @change="onFile" />
                   <div v-if="!fileName">
                     <BaseIcon name="upload" class="w-8 h-8 text-gray-300 mx-auto mb-2" />

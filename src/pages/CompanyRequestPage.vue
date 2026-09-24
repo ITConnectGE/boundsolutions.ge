@@ -102,8 +102,8 @@ async function submit() {
 }
 
 const inputCls = 'w-full px-4 py-3 rounded-xl text-sm focus:outline-none transition-all'
-const okCls = 'bg-gray-50 focus:ring-2 focus:ring-brand/20 focus:bg-white'
-const errCls = 'bg-red-50 ring-2 ring-red-300 focus:ring-red-400'
+const okCls = 'bg-gray-50 border border-gray-300 focus:border-brand focus:ring-2 focus:ring-brand/20 focus:bg-white'
+const errCls = 'bg-red-50 border border-red-400 focus:border-red-500 focus:ring-2 focus:ring-red-200'
 </script>
 
 <template>

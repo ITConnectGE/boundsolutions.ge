@@ -44,7 +44,7 @@ function submit() {
         error ? 'ring-2 ring-red-300 focus:ring-red-400' : '',
         dark
           ? 'bg-white/10 text-white placeholder-white/50 focus:bg-white/20 focus:ring-2 focus:ring-white/30'
-          : 'bg-gray-50 focus:ring-2 focus:ring-brand/20 focus:bg-white',
+          : 'bg-gray-50 border border-gray-300 focus:border-brand focus:ring-2 focus:ring-brand/20 focus:bg-white',
       ]"
       @blur="touched = true"
     />

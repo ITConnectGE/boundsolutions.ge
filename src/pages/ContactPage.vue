@@ -25,8 +25,8 @@ const errors = computed(() =>
 const hasErrors = computed(() => Object.values(errors.value).some(Boolean))
 const showError = (k) => (touched.value[k] ? errors.value[k] : '')
 
-const okCls = 'bg-gray-50 focus:ring-2 focus:ring-brand/20 focus:bg-white'
-const errCls = 'bg-red-50 ring-2 ring-red-300 focus:ring-red-400'
+const okCls = 'bg-gray-50 border border-gray-300 focus:border-brand focus:ring-2 focus:ring-brand/20 focus:bg-white'
+const errCls = 'bg-red-50 border border-red-400 focus:border-red-500 focus:ring-2 focus:ring-red-200'
 const inputCls = 'w-full px-4 py-3 rounded-xl text-sm focus:outline-none transition-all'
 
 async function submit() {
@@ -156,7 +156,7 @@ const cards = [
               id="contact-interest"
               v-model="form.interest"
               name="interest"
-              class="w-full px-4 py-3 bg-gray-50 rounded-xl text-sm text-gray-600 focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white transition-all"
+              :class="[inputCls, 'text-gray-600', okCls]"
             >
               <option value="">{{ t('contact.form.interestChoose') }}</option>
               <option v-for="(opt, i) in tm('contact.interestOptions')" :key="i" :value="rt(opt)">

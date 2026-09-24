@@ -75,7 +75,7 @@ async function submitPassword() {
 }
 
 const inputCls =
-  'w-full px-4 py-3 bg-gray-50 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white transition-all'
+  'w-full px-4 py-3 rounded-xl text-sm focus:outline-none transition-all bg-gray-50 border border-gray-300 focus:border-brand focus:ring-2 focus:ring-brand/20 focus:bg-white'
 </script>
 
 <template>
