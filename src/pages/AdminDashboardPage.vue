@@ -1063,6 +1063,10 @@ function normalizeCompanyForm(cf) {
   cf.enabled = Array.isArray(cf.enabled) ? cf.enabled : [...defaultCompanyFormEnabled]
   return cf
 }
+// The vacancies nav item shows the live number of open vacancies, so its badge
+// is not editable here.
+const isVacanciesLink = (to) => String(to || '').replace(/\/+$/, '') === '/vacancies'
+
 // Toggle a form field on/off (removes it from the public employer form).
 // Email and phone are locked - every request must arrive with both.
 function toggleCompanyField(key) {
@@ -1928,7 +1932,18 @@ const statCards = computed(() => [
                 </div>
                 <div class="grid sm:grid-cols-2 gap-3">
                   <input v-model="l.to" placeholder="ბმული / Link (მაგ: /about)" class="w-full px-3 py-2 bg-gray-50 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white" />
-                  <input v-model="l.badge" type="number" min="0" placeholder="ბეჯი / Badge (არასავალდებულო)" class="w-full px-3 py-2 bg-gray-50 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white" />
+                  <input
+                    v-model="l.badge"
+                    type="number"
+                    min="0"
+                    :disabled="isVacanciesLink(l.to)"
+                    :placeholder="
+                      isVacanciesLink(l.to)
+                        ? 'ბეჯი ავტომატურია (ვაკანსიების რაოდენობა)'
+                        : 'ბეჯი / Badge (არასავალდებულო)'
+                    "
+                    class="w-full px-3 py-2 bg-gray-50 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white disabled:opacity-60 disabled:cursor-not-allowed"
+                  />
                 </div>
               </div>
               <!-- Footer & CTA link labels (nav.*) -->

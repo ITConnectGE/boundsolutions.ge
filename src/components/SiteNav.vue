@@ -5,6 +5,7 @@ import { useI18n } from 'vue-i18n'
 import { useLoc } from '@/composables/useLocale'
 import { collection } from '@/composables/content.js'
 import { defaultNav } from '@/data/nav.js'
+import { getJobs } from '@/composables/jobs.js'
 import { services as defaultServices } from '@/data/services.js'
 import { withSlash } from '@/utils/url.js'
 import BaseIcon from './BaseIcon.vue'
@@ -15,11 +16,20 @@ const { t } = useI18n()
 const { loc } = useLoc()
 const route = useRoute()
 
+// How many vacancies are open right now. Loaded on the client, so the badge is
+// never a stale number baked into the build (it used to be a hardcoded 6).
+const VACANCIES = '/vacancies/'
+const vacancyCount = ref(null)
+
 // Editable from the admin CMS (add / remove / re-title pages). Paths are put in
 // canonical trailing-slash form here, so whatever gets typed into the CMS the
-// rendered links never point at a URL that redirects.
+// rendered links never point at a URL that redirects. The vacancies badge is
+// always the live count, whatever badge the CMS has stored for that item.
 const links = computed(() =>
-  collection('nav', defaultNav).map((l) => ({ ...l, to: withSlash(l.to) })),
+  collection('nav', defaultNav).map((l) => {
+    const to = withSlash(l.to)
+    return to === VACANCIES ? { ...l, to, badge: vacancyCount.value } : { ...l, to }
+  }),
 )
 // Services list for the "Services" nav dropdown.
 const services = computed(() => collection('services', defaultServices))
@@ -35,9 +45,14 @@ function isActive(to) {
 function onScroll() {
   scrolled.value = window.scrollY > 10
 }
-onMounted(() => {
+onMounted(async () => {
   onScroll()
   window.addEventListener('scroll', onScroll, { passive: true })
+  try {
+    vacancyCount.value = (await getJobs()).length
+  } catch {
+    // API unreachable: show no badge rather than a wrong one
+  }
 })
 onBeforeUnmount(() => window.removeEventListener('scroll', onScroll))
 watch(() => route.fullPath, () => {

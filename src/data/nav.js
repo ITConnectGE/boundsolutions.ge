@@ -8,6 +8,7 @@ export const defaultNav = [
   { to: '/about/', label: { ka: 'ჩვენ შესახებ', en: 'About' } },
   { to: '/services/', label: { ka: 'სერვისები', en: 'Services' } },
   { to: '/blog/', label: { ka: 'ბლოგი', en: 'Blog' } },
-  { to: '/vacancies/', label: { ka: 'ვაკანსიები', en: 'Vacancies' }, badge: 6 },
+  // No badge value here: SiteNav always shows the live number of open vacancies.
+  { to: '/vacancies/', label: { ka: 'ვაკანსიები', en: 'Vacancies' } },
   { to: '/for-companies/', label: { ka: 'დამსაქმებლებისთვის', en: 'For employers' } },
 ]
