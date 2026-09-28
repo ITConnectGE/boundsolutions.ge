@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class Vacancy extends Model
 {
     protected $fillable = [
-        'category', 'title_ka', 'title_en', 'sector_ka', 'sector_en',
+        'category', 'company', 'title_ka', 'title_en', 'sector_ka', 'sector_en',
         'salary', 'description_ka', 'description_en', 'image_path',
         'is_active', 'sort_order',
     ];
@@ -36,6 +36,8 @@ class Vacancy extends Model
     public function toAdminArray(): array
     {
         return $this->toPublicArray() + [
+            // Internal only: the client company never appears in toPublicArray().
+            'company' => $this->company,
             'is_active' => (bool) $this->is_active,
             'sort_order' => (int) $this->sort_order,
         ];

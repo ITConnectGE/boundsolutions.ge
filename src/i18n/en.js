@@ -465,6 +465,8 @@ export default {
         descriptionKa: 'Description (Georgian)',
         descriptionEn: 'Description (English)',
         category: 'Category (e.g. HR, Sales)',
+        company: 'Company (employer)',
+        companyHint: 'Shown in the admin and the CV inbox only, never on the site.',
         salary: 'Salary',
         image: 'Image',
         chooseImage: 'Choose image',

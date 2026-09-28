@@ -466,6 +466,8 @@ export default {
         descriptionKa: 'აღწერა (ქართულად)',
         descriptionEn: 'აღწერა (ინგლისურად)',
         category: 'კატეგორია (მაგ: HR, Sales)',
+        company: 'კომპანია (დამსაქმებელი)',
+        companyHint: 'ჩანს მხოლოდ ადმინში და CV-ების სიაში. საიტზე არ გამოჩნდება.',
         salary: 'ანაზღაურება',
         image: 'სურათი',
         chooseImage: 'სურათის არჩევა',

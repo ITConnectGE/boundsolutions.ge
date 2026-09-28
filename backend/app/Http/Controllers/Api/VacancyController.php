@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Application;
 use App\Models\Vacancy;
 use Illuminate\Http\Request;
 
@@ -41,7 +42,15 @@ class VacancyController extends Controller
     {
         $data = $this->validateData($request);
         $this->handleImage($request, $data);
+        $companyChanged = array_key_exists('company', $data) && $data['company'] !== $vacancy->company;
         $vacancy->update($data);
+
+        // Applications carry a copy of the company (see ApplicationController).
+        // Naming the company on an existing vacancy fills it in for the CVs that
+        // already arrived, so the inbox stops showing two identical folders.
+        if ($companyChanged) {
+            Application::where('vacancy_id', $vacancy->id)->update(['company' => $vacancy->company]);
+        }
 
         return $vacancy;
     }
@@ -57,6 +66,7 @@ class VacancyController extends Controller
     {
         $data = $request->validate([
             'category' => 'required|string|max:50',
+            'company' => 'nullable|string|max:255',
             'title_ka' => 'required|string|max:255',
             'title_en' => 'nullable|string|max:255',
             'sector_ka' => 'nullable|string|max:255',

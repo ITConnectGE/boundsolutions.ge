@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Mail\NewApplicationMail;
 use App\Models\Application;
+use App\Models\Vacancy;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
@@ -63,6 +64,13 @@ class ApplicationController extends Controller
         ]);
 
         $data['phone'] = $this->normalizePhone($data['phone']);
+
+        // Which client company the vacancy belongs to, copied in at submission
+        // time. Two vacancies can carry the same title ("ოფისის მენეჯერი"), and
+        // the copy keeps the inbox readable even after the vacancy is deleted.
+        if (! empty($data['vacancy_id'])) {
+            $data['company'] = Vacancy::find($data['vacancy_id'])?->company;
+        }
 
         if ($request->hasFile('cv')) {
             $data['cv_path'] = $request->file('cv')->store('cv', 'public');

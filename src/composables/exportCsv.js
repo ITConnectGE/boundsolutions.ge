@@ -17,6 +17,7 @@ const COLUMNS = [
   ['phone', (a) => a.phone],
   ['position', (a) => a.position],
   ['sector', (a) => a.sector],
+  ['company', (a) => a.company],
   ['message', (a) => a.message],
   ['cvFile', (a) => a.cvFile],
 ]

@@ -254,6 +254,7 @@ function toJobDraft(job) {
   return {
     id: job?.id || '',
     category: job?.category || '',
+    company: job?.company || '',
     titleKa: job?.title?.ka || '',
     titleEn: job?.title?.en || '',
     sectorKa: job?.sector?.ka || '',
@@ -369,6 +370,7 @@ function jobPayload(row) {
   return {
     id: row.id || undefined,
     category: (row.category || '').trim(),
+    company: (row.company || '').trim(),
     title: { ka: row.titleKa, en: row.titleEn || row.titleKa },
     sector: { ka: row.sectorKa, en: row.sectorEn || row.sectorKa },
     description: { ka: row.descriptionKa, en: row.descriptionEn },
@@ -1167,12 +1169,31 @@ const folders = computed(() => {
     if (!a.vacancyId && (!pos || generalTitles.includes(pos))) { general.push(a); continue }
     // Group by vacancy id when present (robust across locales), else by title.
     const gkey = a.vacancyId ? 'id:' + a.vacancyId : 'pos:' + pos
-    if (!cvGroups.has(gkey)) cvGroups.set(gkey, { label: pos || '#' + a.vacancyId, items: [] })
-    cvGroups.get(gkey).items.push(a)
+    if (!cvGroups.has(gkey)) {
+      cvGroups.set(gkey, { title: pos || '#' + a.vacancyId, company: '', vacancyId: a.vacancyId, items: [] })
+    }
+    const g = cvGroups.get(gkey)
+    // Older applications were stored before the company was recorded.
+    if (!g.company && a.company) g.company = a.company
+    g.items.push(a)
   }
-  const list = [...cvGroups.entries()]
-    .map(([gkey, g]) => ({ id: 'vac:' + gkey, label: g.label, icon: 'briefcase', items: g.items }))
-    .sort((a, b) => a.label.localeCompare(b.label))
+  const list = [...cvGroups.entries()].map(([gkey, g]) => ({
+    id: 'vac:' + gkey,
+    // Two vacancies can carry the same title ("ოფისის მენეჯერი" twice), so the
+    // folder says which company it is for.
+    label: g.company ? `${g.title} · ${g.company}` : g.title,
+    vacancyId: g.vacancyId,
+    icon: 'briefcase',
+    items: g.items,
+  }))
+  // No company recorded yet? Fall back to the vacancy number so no two folders
+  // read the same.
+  const labelCount = new Map()
+  for (const f of list) labelCount.set(f.label, (labelCount.get(f.label) || 0) + 1)
+  for (const f of list) {
+    if (labelCount.get(f.label) > 1 && f.vacancyId) f.label += ' #' + f.vacancyId
+  }
+  list.sort((a, b) => a.label.localeCompare(b.label))
   if (general.length) list.push({ id: 'general', label: t('admin.folders.general'), icon: 'fileCheck', items: general })
   if (company.length) list.push({ id: 'company', label: t('admin.folders.company'), icon: 'briefcase', items: company })
   if (contact.length) list.push({ id: 'contact', label: t('admin.folders.contact'), icon: 'mail', items: contact })
@@ -1708,6 +1729,7 @@ const statCards = computed(() => [
                   class="px-3 py-1 bg-amber-50 text-amber-600 text-xs font-semibold rounded-lg whitespace-nowrap"
                   >{{ t('admin.jobs.hidden') }}</span
                 >
+                <span v-if="row.company" class="max-w-full px-3 py-1 bg-navy/10 text-navy text-xs font-semibold rounded-lg break-words">{{ row.company }}</span>
                 <span v-if="row.category" class="max-w-full px-3 py-1 bg-brand/10 text-brand text-xs font-semibold rounded-lg break-words">{{ catLabel(row.category) }}</span>
                 <span class="px-3 py-1 bg-gray-100 text-gray-500 text-xs rounded-lg whitespace-nowrap">{{ t('vacancies.location') }}</span>
                 <span class="px-3 py-1 bg-gray-100 text-gray-500 text-xs rounded-lg whitespace-nowrap">{{ t('vacancies.fullTime') }}</span>
@@ -2891,6 +2913,11 @@ const statCards = computed(() => [
                 <div>
                   <label class="block text-xs font-medium text-gray-500 mb-1.5">{{ t('admin.jobs.form.category') }} *</label>
                   <input v-model="jobForm.category" list="job-categories" required class="w-full px-4 py-3 bg-gray-50 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white" />
+                </div>
+                <div>
+                  <label class="block text-xs font-medium text-gray-500 mb-1.5">{{ t('admin.jobs.form.company') }}</label>
+                  <input v-model="jobForm.company" type="text" class="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-xl text-sm focus:outline-none focus:border-brand focus:ring-2 focus:ring-brand/20 focus:bg-white" />
+                  <p class="text-[11px] text-gray-400 mt-1">{{ t('admin.jobs.form.companyHint') }}</p>
                 </div>
                 <div>
                   <label class="block text-xs font-medium text-gray-500 mb-1.5">{{ t('admin.jobs.form.salary') }}</label>

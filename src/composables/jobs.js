@@ -19,11 +19,13 @@ export async function getAdminJobs() {
   return api('/admin/vacancies', { auth: true })
 }
 
-// job: { id?, category, title:{ka,en}, sector:{ka,en}, salary, isActive, image? }
+// job: { id?, category, company, title:{ka,en}, sector:{ka,en}, salary, isActive, image? }
 // file: optional File for the vacancy image.
 export async function saveJob(job, file) {
   const fd = new FormData()
   fd.append('category', job.category || 'hr')
+  // Internal: shown in the admin only, never on the public vacancy list.
+  fd.append('company', job.company || '')
   fd.append('title_ka', job.title?.ka || '')
   fd.append('title_en', job.title?.en || '')
   fd.append('sector_ka', job.sector?.ka || '')

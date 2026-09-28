@@ -14,6 +14,8 @@ function normalize(r) {
     position: r.position,
     vacancyId: r.vacancy_id ?? null,
     sector: r.sector,
+    // Client company of the vacancy, copied in when the CV was sent.
+    company: r.company || '',
     message: r.message,
     cvFile: r.cv_path ? r.cv_path.split('/').pop() : r.cvFile || '',
     cvUrl: r.cv_path ? storageUrl(r.cv_path) : '',
