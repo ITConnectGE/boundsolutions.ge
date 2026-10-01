@@ -484,6 +484,8 @@ export default {
     },
     filters: {
       search: 'Search by name, position...',
+      company: 'Company',
+      allCompanies: 'All companies',
       all: 'All',
       new: 'New',
       reviewed: 'Reviewed',

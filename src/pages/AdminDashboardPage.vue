@@ -78,6 +78,7 @@ const apps = ref([])
 const ready = ref(false)
 const search = ref('')
 const statusFilter = ref('all') // all | new | reviewed
+const companyFilter = ref('all') // 'all' | a client company name
 const user = ref('')
 const view = ref('inbox') // inbox | email | jobs | users | content
 const connError = ref(false)
@@ -1128,12 +1129,22 @@ onMounted(() => {
   ready.value = true
 })
 
+// Client companies that actually appear in the inbox, for the filter dropdown.
+const companies = computed(() =>
+  [...new Set(apps.value.map((a) => (a.company || '').trim()).filter(Boolean))].sort((a, b) =>
+    a.localeCompare(b),
+  ),
+)
+function matchesCompany(a) {
+  return companyFilter.value === 'all' || (a.company || '').trim() === companyFilter.value
+}
 function matchesSearchStatus(a) {
   if (statusFilter.value !== 'all' && a.status !== statusFilter.value) return false
+  if (!matchesCompany(a)) return false
   const q = search.value.trim().toLowerCase()
   if (q) {
     const hay =
-      `${a.name} ${a.contactName || ''} ${a.email} ${a.position} ${a.sector} ${a.phone}`.toLowerCase()
+      `${a.name} ${a.contactName || ''} ${a.email} ${a.position} ${a.sector} ${a.company || ''} ${a.phone}`.toLowerCase()
     if (!hay.includes(q)) return false
   }
   return true
@@ -1161,7 +1172,7 @@ const folders = computed(() => {
   const general = []
   const company = []
   const contact = []
-  for (const a of apps.value) {
+  for (const a of apps.value.filter(matchesCompany)) {
     if (a.type === 'company') { company.push(a); continue }
     if (a.type === 'contact') { contact.push(a); continue }
     const pos = (a.position || '').trim() // CV
@@ -1429,6 +1440,15 @@ const statCards = computed(() => [
             class="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-100 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 transition-all"
           />
         </div>
+        <select
+          v-if="companies.length"
+          v-model="companyFilter"
+          class="px-4 py-2.5 bg-white border border-gray-100 rounded-xl text-sm text-gray-600 focus:outline-none focus:ring-2 focus:ring-brand/20 transition-all"
+          :aria-label="t('admin.filters.company')"
+        >
+          <option value="all">{{ t('admin.filters.allCompanies') }}</option>
+          <option v-for="c in companies" :key="c" :value="c">{{ c }}</option>
+        </select>
         <div class="flex gap-2">
           <button
             v-for="s in ['all', 'new', 'reviewed']"

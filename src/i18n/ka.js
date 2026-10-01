@@ -485,6 +485,8 @@ export default {
     },
     filters: {
       search: 'ძებნა სახელით, პოზიციით...',
+      company: 'კომპანია',
+      allCompanies: 'ყველა კომპანია',
       all: 'ყველა',
       new: 'ახალი',
       reviewed: 'ნანახი',
