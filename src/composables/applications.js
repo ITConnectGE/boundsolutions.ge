@@ -1,6 +1,6 @@
 // Applications store - always talks to the Laravel API (data lives in the DB).
 // The backend also emails the team (with the CV attached) on each submission.
-import { api, storageUrl } from './api'
+import { api } from './api'
 
 // Normalise a backend row to the shape the UI uses (camelCase + display fields).
 function normalize(r) {
@@ -18,7 +18,6 @@ function normalize(r) {
     company: r.company || '',
     message: r.message,
     cvFile: r.cv_path ? r.cv_path.split('/').pop() : r.cvFile || '',
-    cvUrl: r.cv_path ? storageUrl(r.cv_path) : '',
     consent: r.consent,
     status: r.status,
     date: r.created_at ?? r.date,
@@ -56,6 +55,20 @@ export async function addApplication(app, file) {
     return api('/applications', { method: 'POST', body: fd, form: true })
   }
   return api('/applications', { method: 'POST', body: payload })
+}
+
+// CVs live on the private disk; only this endpoint (admin token) serves them,
+// so the file is fetched and handed to the browser instead of being linked.
+export async function downloadCv(id, filename) {
+  const file = await api(`/applications/${id}/cv`, { auth: true, blob: true })
+  const url = URL.createObjectURL(file)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = filename || 'cv'
+  document.body.appendChild(a)
+  a.click()
+  a.remove()
+  URL.revokeObjectURL(url)
 }
 
 export async function setApplicationStatus(id, status) {

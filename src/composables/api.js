@@ -18,14 +18,6 @@ export function hasApi() {
 export function apiBase() {
   return BASE
 }
-// Absolute URL for a stored file (e.g. cv_path "cv/x.pdf" -> origin/storage/cv/x.pdf)
-export function storageUrl(path) {
-  if (!path) return ''
-  if (/^https?:\/\//.test(path)) return path
-  const origin = BASE.replace(/\/api$/, '')
-  return `${origin}/storage/${String(path).replace(/^\/+/, '')}`
-}
-
 export function getToken() {
   return typeof localStorage !== 'undefined' ? localStorage.getItem(TOKEN_KEY) || '' : ''
 }
@@ -49,7 +41,7 @@ export function setStoredUser(u) {
   else localStorage.removeItem(USER_KEY)
 }
 
-export async function api(path, { method = 'GET', body, auth = false, form = false } = {}) {
+export async function api(path, { method = 'GET', body, auth = false, form = false, blob = false } = {}) {
   const headers = { Accept: 'application/json' }
   if (auth && getToken()) headers.Authorization = `Bearer ${getToken()}`
 
@@ -72,5 +64,5 @@ export async function api(path, { method = 'GET', body, auth = false, form = fal
     throw Object.assign(new Error(data.message || res.statusText), { status: res.status, data })
   }
   if (res.status === 204) return null
-  return res.json()
+  return blob ? res.blob() : res.json()
 }

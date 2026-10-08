@@ -10,8 +10,11 @@ use App\Http\Controllers\Api\VacancyController;
 use Illuminate\Support\Facades\Route;
 
 // ---- Public ----
-Route::post('auth/login', [AuthController::class, 'login']);
-Route::post('applications', [ApplicationController::class, 'store']);
+// The two endpoints anyone can POST to are rate limited per visitor IP
+// (see AppServiceProvider): a bot would otherwise be free to flood the inbox
+// or to guess admin passwords.
+Route::post('auth/login', [AuthController::class, 'login'])->middleware('throttle:login');
+Route::post('applications', [ApplicationController::class, 'store'])->middleware('throttle:forms');
 Route::get('vacancies', [VacancyController::class, 'index']);
 Route::get('vacancy-categories', [VacancyCategoryController::class, 'index']);
 Route::get('content', [ContentController::class, 'index']);
@@ -28,6 +31,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::middleware('ability:admin')->group(function () {
         // Inbox
         Route::get('applications', [ApplicationController::class, 'index']);
+        // CV files are not public; this is the only way to download one.
+        Route::get('applications/{application}/cv', [ApplicationController::class, 'cv']);
         Route::patch('applications/{application}/status', [ApplicationController::class, 'updateStatus']);
         Route::delete('applications/{application}', [ApplicationController::class, 'destroy']);
 

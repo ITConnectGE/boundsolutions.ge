@@ -9,6 +9,7 @@ use App\Models\Vacancy;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Storage;
 
 class ApplicationController extends Controller
 {
@@ -73,7 +74,9 @@ class ApplicationController extends Controller
         }
 
         if ($request->hasFile('cv')) {
-            $data['cv_path'] = $request->file('cv')->store('cv', 'public');
+            // Private disk: a CV is personal data and must not be reachable by
+            // URL. cv() below serves it, behind the admin token.
+            $data['cv_path'] = $request->file('cv')->store('cv', 'local');
         }
         unset($data['cv']);
         $data['status'] = 'new';
@@ -130,6 +133,18 @@ class ApplicationController extends Controller
         }
 
         return str_starts_with($raw, '+') || str_starts_with($raw, '00') ? '+'.$digits : $raw;
+    }
+
+    // Admin: download one CV. This is the only way to reach the file; the
+    // route sits behind auth:sanctum + ability:admin like the rest of the inbox.
+    public function cv(Application $application)
+    {
+        abort_unless(
+            $application->cv_path && Storage::disk('local')->exists($application->cv_path),
+            404
+        );
+
+        return Storage::disk('local')->download($application->cv_path, basename($application->cv_path));
     }
 
     // Admin: flip new <-> reviewed.

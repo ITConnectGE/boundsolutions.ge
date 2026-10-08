@@ -15,6 +15,7 @@ import {
   getApplications,
   setApplicationStatus,
   deleteApplication,
+  downloadCv,
 } from '@/composables/applications.js'
 import { downloadApplicationsCsv } from '@/composables/exportCsv.js'
 import {
@@ -1213,6 +1214,19 @@ const folders = computed(() => {
 const currentFolder = computed(() => folders.value.find((f) => f.id === folder.value) || folders.value[0] || null)
 const currentItems = computed(() => (currentFolder.value ? currentFolder.value.items.filter(matchesSearchStatus) : []))
 
+// The CV is not a public link: fetch it with the token, then save it.
+const cvDownloading = ref(null)
+async function getCv(a) {
+  cvDownloading.value = a.id
+  try {
+    await downloadCv(a.id, a.cvFile)
+  } catch (e) {
+    adminError(e)
+  } finally {
+    cvDownloading.value = null
+  }
+}
+
 function exportCsv() {
   const stamp = new Date().toISOString().slice(0, 10)
   downloadApplicationsCsv(filtered.value, `bound-applications-${stamp}.csv`)
@@ -1516,16 +1530,16 @@ const statCards = computed(() => [
                       </div>
                       <div v-if="a.contactName" class="text-xs text-gray-400 mt-0.5">{{ a.contactName }}</div>
                       <div class="flex items-center gap-3 mt-1.5">
-                        <a
+                        <button
                           v-if="a.cvFile"
-                          :href="a.cvUrl || undefined"
-                          :target="a.cvUrl ? '_blank' : undefined"
-                          rel="noopener noreferrer"
-                          class="inline-flex items-center gap-1 text-xs font-semibold text-brand hover:underline"
-                          :class="a.cvUrl ? '' : 'opacity-60 pointer-events-none'"
+                          type="button"
+                          :disabled="cvDownloading === a.id"
+                          class="inline-flex items-center gap-1 text-xs font-semibold text-brand hover:underline disabled:opacity-60"
+                          @click="getCv(a)"
                         >
-                          <BaseIcon name="fileCheck" class="w-3.5 h-3.5" /> {{ t('admin.downloadCv') }}
-                        </a>
+                          <BaseIcon name="fileCheck" class="w-3.5 h-3.5" />
+                          {{ cvDownloading === a.id ? t('admin.email.loading') : t('admin.downloadCv') }}
+                        </button>
                         <button
                           v-if="a.message"
                           type="button"

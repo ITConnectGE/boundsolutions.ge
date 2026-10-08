@@ -41,8 +41,8 @@ class NewApplicationMail extends Mailable
     public function attachments(): array
     {
         $a = $this->application;
-        if ($a->cv_path && Storage::disk('public')->exists($a->cv_path)) {
-            return [Attachment::fromStorageDisk('public', $a->cv_path)->as(basename($a->cv_path))];
+        if ($a->cv_path && Storage::disk('local')->exists($a->cv_path)) {
+            return [Attachment::fromStorageDisk('local', $a->cv_path)->as(basename($a->cv_path))];
         }
         return [];
     }
