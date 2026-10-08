@@ -76,6 +76,19 @@ class CvPrivacyTest extends TestCase
         $this->getJson("/api/applications/{$application->id}/cv")->assertUnauthorized();
     }
 
+    public function test_a_browser_hitting_the_endpoint_is_refused_cleanly(): void
+    {
+        Mail::fake();
+        Storage::fake('local');
+
+        $application = $this->submitCv();
+
+        // Not asking for JSON used to end in "Route [login] not defined" and a
+        // 500; an unauthenticated caller must simply be told 401.
+        $this->get("/api/applications/{$application->id}/cv", ['Accept' => 'text/html'])
+            ->assertUnauthorized();
+    }
+
     public function test_a_temporary_password_token_cannot_download_it_either(): void
     {
         Mail::fake();

@@ -18,6 +18,15 @@ return Application::configure(basePath: dirname(__DIR__))
         },
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // Without this, an unauthenticated request that does not ask for JSON
+        // (a browser opening /api/..., a crawler) makes the framework look for
+        // a "login" route that does not exist here, and answers 500 instead of
+        // 401. API callers get the exception (-> 401 JSON, see withExceptions
+        // below); anything else is sent to the admin sign-in page.
+        $middleware->redirectGuestsTo(
+            fn (Request $request) => $request->is('api/*') ? null : '/admin/login'
+        );
+
         // Sanctum's token-ability guards. Admin routes require the "admin"
         // ability, which a token issued against a temporary password lacks.
         $middleware->alias([
