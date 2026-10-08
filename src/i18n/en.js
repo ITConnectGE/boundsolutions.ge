@@ -495,6 +495,7 @@ export default {
     },
     export: 'Export CSV',
     downloadCv: 'Download CV',
+    loading: 'Loading…',
     showDetails: 'Show details',
     hideDetails: 'Hide details',
     confirmDeleteApp: 'Delete this application? This cannot be undone.',

@@ -496,6 +496,7 @@ export default {
     },
     export: 'CSV ექსპორტი',
     downloadCv: 'CV-ს ჩამოტვირთვა',
+    loading: 'იტვირთება…',
     showDetails: 'დეტალების ჩვენება',
     hideDetails: 'დეტალების დამალვა',
     confirmDeleteApp: 'ნამდვილად წავშალო ეს განაცხადი? ეს ქმედება შეუქცევადია.',
