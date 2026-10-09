@@ -19,7 +19,8 @@ export async function getAdminJobs() {
   return api('/admin/vacancies', { auth: true })
 }
 
-// job: { id?, category, company, title:{ka,en}, sector:{ka,en}, salary, isActive, image? }
+// job: { id?, category, company, title:{ka,en}, sector:{ka,en}, location:{ka,en},
+//        salary, isActive, image? }
 // file: optional File for the vacancy image.
 export async function saveJob(job, file) {
   const fd = new FormData()
@@ -30,6 +31,9 @@ export async function saveJob(job, file) {
   fd.append('title_en', job.title?.en || '')
   fd.append('sector_ka', job.sector?.ka || '')
   fd.append('sector_en', job.sector?.en || '')
+  // Blank = the site shows its default city.
+  fd.append('location_ka', job.location?.ka || '')
+  fd.append('location_en', job.location?.en || '')
   fd.append('description_ka', job.description?.ka || '')
   fd.append('description_en', job.description?.en || '')
   fd.append('salary', job.salary || '')

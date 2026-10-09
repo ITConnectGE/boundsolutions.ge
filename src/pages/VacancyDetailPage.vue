@@ -53,6 +53,9 @@ useHead({
   meta: computed(() => (loaded.value && !job.value ? [{ name: 'robots', content: 'noindex, follow' }] : [])),
 })
 
+// The city of this vacancy, or the default one when it does not name a city.
+const city = computed(() => (job.value ? loc(job.value.location) : '') || t('vacancies.location'))
+
 // Per-vacancy JobPosting structured data (Google job results).
 const schema = computed(() => {
   const j = job.value
@@ -72,7 +75,11 @@ const schema = computed(() => {
     },
     jobLocation: {
       '@type': 'Place',
-      address: { '@type': 'PostalAddress', addressLocality: 'Tbilisi', addressCountry: 'GE' },
+      address: {
+        '@type': 'PostalAddress',
+        addressLocality: j.location?.en || j.location?.ka || 'Tbilisi',
+        addressCountry: 'GE',
+      },
     },
     ...(j.salary
       ? {
@@ -119,7 +126,7 @@ const modalOpen = ref(false)
 
         <div class="flex flex-wrap items-center gap-2 mt-6">
           <span class="px-3 py-1.5 bg-white border border-gray-100 text-gray-500 text-xs rounded-lg inline-flex items-center gap-1.5">
-            <BaseIcon name="pin" class="w-3.5 h-3.5" /> {{ t('vacancies.location') }}
+            <BaseIcon name="pin" class="w-3.5 h-3.5" /> {{ city }}
           </span>
           <span class="px-3 py-1.5 bg-white border border-gray-100 text-gray-500 text-xs rounded-lg">{{ t('vacancies.fullTime') }}</span>
           <span v-if="job.salary" class="max-w-full px-3 py-1.5 bg-white border border-gray-100 text-gray-700 text-xs font-semibold rounded-lg break-words">{{ job.salary }}</span>

@@ -71,6 +71,8 @@ class VacancyController extends Controller
             'title_en' => 'nullable|string|max:255',
             'sector_ka' => 'nullable|string|max:255',
             'sector_en' => 'nullable|string|max:255',
+            'location_ka' => 'nullable|string|max:255',
+            'location_en' => 'nullable|string|max:255',
             'salary' => 'nullable|string|max:100',
             'description_ka' => 'nullable|string',
             'description_en' => 'nullable|string',

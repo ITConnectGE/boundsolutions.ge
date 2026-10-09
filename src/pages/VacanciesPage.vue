@@ -49,6 +49,9 @@ const filtered = computed(() =>
     : jobsList.value.filter((j) => norm(j.category) === norm(active.value)),
 )
 
+// The city of a vacancy, or the default one for the vacancies that do not name it.
+const cityOf = (job) => loc(job.location) || t('vacancies.location')
+
 // JobPosting structured data so vacancies can appear in Google's job results.
 const jobsSchema = computed(() => {
   const today = new Date().toISOString().slice(0, 10)
@@ -67,7 +70,11 @@ const jobsSchema = computed(() => {
     },
     jobLocation: {
       '@type': 'Place',
-      address: { '@type': 'PostalAddress', addressLocality: 'Tbilisi', addressCountry: 'GE' },
+      address: {
+        '@type': 'PostalAddress',
+        addressLocality: j.location?.en || j.location?.ka || 'Tbilisi',
+        addressCountry: 'GE',
+      },
     },
     ...(j.salary
       ? {
@@ -156,8 +163,8 @@ function openModal(job) {
                 class="max-w-full px-3 py-1 bg-brand/10 text-brand text-xs font-semibold rounded-lg break-words"
                 >{{ catLabel(job.category) }}</span
               >
-              <span class="px-3 py-1 bg-gray-100 text-gray-500 text-xs rounded-lg whitespace-nowrap">{{
-                t('vacancies.location')
+              <span class="max-w-full px-3 py-1 bg-gray-100 text-gray-500 text-xs rounded-lg break-words">{{
+                cityOf(job)
               }}</span>
               <span class="px-3 py-1 bg-gray-100 text-gray-500 text-xs rounded-lg whitespace-nowrap">{{
                 t('vacancies.fullTime')

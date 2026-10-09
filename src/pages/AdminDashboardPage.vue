@@ -147,6 +147,8 @@ function toJobDraft(job) {
     titleEn: job?.title?.en || '',
     sectorKa: job?.sector?.ka || '',
     sectorEn: job?.sector?.en || '',
+    locationKa: job?.location?.ka || '',
+    locationEn: job?.location?.en || '',
     descriptionKa: job?.description?.ka || '',
     descriptionEn: job?.description?.en || '',
     salary: job?.salary || '',
@@ -261,6 +263,7 @@ function jobPayload(row) {
     company: (row.company || '').trim(),
     title: { ka: row.titleKa, en: row.titleEn || row.titleKa },
     sector: { ka: row.sectorKa, en: row.sectorEn || row.sectorKa },
+    location: { ka: row.locationKa, en: row.locationEn || row.locationKa },
     description: { ka: row.descriptionKa, en: row.descriptionEn },
     salary: row.salary,
     isActive: row.isActive !== false,
@@ -1571,7 +1574,7 @@ const statCards = computed(() => [
                 >
                 <span v-if="row.company" class="max-w-full px-3 py-1 bg-navy/10 text-navy text-xs font-semibold rounded-lg break-words">{{ row.company }}</span>
                 <span v-if="row.category" class="max-w-full px-3 py-1 bg-brand/10 text-brand text-xs font-semibold rounded-lg break-words">{{ catLabel(row.category) }}</span>
-                <span class="px-3 py-1 bg-gray-100 text-gray-500 text-xs rounded-lg whitespace-nowrap">{{ t('vacancies.location') }}</span>
+                <span class="max-w-full px-3 py-1 bg-gray-100 text-gray-500 text-xs rounded-lg break-words">{{ row.locationKa || t('vacancies.location') }}</span>
                 <span class="px-3 py-1 bg-gray-100 text-gray-500 text-xs rounded-lg whitespace-nowrap">{{ t('vacancies.fullTime') }}</span>
                 <span v-if="row.salary" class="max-w-full px-3 py-1 bg-gray-100 text-gray-600 text-xs font-semibold rounded-lg break-words">{{ row.salary }}</span>
               </div>
@@ -2665,6 +2668,15 @@ const statCards = computed(() => [
                 <div>
                   <label class="block text-xs font-medium text-gray-500 mb-1.5">{{ t('admin.jobs.form.category') }} *</label>
                   <input v-model="jobForm.category" list="job-categories" required class="w-full px-4 py-3 bg-gray-50 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white" />
+                </div>
+                <div>
+                  <label class="block text-xs font-medium text-gray-500 mb-1.5">{{ t('admin.jobs.form.locationKa') }}</label>
+                  <input v-model="jobForm.locationKa" type="text" :placeholder="t('vacancies.location')" class="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-xl text-sm focus:outline-none focus:border-brand focus:ring-2 focus:ring-brand/20 focus:bg-white" />
+                  <p class="text-[11px] text-gray-400 mt-1">{{ t('admin.jobs.form.locationHint') }}</p>
+                </div>
+                <div>
+                  <label class="block text-xs font-medium text-gray-500 mb-1.5">{{ t('admin.jobs.form.locationEn') }}</label>
+                  <input v-model="jobForm.locationEn" type="text" placeholder="Tbilisi" class="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-xl text-sm focus:outline-none focus:border-brand focus:ring-2 focus:ring-brand/20 focus:bg-white" />
                 </div>
                 <div>
                   <label class="block text-xs font-medium text-gray-500 mb-1.5">{{ t('admin.jobs.form.company') }}</label>

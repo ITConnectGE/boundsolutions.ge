@@ -8,6 +8,7 @@ class Vacancy extends Model
 {
     protected $fillable = [
         'category', 'company', 'title_ka', 'title_en', 'sector_ka', 'sector_en',
+        'location_ka', 'location_en',
         'salary', 'description_ka', 'description_en', 'image_path',
         'is_active', 'sort_order',
     ];
@@ -24,6 +25,8 @@ class Vacancy extends Model
             'category' => $this->category,
             'title' => ['ka' => $this->title_ka, 'en' => $this->title_en ?: $this->title_ka],
             'sector' => ['ka' => $this->sector_ka, 'en' => $this->sector_en ?: $this->sector_ka],
+            // Empty for the older vacancies; the site then shows its default city.
+            'location' => ['ka' => $this->location_ka, 'en' => $this->location_en ?: $this->location_ka],
             'salary' => $this->salary,
             'description' => ['ka' => $this->description_ka, 'en' => $this->description_en],
             'image' => $this->image_path ? asset('storage/' . $this->image_path) : null,
