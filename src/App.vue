@@ -7,6 +7,7 @@ import SiteNav from '@/components/SiteNav.vue'
 import SiteFooter from '@/components/SiteFooter.vue'
 import SocialRail from '@/components/SocialRail.vue'
 import ToastHost from '@/components/ToastHost.vue'
+import CookieBanner from '@/components/CookieBanner.vue'
 import { editMode, canEdit, toggleEdit } from '@/composables/editMode'
 
 const { locale } = useI18n()
@@ -94,6 +95,8 @@ onBeforeUnmount(() => {
     <span class="w-2 h-2 rounded-full" :class="editMode ? 'bg-white' : 'bg-brand'"></span>
     {{ editMode ? 'რედაქტირება: ჩართული' : 'ტექსტის რედაქტირება' }}
   </button>
+
+  <CookieBanner v-if="!isAdmin" />
 
   <ToastHost />
 </template>

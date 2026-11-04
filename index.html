@@ -4,9 +4,31 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
+    <!-- Consent Mode. Everything is denied before Tag Manager loads, so no tag
+         inside the container (Google Analytics among them) may run until the
+         visitor agrees. src/composables/consent.js flips this to "granted" and
+         remembers the answer; a visitor who already agreed starts granted, so
+         nothing flickers. This defines gtag() only - it loads no analytics. -->
+    <script>
+      (function () {
+        window.dataLayer = window.dataLayer || [];
+        window.gtag = function () { dataLayer.push(arguments); };
+        var answer = null;
+        try { answer = localStorage.getItem('bs-cookie-consent'); } catch (e) { /* storage blocked */ }
+        var state = answer === 'granted' ? 'granted' : 'denied';
+        gtag('consent', 'default', {
+          ad_storage: state,
+          ad_user_data: state,
+          ad_personalization: state,
+          analytics_storage: state,
+          wait_for_update: 500
+        });
+      })();
+    </script>
+
     <!-- Google Tag Manager: placed as high in the head as possible, per Google.
-         Same guard as the analytics further down, so localhost and the admin
-         portal stay out of the data. GA4 + Meta Pixel below are untouched. -->
+         Not loaded on localhost or the admin portal, so neither pollutes the data.
+         The Meta Pixel is not here: it loads from consent.js, after consent. -->
     <script>
       (function () {
         var h = location.hostname;
@@ -63,35 +85,15 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Noto+Sans+Georgian:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
 
-    <!-- Meta Pixel.
-         Guarded so dev (localhost) and the admin portal don't pollute the data.
-         Google Analytics is NOT loaded here: Tag Manager fires it from the
-         container in the head above. Adding gtag.js back would double-count
-         every page view. -->
-    <script>
-      (function () {
-        var h = location.hostname;
-        if (h === 'localhost' || h === '127.0.0.1' || h.indexOf('portal.') === 0) return;
-
-        // Meta Pixel
-        !(function (f, b, e, v, n, t, s) {
-          if (f.fbq) return; n = f.fbq = function () { n.callMethod ? n.callMethod.apply(n, arguments) : n.queue.push(arguments); };
-          if (!f._fbq) f._fbq = n; n.push = n; n.loaded = !0; n.version = '2.0'; n.queue = [];
-          t = b.createElement(e); t.async = !0; t.src = v; s = b.getElementsByTagName(e)[0]; s.parentNode.insertBefore(t, s);
-        })(window, document, 'script', 'https://connect.facebook.net/en_US/fbevents.js');
-        fbq('init', '1725901878748031');
-        fbq('track', 'PageView');
-      })();
-    </script>
+    <!-- Analytics and the Meta Pixel are not started here. Google Analytics is
+         fired by Tag Manager once Consent Mode is granted, and the Meta Pixel is
+         loaded by src/composables/consent.js - both only after the visitor
+         accepts cookies. -->
 </head>
 <body class="bg-white text-gray-600 antialiased overflow-x-hidden">
-    <!-- Google Tag Manager (noscript) -->
-    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-PQQVVZVJ"
-    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
-    <!-- End Google Tag Manager (noscript) -->
-    <!-- Meta Pixel fallback for visitors with JavaScript disabled -->
-    <noscript><img height="1" width="1" style="display:none" alt=""
-      src="https://www.facebook.com/tr?id=1725901878748031&ev=PageView&noscript=1" /></noscript>
+    <!-- Tag Manager's <noscript> fallback is deliberately absent: with JavaScript
+         off the consent banner cannot be shown, so the container would load
+         without the visitor ever being asked. -->
     <script>document.documentElement.classList.add('js')</script>
     <div id="app"></div>
     <script type="module" src="/src/main.js"></script>

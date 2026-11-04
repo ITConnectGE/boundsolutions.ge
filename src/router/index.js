@@ -23,6 +23,7 @@ export const routes = [
   { path: '/contact', name: 'contact', component: () => import('@/pages/ContactPage.vue') },
   { path: '/privacy', name: 'privacy', component: () => import('@/pages/PrivacyPage.vue') },
   { path: '/terms', name: 'terms', component: () => import('@/pages/TermsPage.vue') },
+  { path: '/cookies', name: 'cookies', component: () => import('@/pages/CookiesPage.vue') },
   // Admin (demo, client-only - not linked publicly, not in the sitemap)
   {
     path: '/admin/login',

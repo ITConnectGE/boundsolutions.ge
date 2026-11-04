@@ -3,6 +3,7 @@ import App from './App.vue'
 import { routes } from './router'
 import { createI18nInstance } from './i18n'
 import { initContent } from './composables/content.js'
+import { initConsent } from './composables/consent.js'
 import './style.css'
 
 // ViteSSG = the same app in dev (SPA) and at build time pre-renders every route
@@ -25,8 +26,12 @@ export const createApp = ViteSSG(
       ;['bs-applications', 'bs-jobs', 'bs-admin-auth'].forEach((k) => localStorage.removeItem(k))
       // Fetch admin-edited content and merge it over the defaults.
       initContent(i18n)
-      // Meta Pixel: the inline snippet fires the first PageView; report subsequent
-      // client-side route changes too. (GA4 enhanced measurement tracks these itself.)
+      // Re-apply a cookie answer given on an earlier visit (loads nothing when
+      // the visitor declined or has not answered yet).
+      initConsent()
+      // Meta Pixel: consent.js fires the first PageView when it loads the pixel;
+      // report later client-side route changes too. Does nothing without consent,
+      // because fbq only exists once the pixel has loaded.
       let first = true
       router.afterEach(() => {
         if (first) {

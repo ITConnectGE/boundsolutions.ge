@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n'
 import { useLoc } from '@/composables/useLocale'
 import { services as defaultServices } from '@/data/services.js'
 import { collection } from '@/composables/content.js'
+import { openConsentSettings } from '@/composables/consent.js'
 import SocialLinks from './SocialLinks.vue'
 import NewsletterForm from './NewsletterForm.vue'
 import BaseIcon from './BaseIcon.vue'
@@ -38,6 +39,10 @@ const services = computed(() => collection('services', defaultServices))
             <RouterLink to="/blog/" class="footer-link">{{ t('nav.blog') }}</RouterLink>
             <RouterLink to="/privacy/" class="footer-link">{{ t('footer.privacy') }}</RouterLink>
             <RouterLink to="/terms/" class="footer-link">{{ t('footer.terms') }}</RouterLink>
+            <RouterLink to="/cookies/" class="footer-link">{{ t('footer.cookies') }}</RouterLink>
+            <button type="button" class="footer-link text-left" @click="openConsentSettings">
+              {{ t('footer.cookieSettings') }}
+            </button>
           </div>
         </div>
 

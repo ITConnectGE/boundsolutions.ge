@@ -51,7 +51,7 @@ import {
   lockedCompanyFields,
 } from '@/data/lists.js'
 import { defaultVacancyCategories } from '@/data/jobs.js'
-import { privacyDefault, termsDefault } from '@/data/legal.js'
+import { privacyDefault, termsDefault, cookiesDefault } from '@/data/legal.js'
 import { toast } from '@/composables/toast'
 import kaMessages from '@/i18n/ka.js'
 import enMessages from '@/i18n/en.js'
@@ -288,9 +288,10 @@ async function saveJobModal() {
   }
 }
 
-// ---- Legal pages (Privacy & Terms - WYSIWYG) ----
+// ---- Legal pages (Privacy, Terms & Cookies - WYSIWYG) ----
 const privacyDraft = ref(null)
 const termsDraft = ref(null)
+const cookiesDraft = ref(null)
 const legalSaving = ref(false)
 function normalizePolicy(p, fallback) {
   if (!p || typeof p !== 'object') return JSON.parse(JSON.stringify(fallback))
@@ -303,6 +304,7 @@ async function saveLegal() {
   try {
     await saveCollection('privacy', privacyDraft.value)
     await saveCollection('terms', termsDraft.value)
+    await saveCollection('cookies', cookiesDraft.value)
     const labels = textItemsPayload('legal')
     if (labels.length) await saveTexts(labels)
     contentSaved.value = true
@@ -710,6 +712,7 @@ async function loadContentEditor() {
   companyFormDraft.value = normalizeCompanyForm(JSON.parse(JSON.stringify(collection('companyForm', defaultCompanyForm))))
   privacyDraft.value = normalizePolicy(JSON.parse(JSON.stringify(collection('privacy', privacyDefault))), privacyDefault)
   termsDraft.value = normalizePolicy(JSON.parse(JSON.stringify(collection('terms', termsDefault))), termsDefault)
+  cookiesDraft.value = normalizePolicy(JSON.parse(JSON.stringify(collection('cookies', cookiesDefault))), cookiesDefault)
   try {
     const rows = await loadAllContent()
     for (const r of rows) {
@@ -796,6 +799,14 @@ async function loadContentEditor() {
       if (r.type === 'json' && r.key === 'col.terms') {
         try {
           termsDraft.value = normalizePolicy(JSON.parse(r.value), termsDefault)
+        } catch {
+          /* keep default */
+        }
+        continue
+      }
+      if (r.type === 'json' && r.key === 'col.cookies') {
+        try {
+          cookiesDraft.value = normalizePolicy(JSON.parse(r.value), cookiesDefault)
         } catch {
           /* keep default */
         }
@@ -2450,9 +2461,9 @@ const statCards = computed(() => [
           </details>
 
           <!-- Collection: Legal pages (Privacy & Terms, WYSIWYG) -->
-          <details v-if="!contentSearch && privacyDraft && termsDraft" class="bg-white rounded-2xl border border-gray-100 px-5 lg:px-6 py-4">
+          <details v-if="!contentSearch && privacyDraft && termsDraft && cookiesDraft" class="bg-white rounded-2xl border border-gray-100 px-5 lg:px-6 py-4">
             <summary class="font-brand text-sm text-gray-900 cursor-pointer select-none">
-              იურიდიული - Privacy &amp; Terms
+              იურიდიული - Privacy, Terms &amp; Cookies
             </summary>
             <div class="space-y-5 mt-5">
               <!-- Page labels (legal.*) -->
@@ -2501,6 +2512,25 @@ const statCards = computed(() => [
                   <div>
                     <span class="block text-[10px] uppercase tracking-wide text-gray-300 mb-1">Text (EN)</span>
                     <RichTextEditor v-model="termsDraft.body.en" />
+                  </div>
+                </div>
+              </div>
+
+              <!-- Cookie policy -->
+              <div class="border border-gray-100 rounded-xl p-4 space-y-3">
+                <p class="text-xs font-semibold text-gray-600">ქუქი-ფაილების პოლიტიკა / Cookie Policy</p>
+                <div class="grid sm:grid-cols-2 gap-3">
+                  <input v-model="cookiesDraft.updated.ka" placeholder="განახლდა (ქარ)" class="w-full px-3 py-2 bg-gray-50 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white" />
+                  <input v-model="cookiesDraft.updated.en" placeholder="Updated (EN)" class="w-full px-3 py-2 bg-gray-50 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white" />
+                </div>
+                <div class="grid sm:grid-cols-2 gap-3">
+                  <div>
+                    <span class="block text-[10px] uppercase tracking-wide text-gray-300 mb-1">ტექსტი (ქარ)</span>
+                    <RichTextEditor v-model="cookiesDraft.body.ka" />
+                  </div>
+                  <div>
+                    <span class="block text-[10px] uppercase tracking-wide text-gray-300 mb-1">Text (EN)</span>
+                    <RichTextEditor v-model="cookiesDraft.body.en" />
                   </div>
                 </div>
               </div>

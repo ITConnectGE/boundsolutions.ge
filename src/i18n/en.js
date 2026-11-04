@@ -336,12 +336,25 @@ export default {
     subscribed: 'Thank you! Your subscription is active.',
     privacy: 'Privacy Policy',
     terms: 'Terms & Conditions',
+    cookies: 'Cookies',
+    cookieSettings: 'Cookie settings',
     websiteBy: 'Website by',
   },
 
+  cookies: {
+    bannerTitle: 'We use cookies',
+    bannerText:
+      'Cookies the site needs to work are always on. Cookies for statistics and advertising are only used with your consent.',
+    readMore: 'Read more',
+    accept: 'I agree',
+    decline: 'I do not agree',
+    currentAccepted: 'Your current choice: I agree',
+    currentDeclined: 'Your current choice: I do not agree',
+  },
   legal: {
     privacyTitle: 'Privacy Policy',
     termsTitle: 'Terms & Conditions',
+    cookiesTitle: 'Cookie Policy',
     updated: 'Last updated:',
   },
 
