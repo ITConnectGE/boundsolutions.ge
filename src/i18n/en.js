@@ -344,7 +344,7 @@ export default {
   cookies: {
     bannerTitle: 'We use cookies',
     bannerText:
-      'Cookies the site needs to work are always on. Cookies for statistics and advertising are only used with your consent.',
+      'We use cookies so that our website works properly and to improve your experience. Necessary cookies are active automatically, while analytics and marketing cookies are only used with your consent.',
     readMore: 'Read more',
     accept: 'I agree',
     decline: 'I do not agree',

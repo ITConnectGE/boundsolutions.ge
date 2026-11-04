@@ -50,6 +50,7 @@ export const privacy = {
     },
     {
       title: { ka: 'ტერმინთა განმარტება', en: 'Definitions' },
+      list: 'geo',
       paras: {
         ka: [
           'ამ წესში გამოყენებულ ტერმინებს ამავე წესის მიზნებისთვის აქვთ „პერსონალურ მონაცემთა დაცვის შესახებ" საქართველოს კანონით გათვალისწინებული მნიშვნელობა:',
@@ -120,6 +121,7 @@ export const privacy = {
         ka: 'პერსონალურ მონაცემთა დამუშავებაზე უფლებამოსილი პირი',
         en: 'Processors',
       },
+      list: 'num',
       bullets: {
         ka: [
           'კომპანიას ჰყავს მონაცემთა დამუშავებაზე უფლებამოსილი პირები, რომლებიც მონაცემებს ამუშავებენ მხოლოდ კომპანიის ლეგიტიმური მიზნების განსახორციელებლად.',
@@ -137,6 +139,7 @@ export const privacy = {
     },
     {
       title: { ka: 'მონაცემთა სუბიექტები', en: 'Data subjects' },
+      list: 'geo',
       paras: {
         ka: ['კომპანია ამუშავებს შემდეგი ფიზიკური პირების პერსონალურ მონაცემებს:'],
         en: ['The Company processes the personal data of the following individuals:'],
@@ -164,6 +167,7 @@ export const privacy = {
     },
     {
       title: { ka: 'მონაცემთა კატეგორია', en: 'Categories of data' },
+      list: 'geo',
       paras: {
         ka: [
           'მონაცემთა სუბიექტთან ურთიერთობის ხასიათიდან და დამუშავების მიზნიდან გამომდინარე, საჭიროებისამებრ, შეიძლება დამუშავდეს შემდეგი პერსონალური მონაცემები:',
@@ -211,6 +215,7 @@ export const privacy = {
     },
     {
       title: { ka: 'მონაცემთა მიღების წყაროები', en: 'Sources of the data' },
+      list: 'geo',
       bullets: {
         ka: [
           'სუბიექტის მიერ აქტიურად და ნებაყოფლობით მოწოდებული მონაცემები (თანხმობის, რეკრუტინგის, განაცხადის შევსების, ჯავშნის ან ხელშეკრულების დადებისა და შესრულების საფუძველზე);',
@@ -236,6 +241,7 @@ export const privacy = {
     },
     {
       title: { ka: 'მონაცემთა დამუშავების მიზნები', en: 'Purposes of processing' },
+      list: 'geo',
       bullets: {
         ka: [
           'პირის იდენტიფიცირება;',
@@ -258,6 +264,7 @@ export const privacy = {
         ka: 'მონაცემთა დამუშავების სამართლებრივი საფუძვლები',
         en: 'Legal grounds for processing',
       },
+      list: 'geo',
       paras: {
         ka: ['პერსონალურ მონაცემთა დამუშავება ხდება შემდეგი საფუძვლებით:'],
         en: ['Personal data is processed on the following grounds:'],
@@ -306,6 +313,7 @@ export const privacy = {
         ka: 'პერსონალურ მონაცემთა დამუშავების პრინციპები',
         en: 'Principles of processing',
       },
+      list: 'geo',
       paras: {
         ka: ['პერსონალურ მონაცემთა დამუშავებისას დაცული უნდა იქნეს შემდეგი პრინციპები:'],
         en: ['The following principles are observed when processing personal data:'],
@@ -331,6 +339,7 @@ export const privacy = {
     },
     {
       title: { ka: 'მონაცემთა სუბიექტის უფლებები', en: 'Rights of the data subject' },
+      list: 'geo',
       paras: {
         ka: ['მონაცემთა სუბიექტი უფლებამოსილია:'],
         en: ['The data subject has the right to:'],
@@ -367,6 +376,7 @@ export const privacy = {
         ka: 'უფლებების განხორციელების წესი',
         en: 'How to exercise these rights',
       },
+      list: 'num',
       bullets: {
         ka: [
           'აღნიშნული უფლებებით სარგებლობისათვის მონაცემთა სუბიექტი უნდა დაუკავშირდეს დამუშავებაზე უფლებამოსილ პირს ან დამუშავებისათვის პასუხისმგებელ პირს.',
@@ -391,6 +401,7 @@ export const privacy = {
         ka: 'მონაცემთა უსაფრთხოების ვალდებულებები',
         en: 'Data security obligations',
       },
+      list: 'num',
       bullets: {
         ka: [
           'კომპანია სათანადო ორგანიზაციული და ტექნიკური ზომების მიღებით უზრუნველყოფს მონაცემთა უსაფრთხოებას, მათ დაცვას შემთხვევითი ან უკანონო განადგურებისგან, შეცვლისაგან, გამჟღავნებისგან, მოპოვებისგან, ნებისმიერი სხვა ფორმით უკანონო გამოყენებისა და დაკარგვისაგან.',
@@ -488,6 +499,7 @@ export const privacy = {
     },
     {
       title: { ka: 'მონაცემთა შენახვის ვადები', en: 'Retention periods' },
+      list: 'num',
       bullets: {
         ka: [
           'კომპანია ინახავს მხოლოდ იმ მონაცემებს, რომლებიც აუცილებელია კონკრეტული, კანონიერი მიზნის მისაღწევად.',
@@ -505,6 +517,7 @@ export const privacy = {
     },
     {
       title: { ka: 'პირდაპირი მარკეტინგი', en: 'Direct marketing' },
+      list: 'num',
       bullets: {
         ka: [
           'კომპანია პირდაპირ მარკეტინგს ეწევა მონაცემთა სუბიექტებისთვის ელექტრონულ ფოსტაზე შეთავაზებების გაგზავნისას.',
@@ -725,7 +738,12 @@ function policyToHtml(policy, { translated = false } = {}) {
       .map((s) => {
         let html = `<h2>${s.title[locale]}</h2>`
         for (const p of s.paras?.[locale] || []) html += `<p>${p}</p>`
-        if (s.bullets) html += '<ul>' + (s.bullets[locale] || []).map((b) => `<li>${b}</li>`).join('') + '</ul>'
+        if (s.bullets) {
+          // `list: 'geo'` keeps the ა) ბ) გ) lettering of the signed document,
+          // `list: 'num'` its 1. 2. 3.; without it the clause is a plain bullet.
+          const items = (s.bullets[locale] || []).map((b) => `<li>${b}</li>`).join('')
+          html += s.list ? `<ol class="${s.list}">${items}</ol>` : `<ul>${items}</ul>`
+        }
         return html
       })
       .join('')

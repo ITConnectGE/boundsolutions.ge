@@ -26,21 +26,10 @@
       })();
     </script>
 
-    <!-- Google Tag Manager: placed as high in the head as possible, per Google.
-         Not loaded on localhost or the admin portal, so neither pollutes the data.
-         The Meta Pixel is not here: it loads from consent.js, after consent. -->
-    <script>
-      (function () {
-        var h = location.hostname;
-        if (h === 'localhost' || h === '127.0.0.1' || h.indexOf('portal.') === 0) return;
-        (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-        new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-        j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-        'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-        })(window,document,'script','dataLayer','GTM-PQQVVZVJ');
-      })();
-    </script>
-    <!-- End Google Tag Manager -->
+    <!-- Google Tag Manager is NOT started here. src/composables/consent.js
+         loads the container only after the visitor accepts cookies, so Google
+         is not contacted at all beforehand - not even for a cookieless ping -
+         and never on localhost or the admin portal. -->
 
     <title>Bound Solutions | HR Consulting & Recruitment</title>
     <meta name="description" content="Bound Solutions - HR კონსალტინგი, რეკრუტინგი და გუნდური ივენთები თბილისში. 20+ წლის გამოცდილება. ნინო ბართაია - Founder & CEO." />

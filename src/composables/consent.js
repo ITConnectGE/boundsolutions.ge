@@ -1,10 +1,13 @@
-// Cookie consent. Nothing that tracks the visitor runs before they agree:
+// Cookie consent. Nothing that tracks the visitor runs before they agree, and
+// neither Google nor Meta is contacted at all until then:
 //
-//  - Google (GA4 through Tag Manager) is held back by Consent Mode. index.html
-//    sets every consent type to "denied" before the GTM snippet loads, and this
-//    file flips it to "granted" when the visitor accepts.
-//  - the Meta Pixel is not inside Tag Manager, so it is loaded from here - once,
-//    and only after consent.
+//  - the Tag Manager container (which fires GA4) is loaded from here, after
+//    consent. Loading it up front and relying on Consent Mode alone would still
+//    let Google receive a cookieless ping, which is not "not loaded".
+//    index.html sets every consent type to "denied" before anything else, so
+//    the container reads the right state the moment it does load.
+//  - the Meta Pixel is not inside Tag Manager, so it is loaded from here too -
+//    once, and only after consent.
 //
 // The answer is kept in localStorage, so the banner is shown once and the choice
 // survives later visits.
@@ -12,6 +15,7 @@ import { ref, computed } from 'vue'
 
 const KEY = 'bs-cookie-consent' // 'granted' | 'denied'
 const PIXEL_ID = '1725901878748031'
+const GTM_ID = 'GTM-PQQVVZVJ'
 
 function readStored() {
   try {
@@ -44,6 +48,18 @@ function updateGoogleConsent(state) {
 function trackingAllowedHere() {
   const h = window.location.hostname
   return h !== 'localhost' && h !== '127.0.0.1' && !h.startsWith('portal.')
+}
+
+function loadTagManager() {
+  if (window.__gtmLoaded || !trackingAllowedHere()) return
+  window.__gtmLoaded = true
+  window.dataLayer = window.dataLayer || []
+  window.dataLayer.push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' })
+  const s = document.createElement('script')
+  s.async = true
+  s.src = `https://www.googletagmanager.com/gtm.js?id=${GTM_ID}`
+  const first = document.getElementsByTagName('script')[0]
+  first.parentNode.insertBefore(s, first)
 }
 
 function loadMetaPixel() {
@@ -84,6 +100,7 @@ export function setConsent(value) {
   updateGoogleConsent(value)
 
   if (value === 'granted') {
+    loadTagManager()
     loadMetaPixel()
   } else if (previous === 'granted') {
     // Withdrawn: the Pixel is already on the page and cannot be unloaded, so
@@ -100,6 +117,7 @@ export function openConsentSettings() {
 export function initConsent() {
   if (consent.value === 'granted') {
     updateGoogleConsent('granted')
+    loadTagManager()
     loadMetaPixel()
   }
 }
