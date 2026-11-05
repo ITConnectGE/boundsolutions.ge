@@ -46,9 +46,17 @@ ln -sf "$DEST" /etc/nginx/sites-enabled/boundsolutions
 # leaves the committed config pointing at a socket that no longer exists.
 # nginx -t does not look at sockets - it passes, and every API request 502s.
 # Point fastcgi_pass at the newest socket actually present instead.
-sock=$(ls -1 /run/php/php*-fpm.sock 2>/dev/null | sort -V | tail -1 || true)
+# Newest version first, then the versionless php-fpm.sock - which is only a
+# symlink into /etc/alternatives and can dangle, so it is the last resort and,
+# like every candidate, has to be a socket that is really there (-S).
+sock=""
+for cand in $(ls -1 /run/php/php[0-9]*-fpm.sock 2>/dev/null | sort -rV) /run/php/php-fpm.sock; do
+  [ -S "$cand" ] || continue
+  sock=$cand
+  break
+done
 if [ -z "$sock" ]; then
-  echo "!! no /run/php/php*-fpm.sock found - is php-fpm running?"
+  echo "!! no usable php-fpm socket in /run/php - is php-fpm running?"
   restore
 fi
 sed -i "s|unix:/run/php/php[0-9.]*-fpm\.sock|unix:$sock|g" "$DEST"
