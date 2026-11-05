@@ -2,7 +2,7 @@ import { copyFileSync, readFileSync, writeFileSync, readdirSync, statSync, exist
 import { resolve, join, relative, sep } from 'node:path'
 import { SITE_URL, FILE_PATH, withSlash } from '../src/utils/url.js'
 
-const dist = resolve('dist')
+const dist = resolve(process.env.BUILD_OUT || 'dist')
 
 // SPA fallback: GitHub Pages serves 404.html for any unmatched path. We reuse the
 // built index.html so the client router can resolve deep links / show NotFound.

@@ -14,6 +14,9 @@ export default defineConfig({
     },
   },
   build: {
+    // Deploys build into a staging directory (BUILD_OUT) and sync from there,
+    // so the live folder is never half-written - see deploy/update.sh.
+    outDir: process.env.BUILD_OUT || 'dist',
     // Keep the original videos out of the JS bundle; they live in /public
     assetsInlineLimit: 0,
   },
