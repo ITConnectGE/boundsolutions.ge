@@ -41,6 +41,19 @@ fi
 echo "==> installing $SRC"
 cp "$SRC" "$DEST"
 ln -sf "$DEST" /etc/nginx/sites-enabled/boundsolutions
+
+# The php-fpm socket carries the PHP version, so a PHP upgrade renames it and
+# leaves the committed config pointing at a socket that no longer exists.
+# nginx -t does not look at sockets - it passes, and every API request 502s.
+# Point fastcgi_pass at the newest socket actually present instead.
+sock=$(ls -1 /run/php/php*-fpm.sock 2>/dev/null | sort -V | tail -1 || true)
+if [ -z "$sock" ]; then
+  echo "!! no /run/php/php*-fpm.sock found - is php-fpm running?"
+  restore
+fi
+sed -i "s|unix:/run/php/php[0-9.]*-fpm\.sock|unix:$sock|g" "$DEST"
+echo "==> php-fpm socket: $sock"
+
 nginx -t
 
 # Re-install every existing certificate whose names are all *.boundsolutions.ge
@@ -81,8 +94,16 @@ fi
 
 nginx -t
 systemctl reload nginx
-trap - ERR
 echo "==> nginx reloaded"
+
+# Safety net: nginx can be syntactically perfect and still not reach Laravel.
+# If the API is not answering, this config is worse than the one it replaced.
+api=$(curl -s -o /dev/null -m 10 -w '%{http_code}' -k   --resolve boundsolutions.ge:443:127.0.0.1 https://boundsolutions.ge/api/vacancies || echo 000)
+if [ "$api" != "200" ]; then
+  echo "!! the API answered $api, not 200 - this config does not reach Laravel"
+  restore
+fi
+trap - ERR
 
 # ---- Origin-side checks (no Cloudflare in between) ----
 check() { # label, curl args...
